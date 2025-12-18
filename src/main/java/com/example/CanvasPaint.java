@@ -1,11 +1,14 @@
-package com.example.view;
+
+package com.example;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 import javax.swing.JFrame;
@@ -13,18 +16,17 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-public class CanvasKey {
+public class CanvasPaint {
 
     private JFrame frame;
     private JPanel panel;
     private BufferedImage img;
-    private int x, y;
 
-    public CanvasKey(int width, int height) {
+    public CanvasPaint(int width, int height) {
         frame = new JFrame();
 
         frame.setLayout(new BorderLayout());
-        frame.setResizable(false);
+        frame.setResizable(true);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -38,33 +40,32 @@ public class CanvasKey {
                 present(g);
             }
         };
-
         panel.setPreferredSize(new Dimension(width, height));
 
         frame.add(panel, BorderLayout.CENTER);
+        frame.add(panel);
         frame.pack();
         frame.setVisible(true);
 
-        panel.requestFocus();
-        panel.requestFocusInWindow();
-        panel.addKeyListener(new KeyAdapter() {
+        panel.addComponentListener(new ComponentAdapter() {
             @Override
-            public void keyPressed(KeyEvent e) {
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_LEFT:
-                        x--;
-                        break;
-                    case KeyEvent.VK_RIGHT:
-                        x++;
-                        break;
-                    case KeyEvent.VK_UP:
-                        y--;
-                        break;
-                    case KeyEvent.VK_DOWN:
-                        y++;
-                        break;
-                }
+            public void componentResized(ComponentEvent e) {
+                BufferedImage newImg = new BufferedImage(panel.getWidth(), panel.getHeight(),
+                        BufferedImage.TYPE_INT_RGB);
+                img = newImg;
                 draw();
+            }
+        });
+
+        panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1)
+                    img.setRGB(e.getX(), e.getY(), 0xff0000);
+                if (e.getButton() == MouseEvent.BUTTON2)
+                    img.setRGB(e.getX(), e.getY(), 0xff00);
+                if (e.getButton() == MouseEvent.BUTTON3)
+                    img.setRGB(e.getX(), e.getY(), 0xff);
                 panel.repaint();
             }
         });
@@ -80,22 +81,20 @@ public class CanvasKey {
         graphics.drawImage(img, 0, 0, null);
     }
 
-    private void draw() {
-        img.setRGB(x, y, 0xffff00);
-        System.out.println("[" + x + "," + y + "]");
+    public void draw() {
+        clear();
+        img.setRGB(10, 10, 0xffff00);
+        img.getGraphics().drawString("Resize the window", 5, img.getHeight() - 5);
+
     }
 
     public void start() {
-        x = img.getWidth() / 2;
-        y = img.getHeight() / 2;
-        clear();
         draw();
-        img.getGraphics().drawString("Use arrow keys", 5, img.getHeight() - 5);
         panel.repaint();
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new CanvasKey(800, 600).start());
+        SwingUtilities.invokeLater(() -> new CanvasPaint(800, 600).start());
     }
 
 }

@@ -1,7 +1,6 @@
-package com.example.view;
+package com.example;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ComponentAdapter;
@@ -9,27 +8,32 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.image.BufferedImage;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-public class CanvasMouseResizeRepaint {
+import com.example.rasterize.LineRasterizerGraphics;
+import com.example.rasterize.RasterBufferedImage;
+
+public class CanvasRasterBufferedImage {
 
     private JPanel panel;
-    private BufferedImage img;
+    private RasterBufferedImage raster;
+    private int x, y;
+    private LineRasterizerGraphics rasterizer;
 
-    public CanvasMouseResizeRepaint(int width, int height) {
+    public CanvasRasterBufferedImage(int width, int height) {
         JFrame frame = new JFrame();
 
         frame.setLayout(new BorderLayout());
+
         frame.setResizable(true);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-
+        raster = new RasterBufferedImage(width, height);
+        rasterizer = new LineRasterizerGraphics(raster);
         panel = new JPanel() {
             private static final long serialVersionUID = 1L;
 
@@ -54,11 +58,14 @@ public class CanvasMouseResizeRepaint {
                     color = 0xff0000;
                 if (e.getButton() == MouseEvent.BUTTON2)
                     color = 0xff00;
-                if (e.getButton() == MouseEvent.BUTTON3)
-                    color = 0xff;
                 for (int i = -size; i <= size; i++)
                     for (int j = -size; j <= size; j++)
-                        img.setRGB(e.getX() + i, e.getY() + j, color);
+                        raster.setPixel(e.getX() + i, e.getY() + j, color);
+                if (e.getButton() == MouseEvent.BUTTON3) {
+                    rasterizer.drawLine(x, y, e.getX(), e.getY());
+                    x = e.getX();
+                    y = e.getY();
+                }
                 panel.repaint();
             }
         });
@@ -66,7 +73,7 @@ public class CanvasMouseResizeRepaint {
         panel.addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                img.setRGB(e.getX(), e.getY(), 0xffff00);
+                raster.setPixel(e.getX(), e.getY(), 0xffff00);
                 panel.repaint();
             }
         });
@@ -76,40 +83,39 @@ public class CanvasMouseResizeRepaint {
             public void componentResized(ComponentEvent e) {
                 if (panel.getWidth() < 1 || panel.getHeight() < 1)
                     return;
-                if (panel.getWidth() <= img.getWidth() && panel.getHeight() <= img.getHeight()) // no resize if new is
-                                                                                                // smaller
+                if (panel.getWidth() <= raster.getWidth()
+                        && panel.getHeight() <= raster.getHeight()) // no resize if new one is smaller
                     return;
-                BufferedImage newImg = new BufferedImage(panel.getWidth(), panel.getHeight(),
-                        BufferedImage.TYPE_INT_RGB);
-                Graphics gr = newImg.getGraphics();
-                gr.setColor(new Color(0xaaaaaa));
-                gr.fillRect(0, 0, newImg.getWidth(), newImg.getHeight());
-                newImg.getGraphics().drawImage(img, 0, 0, null);
-                img = newImg;
+
+                RasterBufferedImage newRaster = new RasterBufferedImage(panel.getWidth(), panel.getHeight());
+
+                newRaster.draw(raster);
+                raster = newRaster;
+                rasterizer = new LineRasterizerGraphics(raster);
+
             }
         });
 
     }
 
     public void clear(int color) {
-        Graphics gr = img.getGraphics();
-        gr.setColor(new Color(color));
-        gr.fillRect(0, 0, img.getWidth(), img.getHeight());
+        raster.setClearColor(color);
+        raster.clear();
 
     }
 
     public void present(Graphics graphics) {
-        graphics.drawImage(img, 0, 0, null);
+        raster.repaint(graphics);
     }
 
     public void start() {
         clear(0xaaaaaa);
-        img.getGraphics().drawString("Use mouse buttons and try resize the window", 5, 15);
+        raster.getGraphics().drawString("Use mouse buttons and try resize the window", 5, 15);
         panel.repaint();
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new CanvasMouseResizeRepaint(800, 600).start());
+        SwingUtilities.invokeLater(() -> new CanvasRasterBufferedImage(800, 600).start());
     }
 
 }

@@ -1,4 +1,4 @@
-package com.example.view;
+package com.example;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -15,13 +15,13 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-public class CanvasPaint {
+public class CanvasMouseResize {
 
     private JFrame frame;
     private JPanel panel;
     private BufferedImage img;
 
-    public CanvasPaint(int width, int height) {
+    public CanvasMouseResize(int width, int height) {
         frame = new JFrame();
 
         frame.setLayout(new BorderLayout());
@@ -93,7 +93,7 @@ public class CanvasPaint {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new CanvasPaint(800, 600).start());
+        SwingUtilities.invokeLater(() -> new CanvasMouseResize(800, 600).start());
     }
 
 }

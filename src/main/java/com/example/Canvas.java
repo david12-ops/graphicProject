@@ -1,13 +1,9 @@
-package com.example.view;
+package com.example;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 import javax.swing.JFrame;
@@ -15,17 +11,17 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-public class CanvasMouseResize {
+public class Canvas {
 
     private JFrame frame;
     private JPanel panel;
     private BufferedImage img;
 
-    public CanvasMouseResize(int width, int height) {
+    public Canvas(int width, int height) {
         frame = new JFrame();
 
         frame.setLayout(new BorderLayout());
-        frame.setResizable(true);
+        frame.setResizable(false);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -39,35 +35,12 @@ public class CanvasMouseResize {
                 present(g);
             }
         };
+
         panel.setPreferredSize(new Dimension(width, height));
 
         frame.add(panel, BorderLayout.CENTER);
-        frame.add(panel);
         frame.pack();
         frame.setVisible(true);
-
-        panel.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                BufferedImage newImg = new BufferedImage(panel.getWidth(), panel.getHeight(),
-                        BufferedImage.TYPE_INT_RGB);
-                img = newImg;
-                draw();
-            }
-        });
-
-        panel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON1)
-                    img.setRGB(e.getX(), e.getY(), 0xff0000);
-                if (e.getButton() == MouseEvent.BUTTON2)
-                    img.setRGB(e.getX(), e.getY(), 0xff00);
-                if (e.getButton() == MouseEvent.BUTTON3)
-                    img.setRGB(e.getX(), e.getY(), 0xff);
-                panel.repaint();
-            }
-        });
     }
 
     public void clear() {
@@ -83,8 +56,6 @@ public class CanvasMouseResize {
     public void draw() {
         clear();
         img.setRGB(10, 10, 0xffff00);
-        img.getGraphics().drawString("Resize the window", 5, img.getHeight() - 5);
-
     }
 
     public void start() {
@@ -93,7 +64,7 @@ public class CanvasMouseResize {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new CanvasMouseResize(800, 600).start());
+        SwingUtilities.invokeLater(() -> new Canvas(800, 600).start());
     }
 
 }
