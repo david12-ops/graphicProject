@@ -1,4 +1,4 @@
-package com.example.rasterize;
+package com.example.raster;
 
 public interface Raster {
 

@@ -5,12 +5,13 @@ import java.awt.Graphics;
 import com.example.raster.Raster;
 import com.example.raster.RasterBufferedImage;
 
-public class LineRasterizerGraphics extends LineRasterizer {
+public class FilledLineRasterizer extends LineRasterizer {
 
-    public LineRasterizerGraphics(Raster raster) {
+    public FilledLineRasterizer(Raster raster) {
         super(raster);
     }
 
+    // TODO - s vyplnenim
     @Override
     public void drawLine(int x1, int y1, int x2, int y2) {
         Graphics g = ((RasterBufferedImage) raster).getImg().getGraphics();
