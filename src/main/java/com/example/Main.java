@@ -1,23 +1,16 @@
 package com.example;
 
-import com.example.view.MainScreen;
+import javax.swing.*;
 
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
+import com.example.controller.Controller2D;
+import com.example.view.Window;
 
-public class Main extends Application {
-    // Zatim požít Swing a pak z toho zkusit udělat malování
-    @Override
-    public void start(Stage primaryStage) {
-        MainScreen mainScreen = new MainScreen(primaryStage);
-
-        Scene scene = new Scene(mainScreen, 400, 300);
-        primaryStage.setScene(scene);
-        primaryStage.show();
-    }
-
+public class Main {
     public static void main(String[] args) {
-        launch(args);
+        SwingUtilities.invokeLater(() -> {
+            Window window = new Window();
+            new Controller2D(window.getPanel());
+            window.setVisible(true);
+        });
     }
 }
