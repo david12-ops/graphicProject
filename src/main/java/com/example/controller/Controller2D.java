@@ -9,8 +9,10 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.SwingUtilities;
 
+import com.example.raster.Raster;
+import com.example.rasterize.FilledLineRasterizer;
+import com.example.rasterize.LineRasterizer;
 import com.example.rasterize.LineRasterizerGraphics;
-import com.example.rasterize.Raster;
 import com.example.view.Panel;
 
 public class Controller2D implements Controller {
@@ -19,6 +21,7 @@ public class Controller2D implements Controller {
 
     private int x, y;
     private LineRasterizerGraphics rasterizer;
+    private FilledLineRasterizer filledLineRasterizer;
 
     public Controller2D(Panel panel) {
         this.panel = panel;
@@ -88,7 +91,7 @@ public class Controller2D implements Controller {
             public void keyPressed(KeyEvent e) {
                 // na klávesu C vymazat plátno
                 if (e.getKeyCode() == KeyEvent.VK_C) {
-                    // TODO
+                    hardClear();
                 }
             }
         });
@@ -103,8 +106,10 @@ public class Controller2D implements Controller {
     }
 
     private void update() {
-        panel.clear();
         // TODO
+        panel.clear();
+        initObjects(panel.getRaster());
+        initListeners(panel);
     }
 
     public void hardClear() {

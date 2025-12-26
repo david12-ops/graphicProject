@@ -1,4 +1,4 @@
-package com.example.rasterize;
+package com.example.raster;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

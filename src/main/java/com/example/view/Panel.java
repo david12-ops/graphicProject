@@ -1,9 +1,10 @@
 package com.example.view;
 
-import com.example.rasterize.Raster;
-import com.example.rasterize.RasterBufferedImage;
-
 import javax.swing.*;
+
+import com.example.raster.Raster;
+import com.example.raster.RasterBufferedImage;
+
 import java.awt.*;
 import java.util.Timer;
 import java.util.TimerTask;

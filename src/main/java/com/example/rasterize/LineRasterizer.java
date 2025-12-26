@@ -3,6 +3,7 @@ package com.example.rasterize;
 import java.awt.Color;
 
 import com.example.model.Line;
+import com.example.raster.Raster;
 
 public class LineRasterizer {
 
