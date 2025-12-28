@@ -5,7 +5,7 @@ import com.example.raster.Raster;
 public class SeedFill implements Filler {
     private Raster raster;
     private int x, y;
-    private int fillColor, backgroundColor;
+    private int backgroundColor;
 
     public SeedFill(Raster raster, int backgroundColor, int x, int y) {
         this.raster = raster;
@@ -24,7 +24,7 @@ public class SeedFill implements Filler {
         if (pixelColor != backgroundColor)
             return;
 
-        raster.setPixel(x, y, fillColor);
+        raster.setPixel(x, y, 0x0000ff);
 
         seedFill(x + 1, y);
         seedFill(x - 1, y);

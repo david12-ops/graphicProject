@@ -14,8 +14,8 @@ import com.example.model.Line;
 import com.example.model.Point;
 import com.example.model.Polygon;
 import com.example.raster.Raster;
+import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
-import com.example.rasterize.LineRasterizerGraphics;
 import com.example.rasterize.PolygonRasterizer;
 import com.example.view.Panel;
 
@@ -34,8 +34,7 @@ public class Controller2D implements Controller {
     }
 
     public void initObjects(Raster raster) {
-        lineRasterizer = new LineRasterizerGraphics(raster);
-        // lineRasterizer = new LineRasterizerTrivial(raster);
+        lineRasterizer = new FilledLineRasterizer(raster);
         lineRasterizer.setColor(0x00ff00);
 
         polygonRasterizer = new PolygonRasterizer(lineRasterizer);
@@ -54,15 +53,16 @@ public class Controller2D implements Controller {
                 if (e.isShiftDown()) {
                     // TODO
                 } else if (SwingUtilities.isLeftMouseButton(e)) {
-                    panel.clear();
+                    // panel.clear();
                     polygon.addPoint(new Point(e.getX(), e.getY()));
                     panel.getRaster().setPixel(e.getX(), e.getY(), 0xff0000);
                     polygonRasterizer.rasterize(polygon);
-                    panel.repaint();
+                    // panel.repaint();
 
                 } else if (SwingUtilities.isMiddleMouseButton(e)) {
                     // TODO
                 } else if (SwingUtilities.isRightMouseButton(e)) {
+                    // panel.clear();
                     SeedFill seedFill = new SeedFill(
                             panel.getRaster(),
                             panel.getRaster().getPixel(e.getX(), e.getY()),
@@ -70,6 +70,7 @@ public class Controller2D implements Controller {
                     seedFill.fill();
                     panel.repaint();
                 }
+
             }
 
             @Override
@@ -82,6 +83,18 @@ public class Controller2D implements Controller {
                     }
                 }
             }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                // panel.clear();
+                Line line = new Line(
+                        panel.getRaster().getWidth() / 2,
+                        panel.getRaster().getHeight() / 2,
+                        e.getX(), e.getY(),
+                        0xff0000);
+                lineRasterizer.rasterize(line);
+                panel.repaint();
+            }
         });
 
         panel.addMouseMotionListener(new MouseAdapter() {
@@ -93,7 +106,7 @@ public class Controller2D implements Controller {
                 if (e.isShiftDown()) {
                     // TODO
                 } else if (SwingUtilities.isLeftMouseButton(e)) {
-                    panel.clear();
+                    // panel.clear();
                     Line line = new Line(
                             panel.getRaster().getWidth() / 2,
                             panel.getRaster().getHeight() / 2,
@@ -106,7 +119,8 @@ public class Controller2D implements Controller {
                 } else if (SwingUtilities.isMiddleMouseButton(e)) {
                     // TODO
                 }
-                update();
+                // update();
+
             }
         });
 
@@ -130,9 +144,7 @@ public class Controller2D implements Controller {
     }
 
     private void update() {
-        // panel.clear();
-        // TODO
-
+        panel.clear();
     }
 
     private void hardClear() {
