@@ -1,6 +1,6 @@
 package com.example;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 import com.example.controller.Controller2D;
 import com.example.view.Window;
