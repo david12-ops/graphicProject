@@ -40,6 +40,7 @@ public class FilledLineRasterizer extends LineRasterizer {
         float q = y1 - k * x1;
 
         if (Math.abs((y2 - y1)) < Math.abs(x2 - x1)) {
+
             if (x2 < x1) {
                 int t;
                 t = x1;
@@ -51,19 +52,39 @@ public class FilledLineRasterizer extends LineRasterizer {
             }
 
             if (colorMode == ColorMode.SOLID) {
+                drawBigPoint(x1, y1, 5, 0xFFFFFF);
+
                 for (int x = x1; x < x2; x++) {
                     int y = Math.round(k * x + q);
-                    raster.setPixel(x, y, color.getRGB());
+
+                    if (x >= 0 && y >= 0 &&
+                            x < raster.getWidth() &&
+                            y < raster.getHeight()) {
+                        raster.setPixel(x, y, color.getRGB());
+                    } else {
+                        break;
+                    }
                 }
+
+                drawBigPoint(x2, y2, 5, 0xFFFFFF);
             } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
+                drawBigPoint(x1, y1, 5, 0xFFFFFF);
+
                 for (int x = x1; x < x2; x++) {
                     int y = Math.round(k * x + q);
                     float w = (x - x1) / (float) (x2 - x1);
 
-                    raster.setPixel(x, y, computeColor(w, startColor, endColor));
+                    if (x >= 0 && y >= 0 &&
+                            x < raster.getWidth() &&
+                            y < raster.getHeight()) {
+                        raster.setPixel(x, y, computeColor(w, startColor, endColor));
+                    } else {
+                        break;
+                    }
                 }
-            }
 
+                drawBigPoint(x2, y2, 5, 0xFFFFFF);
+            }
         } else {
             if (y2 < y1) {
                 int t;
@@ -76,17 +97,39 @@ public class FilledLineRasterizer extends LineRasterizer {
             }
 
             if (colorMode == ColorMode.SOLID) {
+                drawBigPoint(x1, y1, 5, 0xFFFFFF);
+
                 for (int y = y1; y < y2; y++) {
                     int x = Math.round((y - q) / k);
-                    raster.setPixel(x, y, color.getRGB());
+
+                    if (x >= 0 && y >= 0 &&
+                            x < raster.getWidth() &&
+                            y < raster.getHeight()) {
+                        raster.setPixel(x, y, color.getRGB());
+                    } else {
+                        break;
+                    }
                 }
+
+                drawBigPoint(x2, y2, 5, 0xFFFFFF);
             } else if (colorMode == ColorMode.GRADIENT) {
+                drawBigPoint(x1, y1, 5, 0xFFFFFF);
+
                 for (int y = y1; y < y2; y++) {
                     int x = Math.round((y - q) / k);
                     float w = (y - y1) / (float) (y2 - y1);
 
-                    raster.setPixel(x, y, computeColor(w, startColor, endColor));
+                    if (x >= 0 && y >= 0 &&
+                            x < raster.getWidth() &&
+                            y < raster.getHeight()) {
+
+                        raster.setPixel(x, y, computeColor(w, startColor, endColor));
+                    } else {
+                        break;
+                    }
                 }
+
+                drawBigPoint(x2, y2, 5, 0xFFFFFF);
             }
         }
     }
@@ -105,5 +148,19 @@ public class FilledLineRasterizer extends LineRasterizer {
 
         // revert back
         return ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xFF);
+    }
+
+    private void drawBigPoint(int x, int y, int size, int color) {
+        // namalovani ctverce (point) na zacatku a konci usecky
+        // aby byl videt - pouzito centrovani bodu -> -velikost/2 do +velikost/2
+        for (int dx = -size / 2; dx <= size / 2; dx++) {
+            for (int dy = -size / 2; dy <= size / 2; dy++) {
+                // souradnice pixelku - bere se ten co uz je + offset (dx,dy) pro videlost bodu
+                int px = x + dx;
+                int py = y + dy;
+
+                raster.setPixel(px, py, color);
+            }
+        }
     }
 }

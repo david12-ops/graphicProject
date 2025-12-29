@@ -21,7 +21,7 @@ public class SeedFill implements Filler {
 
     private void seedFill(int x, int y) {
         int pixelColor = raster.getPixel(x, y);
-        if (pixelColor != backgroundColor)
+        if (pixelColor == -1 || pixelColor != backgroundColor)
             return;
 
         raster.setPixel(x, y, 0x0000ff);
