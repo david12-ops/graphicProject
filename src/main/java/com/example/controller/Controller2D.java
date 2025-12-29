@@ -35,6 +35,10 @@ public class Controller2D implements Controller {
         initListeners(panel);
     }
 
+    // TODO BUG in deleteing polygon
+    // TODO vyresit problem s vykreslovanim polygonu (furt se poji s prvnim bodem) a
+    // platnem
+
     public void initObjects(Raster raster) {
         lineRasterizer = new FilledLineRasterizer(raster, ColorMode.GRADIENT);
 
@@ -59,7 +63,7 @@ public class Controller2D implements Controller {
                 if (e.isShiftDown()) {
                     // TODO
                 } else if (SwingUtilities.isLeftMouseButton(e)) {
-                    // panel.clear();
+                    panel.clear();
                     polygon.addPoint(new Point(e.getX(), e.getY()));
                     panel.getRaster().setPixel(e.getX(), e.getY(), 0xff0000);
                     polygonRasterizer.rasterize(polygon);
@@ -74,7 +78,7 @@ public class Controller2D implements Controller {
                             panel.getRaster().getPixel(e.getX(), e.getY()),
                             e.getX(), e.getY());
                     seedFill.fill();
-                    // panel.repaint();
+                    panel.repaint();
                 }
 
             }
@@ -85,10 +89,10 @@ public class Controller2D implements Controller {
                     if (SwingUtilities.isLeftMouseButton(e)) {
                         // TODO
                     } else if (SwingUtilities.isRightMouseButton(e)) {
-                        panel.clear();
-
                         if (polygon.getSize() > 0)
                             polygon.clearAllPoints();
+
+                        panel.clear();
 
                         line = new Line(
                                 panel.getRaster().getWidth() / 2,
@@ -107,10 +111,11 @@ public class Controller2D implements Controller {
                 line = new Line(new Point(line.getX1(), line.getY1()), new Point(e.getX(), e.getY()), 0xff0000);
                 lineRasterizer.rasterize(line);
 
-                // přidej konec a zacatek usecky do polygonu
+                // přidej konec a zacatek usecky do polygonu - ? je to dobre
                 polygon.addPoint(new Point(line.getX1(), line.getY1()));
-                polygon.addPoint(new Point(line.getX2(), line.getY2()));
+                // polygon.addPoint(new Point(e.getX(), e.getY()));
             }
+
         });
 
         panel.addMouseMotionListener(new MouseAdapter() {
@@ -136,7 +141,6 @@ public class Controller2D implements Controller {
                     // TODO
                 }
                 // update();
-
             }
         });
 
