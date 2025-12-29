@@ -15,6 +15,15 @@ public class Polygon {
         this.points.add(point);
     }
 
+    public void clearAllPoints() {
+        this.points.clear();
+    }
+
+    public void removePoint(Point point) {
+        if (this.points.contains(point))
+            this.points.remove(point);
+    }
+
     public Point getPoint(int index) {
         return this.points.get(index);
     }

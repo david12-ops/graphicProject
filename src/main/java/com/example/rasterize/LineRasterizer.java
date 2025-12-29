@@ -8,7 +8,10 @@ import com.example.raster.Raster;
 public class LineRasterizer {
 
     Raster raster;
+
     Color color;
+    Color startColor;
+    Color endColor;
 
     public LineRasterizer(Raster raster) {
         this.raster = raster;
@@ -20,6 +23,16 @@ public class LineRasterizer {
 
     public void setColor(int color) {
         this.color = new Color(color);
+    }
+
+    public void setGradientColors(Color startColor, Color endColor) {
+        this.startColor = startColor;
+        this.endColor = endColor;
+    }
+
+    public void setGradientColors(int startColor, int endColor) {
+        this.startColor = new Color(startColor);
+        this.endColor = new Color(endColor);
     }
 
     public void rasterize(Line line) {
