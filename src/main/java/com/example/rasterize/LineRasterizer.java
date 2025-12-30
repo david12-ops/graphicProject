@@ -7,11 +7,12 @@ import com.example.raster.Raster;
 
 public class LineRasterizer {
 
-    Raster raster;
+    protected Raster raster;
 
-    Color color;
-    Color startColor;
-    Color endColor;
+    protected Color color;
+    protected Color startColor;
+    protected Color endColor;
+    protected boolean onShiftMode = false;
 
     public LineRasterizer(Raster raster) {
         this.raster = raster;
@@ -33,6 +34,10 @@ public class LineRasterizer {
     public void setGradientColors(int startColor, int endColor) {
         this.startColor = new Color(startColor);
         this.endColor = new Color(endColor);
+    }
+
+    public void setShifMode(boolean onShifMode) {
+        this.onShiftMode = onShifMode;
     }
 
     public void rasterize(Line line) {

@@ -23,7 +23,7 @@ public class Panel extends JPanel {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         raster = new RasterBufferedImage(WIDTH, HEIGHT);
         raster.setClearColor(Color.BLACK.getRGB());
-        // setLoop();
+        setLoop();
     }
 
     @Override
@@ -36,9 +36,11 @@ public class Panel extends JPanel {
     public void resize() {
         if (this.getWidth() < 1 || this.getHeight() < 1)
             return;
-        if (this.getWidth() <= raster.getWidth() && this.getHeight() <= raster.getHeight()) // no resize if new is
-                                                                                            // smaller
+
+        // no resize if new is // smaller
+        if (this.getWidth() <= raster.getWidth() && this.getHeight() <= raster.getHeight())
             return;
+
         RasterBufferedImage newRaster = new RasterBufferedImage(this.getWidth(), this.getHeight());
 
         newRaster.draw(raster);

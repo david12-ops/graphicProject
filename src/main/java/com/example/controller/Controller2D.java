@@ -9,7 +9,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.SwingUtilities;
 
-import com.example.ColorMode;
+import com.example.enums.ColorMode;
 import com.example.fill.SeedFill;
 import com.example.model.Line;
 import com.example.model.Point;
@@ -38,6 +38,7 @@ public class Controller2D implements Controller {
     // TODO BUG in deleteing polygon
     // TODO vyresit problem s vykreslovanim polygonu (furt se poji s prvnim bodem) a
     // platnem
+    // TODO vykreslovani svisle, vodorovne a uhlopricne cary neni na sto pro
 
     public void initObjects(Raster raster) {
         lineRasterizer = new FilledLineRasterizer(raster, ColorMode.GRADIENT);
@@ -63,59 +64,60 @@ public class Controller2D implements Controller {
                 if (e.isShiftDown()) {
                     // TODO
                 } else if (SwingUtilities.isLeftMouseButton(e)) {
-                    panel.clear();
-                    polygon.addPoint(new Point(e.getX(), e.getY()));
-                    panel.getRaster().setPixel(e.getX(), e.getY(), 0xff0000);
-                    polygonRasterizer.rasterize(polygon);
-                    panel.repaint();
-
+                    // lineRasterizer.setShifMode(true);
+                    // polygon.addPoint(new Point(e.getX(), e.getY()));
+                    // polygonRasterizer.rasterize(polygon);
                 } else if (SwingUtilities.isMiddleMouseButton(e)) {
                     // TODO
                 } else if (SwingUtilities.isRightMouseButton(e)) {
-                    // panel.clear();
-                    SeedFill seedFill = new SeedFill(
-                            panel.getRaster(),
-                            panel.getRaster().getPixel(e.getX(), e.getY()),
-                            e.getX(), e.getY());
-                    seedFill.fill();
-                    panel.repaint();
-                }
+                    // SeedFill seedFill = new SeedFill(
+                    // panel.getRaster(),
+                    // panel.getRaster().getPixel(e.getX(), e.getY()),
+                    // e.getX(), e.getY());
+                    // seedFill.fill();
 
+                }
+                update();
             }
 
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.isControlDown()) {
                     if (SwingUtilities.isLeftMouseButton(e)) {
-                        // TODO
-                    } else if (SwingUtilities.isRightMouseButton(e)) {
+                        panel.clear();
+                        // lineRasterizer.setShifMode(false);
                         if (polygon.getSize() > 0)
                             polygon.clearAllPoints();
-
-                        panel.clear();
 
                         line = new Line(
                                 panel.getRaster().getWidth() / 2,
                                 panel.getRaster().getHeight() / 2,
                                 e.getX(), e.getY(),
                                 0xff0000);
+                    } else if (SwingUtilities.isRightMouseButton(e)) {
+                        // lineRasterizer.setShifMode(true);
+                        // if (polygon.getSize() > 0)
+                        // polygon.clearAllPoints();
 
-                        panel.repaint();
+                        // line = new Line(
+                        // panel.getRaster().getWidth() / 2,
+                        // panel.getRaster().getHeight() / 2,
+                        // e.getX(), e.getY(),
+                        // 0xff0000);
+
                     }
+
                 }
+                update();
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                panel.clear();
-                line = new Line(new Point(line.getX1(), line.getY1()), new Point(e.getX(), e.getY()), 0xff0000);
-                lineRasterizer.rasterize(line);
-
-                // přidej konec a zacatek usecky do polygonu - ? je to dobre
-                polygon.addPoint(new Point(line.getX1(), line.getY1()));
-                // polygon.addPoint(new Point(e.getX(), e.getY()));
+                if (line != null) {
+                    line = new Line(new Point(line.getX1(), line.getY1()), new Point(e.getX(), e.getY()), 0xff0000);
+                    lineRasterizer.rasterize(line);
+                }
             }
-
         });
 
         panel.addMouseMotionListener(new MouseAdapter() {
@@ -125,29 +127,35 @@ public class Controller2D implements Controller {
                     return;
 
                 if (e.isShiftDown()) {
-                    // TODO
-                } else if (SwingUtilities.isLeftMouseButton(e)) {
-                    panel.clear();
+                    lineRasterizer.setShifMode(true);
                     line = new Line(
                             panel.getRaster().getWidth() / 2,
                             panel.getRaster().getHeight() / 2,
                             e.getX(), e.getY(),
                             0xff0000);
                     lineRasterizer.rasterize(line);
-                    panel.repaint();
+                    panel.clear();
+                } else if (SwingUtilities.isLeftMouseButton(e)) {
+                    lineRasterizer.setShifMode(true);
+                    line = new Line(
+                            panel.getRaster().getWidth() / 2,
+                            panel.getRaster().getHeight() / 2,
+                            e.getX(), e.getY(),
+                            0xff0000);
+                    lineRasterizer.rasterize(line);
+
                 } else if (SwingUtilities.isRightMouseButton(e)) {
                     // TODO
                 } else if (SwingUtilities.isMiddleMouseButton(e)) {
                     // TODO
                 }
-                // update();
+                update();
             }
         });
 
         panel.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                // na klávesu C vymazat plátno
                 if (e.getKeyCode() == KeyEvent.VK_C) {
                     hardClear();
                 }
@@ -164,10 +172,12 @@ public class Controller2D implements Controller {
     }
 
     private void update() {
-        panel.clear();
+        panel.repaint();
     }
 
     private void hardClear() {
         panel.clear();
+        polygon.clearAllPoints();
+        lineRasterizer.setShifMode(false);
     }
 }
