@@ -70,9 +70,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
 
-                    // skip drawing when y is outside raster; line may re-enter later
-                    if (y < 0 || y >= raster.getHeight())
+                    // skip drawing when y is outside raster
+                    if (y < 0 || y >= raster.getHeight()) {
                         continue;
+                    }
 
                     raster.setPixel(x, y, color.getRGB());
                 }
@@ -85,9 +86,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                     int y = Math.round(k * x + q);
                     float w = (x - x1) / (float) (x2 - x1);
 
-                    // skip drawing when y is outside raster; line may re-enter later
-                    if (y < 0 || y >= raster.getHeight())
+                    // skip drawing when y is outside raster
+                    if (y < 0 || y >= raster.getHeight()) {
                         continue;
+                    }
 
                     raster.setPixel(x, y, computeColor(w, startColor, endColor));
                 }
@@ -148,9 +150,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                 for (int y = startY; y < endY; y++) {
                     int x = Math.round((y - q) / k);
 
-                    // skip drawing when x is outside raster; line may re-enter later
-                    if (x < 0 || x >= raster.getWidth())
+                    // skip drawing when x is outside raster
+                    if (x < 0 || x >= raster.getWidth()) {
                         continue;
+                    }
 
                     raster.setPixel(x, y, color.getRGB());
                 }
@@ -163,9 +166,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                     int x = Math.round((y - q) / k);
                     float w = (y - y1) / (float) (y2 - y1);
 
-                    // skip drawing when x is outside raster; line may re-enter later
-                    if (x < 0 || x >= raster.getWidth())
+                    // skip drawing when x is outside raster
+                    if (x < 0 || x >= raster.getWidth()) {
                         continue;
+                    }
 
                     raster.setPixel(x, y, computeColor(w, startColor, endColor));
                 }
