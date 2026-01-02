@@ -17,10 +17,8 @@ Výhoda: postup použitelný i pro složitější křivky
 Poznatek : nutné rešení vertikální úsečky (formule (y - q) / k -> k != 0 -> x2 != x1)
 */
 
-// TODO - ve druhe casti pridat vyhlazeni
-
-// TODO - vyřešit hranice kreslení
-// TODO - refactor code, a spijení polygonu pri shift
+// TODO - ve druhe casti pridat vyhlazeni (wu algorithm)
+// TODO - refactor code, a spojení polygonu pri shift
 
 public class FilledLineRasterizer extends LineRasterizer {
 

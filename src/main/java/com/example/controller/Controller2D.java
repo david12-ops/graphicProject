@@ -45,8 +45,8 @@ public class Controller2D implements Controller {
     }
 
     public void initObjects(Raster raster) {
-        // lineRasterizer = new FilledLineRasterizer(raster, ColorMode.GRADIENT);
         lineRasterizer = new FilledLineRasterizer(raster, ColorMode.GRADIENT);
+        // lineRasterizer = new LineRasterizerGraphics(raster, ColorMode.GRADIENT);
 
         lineRasterizer.setColor(0x00ff00);
         lineRasterizer.setGradientColors(
@@ -69,9 +69,9 @@ public class Controller2D implements Controller {
                 if (e.isShiftDown()) {
                     // TODO
                 } else if (SwingUtilities.isLeftMouseButton(e)) {
+                    dragging = true;
                     startPoint = new Point(e.getX(), e.getY());
                     currentPoint = startPoint;
-                    dragging = true;
                 } else if (SwingUtilities.isMiddleMouseButton(e)) {
                     SeedFill seedFill = new SeedFill(
                             panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
@@ -108,13 +108,15 @@ public class Controller2D implements Controller {
 
             @Override
             public void mouseReleased(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    draggedVertex = null;
+                    return;
+                }
+
                 if (!dragging || startPoint == null)
                     return;
 
                 Point end = new Point(e.getX(), e.getY());
-
-                if (SwingUtilities.isRightMouseButton(e))
-                    draggedVertex = null;
 
                 Line finalLine = new Line(startPoint, end);
 
@@ -133,19 +135,19 @@ public class Controller2D implements Controller {
         panel.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (!dragging || startPoint == null)
-                    return;
-
-                Point end = new Point(e.getX(), e.getY());
-
                 if (SwingUtilities.isRightMouseButton(e) && draggedVertex != null) {
-                    draggedVertex = new Point(e.getX(), e.getY());
+                    draggedVertex.set(e.getX(), e.getY());
 
                     panel.clear();
                     polygonRasterizer.rasterize(polygon);
                     update();
                     return;
                 }
+
+                if (!dragging || startPoint == null)
+                    return;
+
+                Point end = new Point(e.getX(), e.getY());
 
                 if (e.isShiftDown()) {
                     mode = RasterizerMode.SHIFT;
