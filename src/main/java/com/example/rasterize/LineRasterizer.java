@@ -2,6 +2,8 @@ package com.example.rasterize;
 
 import java.awt.Color;
 
+import com.example.enums.ColorMode;
+import com.example.enums.RasterizerMode;
 import com.example.model.Line;
 import com.example.raster.Raster;
 
@@ -12,10 +14,13 @@ public class LineRasterizer {
     protected Color color;
     protected Color startColor;
     protected Color endColor;
-    protected boolean onShiftMode = false;
 
-    public LineRasterizer(Raster raster) {
+    protected ColorMode colorMode;
+    protected RasterizerMode mode;
+
+    public LineRasterizer(Raster raster, ColorMode colorMode) {
         this.raster = raster;
+        this.colorMode = colorMode;
     }
 
     public void setColor(Color color) {
@@ -24,6 +29,10 @@ public class LineRasterizer {
 
     public void setColor(int color) {
         this.color = new Color(color);
+    }
+
+    public void setRasterizeMode(RasterizerMode mode) {
+        this.mode = mode;
     }
 
     public void setGradientColors(Color startColor, Color endColor) {
@@ -36,8 +45,8 @@ public class LineRasterizer {
         this.endColor = new Color(endColor);
     }
 
-    public void setShifMode(boolean onShifMode) {
-        this.onShiftMode = onShifMode;
+    public ColorMode getColorMode() {
+        return this.colorMode;
     }
 
     public void rasterize(Line line) {

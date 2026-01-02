@@ -3,22 +3,22 @@ package com.example.model;
 public class Line {
 
     private final int x1, x2, y1, y2;
-    private final int color;
+    // private final int color;
 
-    public Line(int x1, int y1, int x2, int y2, int color) {
+    public Line(int x1, int y1, int x2, int y2) {
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;
         this.y2 = y2;
-        this.color = color;
+        // this.color = color;
     }
 
-    public Line(Point p1, Point p2, int color) {
+    public Line(Point p1, Point p2) {
         this.x1 = p1.getX();
         this.y1 = p1.getY();
         this.x2 = p2.getX();
         this.y2 = p2.getY();
-        this.color = color;
+        // this.color = color;
     }
 
     public int getX1() {
@@ -37,7 +37,7 @@ public class Line {
         return y2;
     }
 
-    public int getColor() {
-        return color;
-    }
+    // public int getColor() {
+    // return color;
+    // }
 }

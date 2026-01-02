@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.SwingUtilities;
 
 import com.example.enums.ColorMode;
+import com.example.enums.RasterizerMode;
 import com.example.fill.SeedFill;
 import com.example.model.Line;
 import com.example.model.Point;
@@ -23,11 +24,19 @@ import com.example.view.Panel;
 public class Controller2D implements Controller {
 
     private final Panel panel;
-    private Line line;
+    private RasterizerMode mode;
+
     private LineRasterizer lineRasterizer;
+    private PolygonRasterizer polygonRasterizer;
 
     private Polygon polygon;
-    private PolygonRasterizer polygonRasterizer;
+
+    private Point startPoint;
+    private Point currentPoint;
+    private Point draggedVertex;
+    private boolean dragging;
+
+    private static final int PICK_RADIUS = 10;
 
     public Controller2D(Panel panel) {
         this.panel = panel;
@@ -35,12 +44,8 @@ public class Controller2D implements Controller {
         initListeners(panel);
     }
 
-    // TODO BUG in deleteing polygon
-    // TODO vyresit problem s vykreslovanim polygonu (furt se poji s prvnim bodem) a
-    // platnem
-    // TODO vykreslovani svisle, vodorovne a uhlopricne cary neni na sto pro
-
     public void initObjects(Raster raster) {
+        // lineRasterizer = new FilledLineRasterizer(raster, ColorMode.GRADIENT);
         lineRasterizer = new FilledLineRasterizer(raster, ColorMode.GRADIENT);
 
         lineRasterizer.setColor(0x00ff00);
@@ -64,96 +69,105 @@ public class Controller2D implements Controller {
                 if (e.isShiftDown()) {
                     // TODO
                 } else if (SwingUtilities.isLeftMouseButton(e)) {
-                    // lineRasterizer.setShifMode(true);
-                    // polygon.addPoint(new Point(e.getX(), e.getY()));
-                    // polygonRasterizer.rasterize(polygon);
+                    startPoint = new Point(e.getX(), e.getY());
+                    currentPoint = startPoint;
+                    dragging = true;
                 } else if (SwingUtilities.isMiddleMouseButton(e)) {
-                    // TODO
+                    SeedFill seedFill = new SeedFill(
+                            panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
+                            e.getX(), e.getY());
+                    seedFill.fill();
                 } else if (SwingUtilities.isRightMouseButton(e)) {
-                    // SeedFill seedFill = new SeedFill(
-                    // panel.getRaster(),
-                    // panel.getRaster().getPixel(e.getX(), e.getY()),
-                    // e.getX(), e.getY());
-                    // seedFill.fill();
+                    double minDist = Double.MAX_VALUE;
 
+                    for (Point p : polygon.getPoints()) {
+                        double dx = e.getX() - p.getX();
+                        double dy = e.getY() - p.getY();
+                        double dist = dx * dx + dy * dy;
+
+                        if (dist < minDist && dist < PICK_RADIUS * PICK_RADIUS) {
+                            minDist = dist;
+                            draggedVertex = p;
+                        }
+                    }
                 }
-                update();
+
             }
 
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.isControlDown()) {
                     if (SwingUtilities.isLeftMouseButton(e)) {
-                        panel.clear();
-                        // lineRasterizer.setShifMode(false);
-                        if (polygon.getSize() > 0)
-                            polygon.clearAllPoints();
-
-                        line = new Line(
-                                panel.getRaster().getWidth() / 2,
-                                panel.getRaster().getHeight() / 2,
-                                e.getX(), e.getY(),
-                                0xff0000);
+                        // TODO
                     } else if (SwingUtilities.isRightMouseButton(e)) {
-                        // lineRasterizer.setShifMode(true);
-                        // if (polygon.getSize() > 0)
-                        // polygon.clearAllPoints();
-
-                        // line = new Line(
-                        // panel.getRaster().getWidth() / 2,
-                        // panel.getRaster().getHeight() / 2,
-                        // e.getX(), e.getY(),
-                        // 0xff0000);
-
+                        // TODO
                     }
 
                 }
-                update();
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (line != null) {
-                    line = new Line(new Point(line.getX1(), line.getY1()), new Point(e.getX(), e.getY()), 0xff0000);
-                    lineRasterizer.rasterize(line);
-                }
+                if (!dragging || startPoint == null)
+                    return;
+
+                Point end = new Point(e.getX(), e.getY());
+
+                if (SwingUtilities.isRightMouseButton(e))
+                    draggedVertex = null;
+
+                Line finalLine = new Line(startPoint, end);
+
+                lineRasterizer.rasterize(finalLine);
+
+                polygon.addPoint(end);
+
+                dragging = false;
+                startPoint = null;
+                currentPoint = null;
+
+                update();
             }
         });
 
         panel.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (e.isControlDown())
+                if (!dragging || startPoint == null)
                     return;
 
-                if (e.isShiftDown()) {
-                    lineRasterizer.setShifMode(true);
-                    line = new Line(
-                            panel.getRaster().getWidth() / 2,
-                            panel.getRaster().getHeight() / 2,
-                            e.getX(), e.getY(),
-                            0xff0000);
-                    lineRasterizer.rasterize(line);
-                    panel.clear();
-                } else if (SwingUtilities.isLeftMouseButton(e)) {
-                    lineRasterizer.setShifMode(true);
-                    line = new Line(
-                            panel.getRaster().getWidth() / 2,
-                            panel.getRaster().getHeight() / 2,
-                            e.getX(), e.getY(),
-                            0xff0000);
-                    lineRasterizer.rasterize(line);
+                Point end = new Point(e.getX(), e.getY());
 
-                } else if (SwingUtilities.isRightMouseButton(e)) {
-                    // TODO
-                } else if (SwingUtilities.isMiddleMouseButton(e)) {
-                    // TODO
+                if (SwingUtilities.isRightMouseButton(e) && draggedVertex != null) {
+                    draggedVertex = new Point(e.getX(), e.getY());
+
+                    panel.clear();
+                    polygonRasterizer.rasterize(polygon);
+                    update();
+                    return;
                 }
+
+                if (e.isShiftDown()) {
+                    mode = RasterizerMode.SHIFT;
+                } else {
+                    mode = RasterizerMode.NORMAL;
+                }
+
+                lineRasterizer.setRasterizeMode(mode);
+
+                panel.clear();
+                polygonRasterizer.rasterize(polygon);
+
+                Line preview = new Line(startPoint, end);
+                lineRasterizer.rasterize(preview);
+
+                currentPoint = end;
                 update();
             }
         });
 
         panel.addKeyListener(new KeyAdapter() {
+
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_C) {
@@ -178,6 +192,5 @@ public class Controller2D implements Controller {
     private void hardClear() {
         panel.clear();
         polygon.clearAllPoints();
-        lineRasterizer.setShifMode(false);
     }
 }

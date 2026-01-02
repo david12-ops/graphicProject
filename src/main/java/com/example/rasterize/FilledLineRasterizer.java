@@ -3,8 +3,9 @@ package com.example.rasterize;
 import java.awt.Color;
 
 import com.example.enums.ColorMode;
-import com.example.enums.DirectionType;
+import com.example.enums.RasterizerMode;
 import com.example.model.Line;
+import com.example.model.Point;
 import com.example.raster.Raster;
 
 /* 
@@ -18,25 +19,24 @@ Poznatek : nutné rešení vertikální úsečky (formule (y - q) / k -> k != 0 
 
 // TODO - ve druhe casti pridat vyhlazeni
 
+// TODO - vyřešit hranice kreslení
+// TODO - refactor code, a spijení polygonu pri shift
+
 public class FilledLineRasterizer extends LineRasterizer {
 
-    private ColorMode colorMode;
-    private boolean onShiftMode = false;
-
     public FilledLineRasterizer(Raster raster, ColorMode colorMode) {
-        super(raster);
-        this.colorMode = colorMode;
+        super(raster, colorMode);
     }
 
     @Override
     public void rasterize(int x1, int y1, int x2, int y2) {
-        // if (!onShiftMode)
-        // trivialAlgorithm(x1, y1, x2, y2);
-        // else if (onShiftMode) {
-        // System.out.println("jsem tu");
-        trivialAlgorithmOnShiftMode(x1, x2, y1, y2);
-        // } else
-        // return;
+        if (mode == RasterizerMode.NORMAL)
+            trivialAlgorithm(x1, y1, x2, y2);
+        else if (mode == RasterizerMode.SHIFT) {
+            Point endPoint = snapToHVOrDiagonal(new Point(x1, y1), new Point(x2, y2));
+            trivialAlgorithm(x1, y1, endPoint.getX(), endPoint.getY());
+        } else
+            return;
     }
 
     @Override
@@ -66,7 +66,7 @@ public class FilledLineRasterizer extends LineRasterizer {
             int startX = Math.max(0, x1);
             int endX = Math.min(raster.getWidth() - 1, x2);
 
-            if (colorMode == ColorMode.SOLID) {
+            if (colorMode == ColorMode.SOLID && color != null) {
                 drawBigPoint(x1, y1, 5, 0xFFFFFF);
 
                 for (int x = startX; x < endX; x++) {
@@ -95,7 +95,9 @@ public class FilledLineRasterizer extends LineRasterizer {
                 }
 
                 drawBigPoint(x2, y2, 5, 0xFFFFFF);
-            }
+            } else
+                System.out.println("Color mode is invalid or missing colors to draw");
+
         } else {
             if (y2 < y1) {
                 int t;
@@ -114,7 +116,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
             if (Float.isInfinite(k)) {
                 int x = x1;
-                if (colorMode == ColorMode.SOLID) {
+                if (colorMode == ColorMode.SOLID && color != null) {
                     drawBigPoint(x1, y1, 5, 0xFFFFFF);
 
                     for (int y = startY; y < endY; y++) {
@@ -125,9 +127,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
                     drawBigPoint(x2, y2, 5, 0xFFFFFF);
                     return;
-                }
-
-                if (colorMode == ColorMode.GRADIENT) {
+                } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
                     drawBigPoint(x1, y1, 5, 0xFFFFFF);
 
                     for (int y = startY; y < endY; y++) {
@@ -140,10 +140,11 @@ public class FilledLineRasterizer extends LineRasterizer {
 
                     drawBigPoint(x2, y2, 5, 0xFFFFFF);
                     return;
-                }
+                } else
+                    System.out.println("Color mode is invalid or missing colors to draw");
             }
 
-            if (colorMode == ColorMode.SOLID) {
+            if (colorMode == ColorMode.SOLID && color != null) {
                 drawBigPoint(x1, y1, 5, 0xFFFFFF);
 
                 for (int y = startY; y < endY; y++) {
@@ -157,7 +158,7 @@ public class FilledLineRasterizer extends LineRasterizer {
                 }
 
                 drawBigPoint(x2, y2, 5, 0xFFFFFF);
-            } else if (colorMode == ColorMode.GRADIENT) {
+            } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
                 drawBigPoint(x1, y1, 5, 0xFFFFFF);
 
                 for (int y = startY; y < endY; y++) {
@@ -172,68 +173,30 @@ public class FilledLineRasterizer extends LineRasterizer {
                 }
 
                 drawBigPoint(x2, y2, 5, 0xFFFFFF);
-            }
+            } else
+                System.out.println("Color mode is invalid or missing colors to draw");
         }
     }
 
-    private void trivialAlgorithmOnShiftMode(int x1, int y1, int x2, int y2) {
-        DirectionType directionType = getDirectionByCoordinates(x1, y1, x2, y2);
-        int from = 0;
-        int to = 0;
+    private Point snapToHVOrDiagonal(Point a, Point b) {
+        int dx = b.getX() - a.getX();
+        int dy = b.getY() - a.getY();
 
-        System.out.println("jsem tu ");
-        if (directionType == DirectionType.HORIZONTAL) {
-            from = Math.min(x1, x2);
-            to = Math.max(x1, x2);
+        int adx = Math.abs(dx);
+        int ady = Math.abs(dy);
 
-            drawBigPoint(x1, y1, 5, 0xFFFFFF);
+        if (adx > 2 * ady) {
+            return new Point(b.getX(), a.getY());
+        }
 
-            for (int i = from; i <= to; i++) {
-                raster.setPixel(i, y1, color.getRGB());
-            }
+        if (ady > 2 * adx) {
+            return new Point(a.getX(), b.getY());
+        }
 
-            drawBigPoint(x2, y2, 5, 0xFFFFFF);
-        } else if (directionType == DirectionType.VERTICAL) {
-            from = Math.min(y1, y2);
-            to = Math.max(y1, y2);
-
-            drawBigPoint(x1, y1, 5, 0xFFFFFF);
-
-            for (int i = from; i <= to; i++) {
-                raster.setPixel(x1, i, color.getRGB());
-            }
-
-            drawBigPoint(x2, y2, 5, 0xFFFFFF);
-        } else if (directionType == DirectionType.DIAGONAL) {
-            int distance = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1));
-            int sx = Integer.signum(x2 - x1);
-            int sy = Integer.signum(y2 - y1);
-
-            drawBigPoint(x1, y1, 5, 0xFFFFFF);
-
-            for (int i = 0; i <= distance; i++) {
-                raster.setPixel(x1 + i * sx, y1 + i * sy, color.getRGB());
-            }
-
-            drawBigPoint(x2, y2, 5, 0xFFFFFF);
-        } else
-            return;
-    }
-
-    private DirectionType getDirectionByCoordinates(int x1, int y1, int x2, int y2) {
-        int distH = Math.abs(y2 - y1);
-        int distV = Math.abs(x2 - x1);
-        int distD = Math.abs(Math.abs(x2 - x1) - Math.abs(y2 - y1));
-        int maxDistance = Math.min(Math.min(distH, distV), distD);
-
-        if (maxDistance == distH)
-            return DirectionType.HORIZONTAL;
-        else if (maxDistance == distV)
-            return DirectionType.VERTICAL;
-        else if (maxDistance == distD)
-            return DirectionType.DIAGONAL;
-        else
-            return null;
+        int d = Math.min(adx, ady);
+        return new Point(
+                a.getX() + Integer.signum(dx) * d,
+                a.getY() + Integer.signum(dy) * d);
     }
 
     private int computeColor(float w, Color startColor, Color endColor) {

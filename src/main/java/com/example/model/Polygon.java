@@ -28,6 +28,10 @@ public class Polygon {
         return this.points.get(index);
     }
 
+    public List<Point> getPoints() {
+        return this.points;
+    }
+
     public int getSize() {
         return this.points.size();
     }

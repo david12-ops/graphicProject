@@ -1,7 +1,6 @@
 package com.example.rasterize;
 
 import com.example.model.Point;
-import com.example.model.Line;
 import com.example.model.Polygon;
 
 public class PolygonRasterizer {
@@ -25,7 +24,7 @@ public class PolygonRasterizer {
             Point pointA = polygon.getPoint(indexA);
             Point pointB = polygon.getPoint(indexB);
 
-            lineRasterizer.rasterize(new Line(pointA, pointB, 0xff0000));
+            lineRasterizer.rasterize(pointA.getX(), pointA.getY(), pointB.getX(), pointB.getY());
         }
     }
 }
