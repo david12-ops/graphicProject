@@ -32,7 +32,6 @@ public class Controller2D implements Controller {
     private Polygon polygon;
 
     private Point startPoint;
-    private Point currentPoint;
     private Point draggedVertex;
     private boolean dragging;
 
@@ -66,17 +65,31 @@ public class Controller2D implements Controller {
                 if (e.isControlDown())
                     return;
 
-                if (e.isShiftDown()) {
-                    // TODO
+                if (SwingUtilities.isRightMouseButton(e) && e.isShiftDown()) {
+                    double minDist = Double.MAX_VALUE;
+                    Point nearesPoint = null;
+
+                    for (Point p : polygon.getPoints()) {
+                        double dx = e.getX() - p.getX();
+                        double dy = e.getY() - p.getY();
+                        double dist = dx * dx + dy * dy;
+
+                        if (dist < minDist && dist < PICK_RADIUS * PICK_RADIUS) {
+                            minDist = dist;
+                            nearesPoint = p;
+                        }
+                    }
+
+                    if (nearesPoint != null && polygon.getSize() > 3) {
+                        polygon.removePoint(nearesPoint);
+
+                        panel.clear();
+                        polygonRasterizer.rasterize(polygon);
+                        update();
+                    }
                 } else if (SwingUtilities.isLeftMouseButton(e)) {
                     dragging = true;
                     startPoint = new Point(e.getX(), e.getY());
-                    currentPoint = startPoint;
-                } else if (SwingUtilities.isMiddleMouseButton(e)) {
-                    SeedFill seedFill = new SeedFill(
-                            panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
-                            e.getX(), e.getY());
-                    seedFill.fill();
                 } else if (SwingUtilities.isRightMouseButton(e)) {
                     double minDist = Double.MAX_VALUE;
 
@@ -90,19 +103,11 @@ public class Controller2D implements Controller {
                             draggedVertex = p;
                         }
                     }
-                }
-
-            }
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.isControlDown()) {
-                    if (SwingUtilities.isLeftMouseButton(e)) {
-                        // TODO
-                    } else if (SwingUtilities.isRightMouseButton(e)) {
-                        // TODO
-                    }
-
+                } else if (SwingUtilities.isMiddleMouseButton(e)) {
+                    SeedFill seedFill = new SeedFill(
+                            panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
+                            e.getX(), e.getY());
+                    seedFill.fill();
                 }
             }
 
@@ -126,7 +131,6 @@ public class Controller2D implements Controller {
 
                 dragging = false;
                 startPoint = null;
-                currentPoint = null;
 
                 update();
             }
@@ -148,6 +152,7 @@ public class Controller2D implements Controller {
                     return;
 
                 Point end = new Point(e.getX(), e.getY());
+                ;
 
                 if (e.isShiftDown()) {
                     mode = RasterizerMode.SHIFT;
@@ -163,7 +168,6 @@ public class Controller2D implements Controller {
                 Line preview = new Line(startPoint, end);
                 lineRasterizer.rasterize(preview);
 
-                currentPoint = end;
                 update();
             }
         });
