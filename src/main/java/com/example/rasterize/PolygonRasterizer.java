@@ -24,7 +24,8 @@ public class PolygonRasterizer {
             Point pointA = polygon.getPoint(indexA);
             Point pointB = polygon.getPoint(indexB);
 
-            lineRasterizer.rasterize(pointA.getX(), pointA.getY(), pointB.getX(), pointB.getY());
+            if (pointA != null && pointB != null)
+                lineRasterizer.rasterize(pointA.getX(), pointA.getY(), pointB.getX(), pointB.getY());
         }
     }
 }

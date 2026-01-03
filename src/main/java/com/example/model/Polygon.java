@@ -15,24 +15,44 @@ public class Polygon {
         this.points.add(point);
     }
 
-    public void clearAllPoints() {
-        this.points.clear();
-    }
-
     public void removePoint(Point point) {
-        if (this.points.contains(point))
+        if (!this.points.isEmpty() && this.points.contains(point))
             this.points.remove(point);
     }
 
     public Point getPoint(int index) {
-        return this.points.get(index);
+        if (index >= 0 && index < this.points.size())
+            return this.points.get(index);
+        else
+            return null;
     }
 
-    public List<Point> getPoints() {
-        return this.points;
+    public Point getNearesPoint(int x, int y, int pickRadius) {
+        double minDist = Double.MAX_VALUE;
+        Point draggedVertex = null;
+
+        if (this.points.isEmpty())
+            return null;
+
+        for (Point p : points) {
+            double dx = x - p.getX();
+            double dy = y - p.getY();
+            double dist = dx * dx + dy * dy;
+
+            if (dist < minDist && dist < pickRadius * pickRadius) {
+                minDist = dist;
+                draggedVertex = p;
+            }
+        }
+
+        return draggedVertex;
     }
 
     public int getSize() {
         return this.points.size();
+    }
+
+    public void clearAllPoints() {
+        this.points.clear();
     }
 }

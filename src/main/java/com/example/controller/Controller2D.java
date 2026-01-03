@@ -35,7 +35,7 @@ public class Controller2D implements Controller {
     private Point draggedVertex;
     private boolean dragging;
 
-    private static final int PICK_RADIUS = 10;
+    private static final int PICK_RADIUS = 50;
 
     public Controller2D(Panel panel) {
         this.panel = panel;
@@ -66,19 +66,7 @@ public class Controller2D implements Controller {
                     return;
 
                 if (SwingUtilities.isRightMouseButton(e) && e.isShiftDown()) {
-                    double minDist = Double.MAX_VALUE;
-                    Point nearesPoint = null;
-
-                    for (Point p : polygon.getPoints()) {
-                        double dx = e.getX() - p.getX();
-                        double dy = e.getY() - p.getY();
-                        double dist = dx * dx + dy * dy;
-
-                        if (dist < minDist && dist < PICK_RADIUS * PICK_RADIUS) {
-                            minDist = dist;
-                            nearesPoint = p;
-                        }
-                    }
+                    Point nearesPoint = polygon.getNearesPoint(e.getX(), e.getY(), PICK_RADIUS);
 
                     if (nearesPoint != null && polygon.getSize() > 3) {
                         polygon.removePoint(nearesPoint);
@@ -91,18 +79,7 @@ public class Controller2D implements Controller {
                     dragging = true;
                     startPoint = new Point(e.getX(), e.getY());
                 } else if (SwingUtilities.isRightMouseButton(e)) {
-                    double minDist = Double.MAX_VALUE;
-
-                    for (Point p : polygon.getPoints()) {
-                        double dx = e.getX() - p.getX();
-                        double dy = e.getY() - p.getY();
-                        double dist = dx * dx + dy * dy;
-
-                        if (dist < minDist && dist < PICK_RADIUS * PICK_RADIUS) {
-                            minDist = dist;
-                            draggedVertex = p;
-                        }
-                    }
+                    draggedVertex = polygon.getNearesPoint(e.getX(), e.getY(), PICK_RADIUS);
                 } else if (SwingUtilities.isMiddleMouseButton(e)) {
                     SeedFill seedFill = new SeedFill(
                             panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
