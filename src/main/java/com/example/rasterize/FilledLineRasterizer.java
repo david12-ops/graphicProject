@@ -17,9 +17,6 @@ Výhoda: postup použitelný i pro složitější křivky
 Poznatek : nutné rešení vertikální úsečky (formule (y - q) / k -> k != 0 -> x2 != x1)
 */
 
-// TODO - ve druhe casti pridat vyhlazeni (wu algorithm)
-// TODO - refactor code, a spojení polygonu pri shift
-
 public class FilledLineRasterizer extends LineRasterizer {
 
     public FilledLineRasterizer(Raster raster, ColorMode colorMode) {
@@ -43,6 +40,8 @@ public class FilledLineRasterizer extends LineRasterizer {
     }
 
     private void trivialAlgorithm(int x1, int y1, int x2, int y2) {
+        Point point1;
+        Point point2;
         // y = kx + q
         float k = (y2 - y1) / (float) (x2 - x1);
         float q = y1 - k * x1;
@@ -50,10 +49,12 @@ public class FilledLineRasterizer extends LineRasterizer {
         if (Math.abs((y2 - y1)) < Math.abs(x2 - x1)) {
 
             if (x2 < x1) {
+
                 int t;
                 t = x1;
                 x1 = x2;
                 x2 = t;
+
                 t = y1;
                 y1 = y2;
                 y2 = t;
@@ -64,8 +65,12 @@ public class FilledLineRasterizer extends LineRasterizer {
             int startX = Math.max(0, x1);
             int endX = Math.min(raster.getWidth() - 1, x2);
 
+            point1 = new Point(x1, y1);
+            point2 = new Point(x2, y2);
+
             if (colorMode == ColorMode.SOLID && color != null) {
-                drawBigPoint(x1, y1, 5, 0xFFFFFF);
+
+                point1.resizePoint(5, raster);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -78,9 +83,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, color.getRGB());
                 }
 
-                drawBigPoint(x2, y2, 5, 0xFFFFFF);
+                point2.resizePoint(5, raster);
             } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
-                drawBigPoint(x1, y1, 5, 0xFFFFFF);
+
+                point1.resizePoint(5, raster);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -94,11 +100,13 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, computeColor(w, startColor, endColor));
                 }
 
-                drawBigPoint(x2, y2, 5, 0xFFFFFF);
-            } else
+                point2.resizePoint(5, raster);
+            } else {
                 System.out.println("Color mode is invalid or missing colors to draw");
+            }
 
         } else {
+
             if (y2 < y1) {
                 int t;
                 t = x1;
@@ -114,10 +122,14 @@ public class FilledLineRasterizer extends LineRasterizer {
             int startY = Math.max(0, y1);
             int endY = Math.min(raster.getHeight() - 1, y2);
 
+            point1 = new Point(x1, y1);
+            point2 = new Point(x2, y2);
+
             if (Float.isInfinite(k)) {
                 int x = x1;
                 if (colorMode == ColorMode.SOLID && color != null) {
-                    drawBigPoint(x1, y1, 5, 0xFFFFFF);
+
+                    point1.resizePoint(5, raster);
 
                     for (int y = startY; y < endY; y++) {
                         if (x >= 0 && x < raster.getWidth())
@@ -125,10 +137,11 @@ public class FilledLineRasterizer extends LineRasterizer {
 
                     }
 
-                    drawBigPoint(x2, y2, 5, 0xFFFFFF);
+                    point2.resizePoint(5, raster);
                     return;
                 } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
-                    drawBigPoint(x1, y1, 5, 0xFFFFFF);
+
+                    point1.resizePoint(5, raster);
 
                     for (int y = startY; y < endY; y++) {
                         float w = (y - y1) / (float) (y2 - y1);
@@ -138,14 +151,16 @@ public class FilledLineRasterizer extends LineRasterizer {
 
                     }
 
-                    drawBigPoint(x2, y2, 5, 0xFFFFFF);
+                    point2.resizePoint(5, raster);
                     return;
-                } else
+                } else {
                     System.out.println("Color mode is invalid or missing colors to draw");
+                }
             }
 
             if (colorMode == ColorMode.SOLID && color != null) {
-                drawBigPoint(x1, y1, 5, 0xFFFFFF);
+
+                point1.resizePoint(5, raster);
 
                 for (int y = startY; y < endY; y++) {
                     int x = Math.round((y - q) / k);
@@ -158,9 +173,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, color.getRGB());
                 }
 
-                drawBigPoint(x2, y2, 5, 0xFFFFFF);
+                point2.resizePoint(5, raster);
             } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
-                drawBigPoint(x1, y1, 5, 0xFFFFFF);
+
+                point1.resizePoint(5, raster);
 
                 for (int y = startY; y < endY; y++) {
                     int x = Math.round((y - q) / k);
@@ -174,9 +190,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, computeColor(w, startColor, endColor));
                 }
 
-                drawBigPoint(x2, y2, 5, 0xFFFFFF);
-            } else
+                point2.resizePoint(5, raster);
+            } else {
                 System.out.println("Color mode is invalid or missing colors to draw");
+            }
         }
     }
 
@@ -214,19 +231,5 @@ public class FilledLineRasterizer extends LineRasterizer {
 
         // revert back
         return ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xFF);
-    }
-
-    private void drawBigPoint(int x, int y, int size, int color) {
-        // namalovani ctverce (point) na zacatku a konci usecky
-        // aby byl videt - pouzito centrovani bodu -> -velikost/2 do +velikost/2
-        for (int dx = -size / 2; dx <= size / 2; dx++) {
-            for (int dy = -size / 2; dy <= size / 2; dy++) {
-                // souradnice pixelku - bere se ten co uz je + offset (dx,dy) pro videlost bodu
-                int px = x + dx;
-                int py = y + dy;
-
-                raster.setPixel(px, py, color);
-            }
-        }
     }
 }

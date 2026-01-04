@@ -22,6 +22,9 @@ import com.example.rasterize.PolygonRasterizer;
 import com.example.view.Panel;
 
 public class Controller2D implements Controller {
+    // TODO - spojení polygonu pri shift
+    // TODO - neumí ze zacatku po klikaní zobrazit polygon (zobrazí až po tažení)
+    // TODO - nespojuje podle nejbližšího okolního bodu
 
     private final Panel panel;
     private RasterizerMode mode;
@@ -31,11 +34,17 @@ public class Controller2D implements Controller {
 
     private Polygon polygon;
 
-    private Point startPoint;
+    private Point pressedPoint;
+    private Point pendingPoint;
+    private Point previewPoint;
+
     private Point draggedVertex;
+
     private boolean dragging;
 
     private static final int PICK_RADIUS = 50;
+    private static final int DRAG_THRESHOLD = 3;
+    private static final int DRAG_THRESHOLD_SQUARE = DRAG_THRESHOLD * DRAG_THRESHOLD;
 
     public Controller2D(Panel panel) {
         this.panel = panel;
@@ -65,27 +74,34 @@ public class Controller2D implements Controller {
                 if (e.isControlDown())
                     return;
 
-                if (SwingUtilities.isRightMouseButton(e) && e.isShiftDown()) {
-                    Point nearesPoint = polygon.getNearesPoint(e.getX(), e.getY(), PICK_RADIUS);
-
-                    if (nearesPoint != null && polygon.getSize() > 3) {
-                        polygon.removePoint(nearesPoint);
-
-                        panel.clear();
-                        polygonRasterizer.rasterize(polygon);
-                        update();
-                    }
-                } else if (SwingUtilities.isLeftMouseButton(e)) {
-                    dragging = true;
-                    startPoint = new Point(e.getX(), e.getY());
-                } else if (SwingUtilities.isRightMouseButton(e)) {
-                    draggedVertex = polygon.getNearesPoint(e.getX(), e.getY(), PICK_RADIUS);
-                } else if (SwingUtilities.isMiddleMouseButton(e)) {
+                if (SwingUtilities.isMiddleMouseButton(e)) {
                     SeedFill seedFill = new SeedFill(
                             panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
                             e.getX(), e.getY());
                     seedFill.fill();
+                    return;
                 }
+
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    dragging = false;
+                    pressedPoint = new Point(e.getX(), e.getY());
+                }
+
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    if (e.isShiftDown()) {
+                        Point nearesPoint = polygon.getNearesPoint(e.getX(), e.getY(), PICK_RADIUS);
+
+                        if (nearesPoint != null && polygon.getSize() > 3) {
+                            polygon.removePoint(nearesPoint);
+                            redraw();
+                        }
+                        return;
+                    }
+
+                    draggedVertex = polygon.getNearesPoint(e.getX(), e.getY(), PICK_RADIUS);
+                    return;
+                }
+
             }
 
             @Override
@@ -95,21 +111,26 @@ public class Controller2D implements Controller {
                     return;
                 }
 
-                if (!dragging || startPoint == null)
+                if (!SwingUtilities.isLeftMouseButton(e)) {
                     return;
+                }
 
-                Point end = new Point(e.getX(), e.getY());
+                if (dragging) {
+                    Point end = new Point(e.getX(), e.getY());
 
-                Line finalLine = new Line(startPoint, end);
+                    if (pendingPoint == null) {
+                        polygon.addPoint(pressedPoint);
+                    }
 
-                lineRasterizer.rasterize(finalLine);
+                    polygon.addPoint(end);
+                    pendingPoint = end;
+                } else {
+                    polygon.addPoint(pressedPoint);
+                    pendingPoint = pressedPoint;
+                }
 
-                polygon.addPoint(end);
-
-                dragging = false;
-                startPoint = null;
-
-                update();
+                clearPreview();
+                redraw();
             }
         });
 
@@ -125,27 +146,30 @@ public class Controller2D implements Controller {
                     return;
                 }
 
-                if (!dragging || startPoint == null)
+                if (!SwingUtilities.isLeftMouseButton(e)) {
                     return;
-
-                Point end = new Point(e.getX(), e.getY());
-                ;
-
-                if (e.isShiftDown()) {
-                    mode = RasterizerMode.SHIFT;
-                } else {
-                    mode = RasterizerMode.NORMAL;
                 }
 
-                lineRasterizer.setRasterizeMode(mode);
+                dragging = isPressed(pressedPoint, new Point(e.getX(), e.getY()));
 
-                panel.clear();
-                polygonRasterizer.rasterize(polygon);
+                if (dragging) {
+                    Point end = new Point(e.getX(), e.getY());
+                    previewPoint = end;
 
-                Line preview = new Line(startPoint, end);
-                lineRasterizer.rasterize(preview);
+                    if (e.isShiftDown()) {
+                        mode = RasterizerMode.SHIFT;
+                    } else {
+                        mode = RasterizerMode.NORMAL;
+                    }
 
-                update();
+                    lineRasterizer.setRasterizeMode(mode);
+
+                    panel.clear();
+                    polygonRasterizer.rasterize(polygon);
+                    Line preview = new Line(pendingPoint != null ? pendingPoint : pressedPoint, previewPoint);
+                    lineRasterizer.rasterize(preview);
+                    update();
+                }
             }
         });
 
@@ -175,5 +199,27 @@ public class Controller2D implements Controller {
     private void hardClear() {
         panel.clear();
         polygon.clearAllPoints();
+    }
+
+    private boolean isPressed(Point pressedPoint, Point currenPoint) {
+        int dx = currenPoint.getX() - pressedPoint.getX();
+        int dy = currenPoint.getY() - pressedPoint.getY();
+
+        if (dx * dx + dy * dy > DRAG_THRESHOLD_SQUARE) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void redraw() {
+        panel.clear();
+        polygonRasterizer.rasterize(polygon);
+        update();
+    }
+
+    private void clearPreview() {
+        previewPoint = null;
+        dragging = false;
     }
 }
