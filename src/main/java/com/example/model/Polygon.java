@@ -27,7 +27,7 @@ public class Polygon {
             return null;
     }
 
-    public Point getNearesPoint(int x, int y, int pickRadius) {
+    public Point getNearesPoint(int x, int y) {
         double minDist = Double.MAX_VALUE;
         Point draggedVertex = null;
 
@@ -39,7 +39,7 @@ public class Polygon {
             double dy = y - p.getY();
             double dist = dx * dx + dy * dy;
 
-            if (dist < minDist && dist < pickRadius * pickRadius) {
+            if (dist < minDist) {
                 minDist = dist;
                 draggedVertex = p;
             }

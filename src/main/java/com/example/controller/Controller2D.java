@@ -27,7 +27,6 @@ public class Controller2D implements Controller {
     // TODO - nespojuje podle nejbližšího okolního bodu
 
     private final Panel panel;
-    private RasterizerMode mode;
 
     private LineRasterizer lineRasterizer;
     private PolygonRasterizer polygonRasterizer;
@@ -35,16 +34,9 @@ public class Controller2D implements Controller {
     private Polygon polygon;
 
     private Point pressedPoint;
-    private Point pendingPoint;
     private Point previewPoint;
 
     private Point draggedVertex;
-
-    private boolean dragging;
-
-    private static final int PICK_RADIUS = 50;
-    private static final int DRAG_THRESHOLD = 3;
-    private static final int DRAG_THRESHOLD_SQUARE = DRAG_THRESHOLD * DRAG_THRESHOLD;
 
     public Controller2D(Panel panel) {
         this.panel = panel;
@@ -83,13 +75,13 @@ public class Controller2D implements Controller {
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    dragging = false;
                     pressedPoint = new Point(e.getX(), e.getY());
+                    previewPoint = null;
                 }
 
                 if (SwingUtilities.isRightMouseButton(e)) {
                     if (e.isShiftDown()) {
-                        Point nearesPoint = polygon.getNearesPoint(e.getX(), e.getY(), PICK_RADIUS);
+                        Point nearesPoint = polygon.getNearesPoint(e.getX(), e.getY());
 
                         if (nearesPoint != null && polygon.getSize() > 3) {
                             polygon.removePoint(nearesPoint);
@@ -98,7 +90,7 @@ public class Controller2D implements Controller {
                         return;
                     }
 
-                    draggedVertex = polygon.getNearesPoint(e.getX(), e.getY(), PICK_RADIUS);
+                    draggedVertex = polygon.getNearesPoint(e.getX(), e.getY());
                     return;
                 }
 
@@ -115,18 +107,12 @@ public class Controller2D implements Controller {
                     return;
                 }
 
-                if (dragging) {
-                    Point end = new Point(e.getX(), e.getY());
-
-                    if (pendingPoint == null) {
-                        polygon.addPoint(pressedPoint);
-                    }
-
-                    polygon.addPoint(end);
-                    pendingPoint = end;
-                } else {
+                if (previewPoint != null) {
                     polygon.addPoint(pressedPoint);
-                    pendingPoint = pressedPoint;
+                    polygon.addPoint(previewPoint);
+                } else {
+
+                    polygon.addPoint(pressedPoint);
                 }
 
                 clearPreview();
@@ -146,30 +132,19 @@ public class Controller2D implements Controller {
                     return;
                 }
 
-                if (!SwingUtilities.isLeftMouseButton(e)) {
+                if (!SwingUtilities.isLeftMouseButton(e) || pressedPoint == null) {
                     return;
                 }
 
-                dragging = isPressed(pressedPoint, new Point(e.getX(), e.getY()));
+                // Prewiev
+                Point end = new Point(e.getX(), e.getY());
+                previewPoint = end;
+                lineRasterizer.setRasterizeMode(e.isShiftDown() ? RasterizerMode.SHIFT : RasterizerMode.NORMAL);
 
-                if (dragging) {
-                    Point end = new Point(e.getX(), e.getY());
-                    previewPoint = end;
-
-                    if (e.isShiftDown()) {
-                        mode = RasterizerMode.SHIFT;
-                    } else {
-                        mode = RasterizerMode.NORMAL;
-                    }
-
-                    lineRasterizer.setRasterizeMode(mode);
-
-                    panel.clear();
-                    polygonRasterizer.rasterize(polygon);
-                    Line preview = new Line(pendingPoint != null ? pendingPoint : pressedPoint, previewPoint);
-                    lineRasterizer.rasterize(preview);
-                    update();
-                }
+                panel.clear();
+                polygonRasterizer.rasterize(polygon);
+                lineRasterizer.rasterize(new Line(pressedPoint, previewPoint));
+                update();
             }
         });
 
@@ -197,29 +172,30 @@ public class Controller2D implements Controller {
     }
 
     private void hardClear() {
-        panel.clear();
         polygon.clearAllPoints();
-    }
-
-    private boolean isPressed(Point pressedPoint, Point currenPoint) {
-        int dx = currenPoint.getX() - pressedPoint.getX();
-        int dy = currenPoint.getY() - pressedPoint.getY();
-
-        if (dx * dx + dy * dy > DRAG_THRESHOLD_SQUARE) {
-            return true;
-        } else {
-            return false;
-        }
+        clearPreview();
+        panel.clear();
     }
 
     private void redraw() {
         panel.clear();
+
+        int polygonSize = polygon.getSize();
+
+        // draw polyline
+        if (polygonSize >= 2) {
+            for (int i = 0; i < polygonSize - 1; i++) {
+                lineRasterizer.rasterize(new Line(polygon.getPoint(i), polygon.getPoint(i + 1)));
+            }
+        }
+
         polygonRasterizer.rasterize(polygon);
+
         update();
     }
 
     private void clearPreview() {
         previewPoint = null;
-        dragging = false;
+        pressedPoint = null;
     }
 }

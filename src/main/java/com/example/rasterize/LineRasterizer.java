@@ -49,6 +49,10 @@ public class LineRasterizer {
         return this.colorMode;
     }
 
+    public RasterizerMode getRasterizerMode() {
+        return this.mode;
+    }
+
     public void rasterize(Line line) {
         rasterize(line.getX1(), line.getY1(), line.getX2(), line.getY2());
     }
