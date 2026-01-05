@@ -172,9 +172,13 @@ public class Controller2D implements Controller {
     }
 
     private void hardClear() {
+        panel.clear();
         polygon.clearAllPoints();
         clearPreview();
-        panel.clear();
+
+        draggedVertex = null;
+
+        update();
     }
 
     private void redraw() {
