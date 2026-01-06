@@ -52,6 +52,10 @@ public class Polygon {
         return this.points.size();
     }
 
+    public List<Point> getPoints() {
+        return this.points;
+    }
+
     public void clearAllPoints() {
         this.points.clear();
     }

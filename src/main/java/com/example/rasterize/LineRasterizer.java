@@ -1,10 +1,13 @@
 package com.example.rasterize;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.example.enums.ColorMode;
 import com.example.enums.RasterizerMode;
 import com.example.model.Line;
+import com.example.model.Point;
 import com.example.raster.Raster;
 
 public class LineRasterizer {
@@ -16,7 +19,7 @@ public class LineRasterizer {
     protected Color endColor;
 
     protected ColorMode colorMode;
-    protected RasterizerMode mode;
+    protected RasterizerMode rasterizerMode;
 
     public LineRasterizer(Raster raster, ColorMode colorMode) {
         this.raster = raster;
@@ -31,8 +34,8 @@ public class LineRasterizer {
         this.color = new Color(color);
     }
 
-    public void setRasterizeMode(RasterizerMode mode) {
-        this.mode = mode;
+    public void setRasterizeMode(RasterizerMode rasterizerMode) {
+        this.rasterizerMode = rasterizerMode;
     }
 
     public void setGradientColors(Color startColor, Color endColor) {
@@ -50,14 +53,29 @@ public class LineRasterizer {
     }
 
     public RasterizerMode getRasterizerMode() {
-        return this.mode;
+        return this.rasterizerMode;
+    }
+
+    public List<Color> getColors() {
+        List<Color> colorList = new ArrayList<>();
+
+        if (colorMode == ColorMode.GRADIENT) {
+            colorList.add(startColor);
+            colorList.add(endColor);
+        }
+
+        if (colorMode == ColorMode.SOLID)
+            colorList.add(color);
+
+        return colorList;
+
     }
 
     public void rasterize(Line line) {
-        rasterize(line.getX1(), line.getY1(), line.getX2(), line.getY2());
+        rasterize(line.getPointA(), line.getPointB());
     }
 
-    public void rasterize(int x1, int y1, int x2, int y2) {
+    public void rasterize(Point a, Point b) {
 
     }
 }

@@ -11,13 +11,14 @@ import javax.swing.SwingUtilities;
 
 import com.example.enums.ColorMode;
 import com.example.enums.RasterizerMode;
-import com.example.fill.SeedFill;
+import com.example.fill.ScanLine;
 import com.example.model.Line;
 import com.example.model.Point;
 import com.example.model.Polygon;
 import com.example.raster.Raster;
 import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
+
 import com.example.rasterize.PolygonRasterizer;
 import com.example.view.Panel;
 
@@ -25,6 +26,10 @@ public class Controller2D implements Controller {
     // TODO - spojení polygonu pri shift
     // TODO - neumí ze zacatku po klikaní zobrazit polygon (zobrazí až po tažení)
     // TODO - nespojuje podle nejbližšího okolního bodu
+    // TODO - zlepsit orezavani
+    // TODO - kreslení obdelníku neumí
+    // TODO - malovani pomoci vzoru neumi
+    // TODO - scanLine algoritmus nefunguje uplně dobre
 
     private final Panel panel;
 
@@ -45,7 +50,7 @@ public class Controller2D implements Controller {
     }
 
     public void initObjects(Raster raster) {
-        lineRasterizer = new FilledLineRasterizer(raster, ColorMode.GRADIENT);
+        lineRasterizer = new FilledLineRasterizer(raster, ColorMode.SOLID);
         // lineRasterizer = new LineRasterizerGraphics(raster, ColorMode.GRADIENT);
 
         lineRasterizer.setColor(0x00ff00);
@@ -67,11 +72,33 @@ public class Controller2D implements Controller {
                     return;
 
                 if (SwingUtilities.isMiddleMouseButton(e)) {
-                    SeedFill seedFill = new SeedFill(
-                            panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
-                            e.getX(), e.getY());
-                    seedFill.fill();
+                    // List<Color> colors = lineRasterizer.getColors();
+
+                    // SeedFill seedFill = new SeedFill(
+                    // panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
+                    // 0xFFA52A2A,
+                    // e.getX(), e.getY());
+                    // seedFill.fill();
+                    // update();
+                    // return;
+
+                    ScanLine scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
+                    scanLine.fill(polygon);
+                    update();
                     return;
+
+                    // if (colors.isEmpty()) {
+                    // System.out.println("Color mode is invalid or missing colors to draw");
+                    // return;
+                    // } else if (colors.size() == 1) {
+                    // SeedFillBorder seedFillBorder = new SeedFillBorder(panel.getRaster(),
+                    // colors.get(0).getRGB(),
+                    // 0xFFA52A2A,
+                    // e.getX(), e.getY());
+                    // seedFillBorder.fill();
+                    // update();
+                    // return;
+                    // }
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {

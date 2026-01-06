@@ -2,42 +2,51 @@ package com.example.model;
 
 public class Line {
 
-    private final int x1, x2, y1, y2;
-    // private final int color;
+    private Point a, b;
+    private float k, q;
 
     public Line(int x1, int y1, int x2, int y2) {
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
-        // this.color = color;
+        this.a = new Point(x1, x2);
+        this.b = new Point(x2, y2);
     }
 
     public Line(Point p1, Point p2) {
-        this.x1 = p1.getX();
-        this.y1 = p1.getY();
-        this.x2 = p2.getX();
-        this.y2 = p2.getY();
-        // this.color = color;
+        this.a = p1;
+        this.b = p2;
     }
 
-    public int getX1() {
-        return x1;
+    public void normalize() {
+        if (a.getY() > b.getY()) {
+            Point tmp = a;
+            a = b;
+            b = tmp;
+        }
     }
 
-    public int getX2() {
-        return x2;
+    public void compute() {
+        if (a.getY() != b.getY()) {
+            this.k = (b.getX() - a.getX()) / (b.getY() - a.getY());
+            this.q = a.getX() - k * a.getY();
+        }
     }
 
-    public int getY1() {
-        return y1;
+    public void shorten() {
+        b = new Point(b.getX(), b.getY() - 1);
     }
 
-    public int getY2() {
-        return y2;
+    public boolean isIntersection(int y) {
+        return y >= a.getY() && y < b.getY();
     }
 
-    // public int getColor() {
-    // return color;
-    // }
+    public int intersection(int y) {
+        return (int) Math.floor(k * y + q);
+    }
+
+    public Point getPointA() {
+        return this.a;
+    }
+
+    public Point getPointB() {
+        return this.b;
+    }
 }

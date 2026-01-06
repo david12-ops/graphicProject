@@ -24,19 +24,19 @@ public class FilledLineRasterizer extends LineRasterizer {
     }
 
     @Override
-    public void rasterize(int x1, int y1, int x2, int y2) {
-        if (mode == RasterizerMode.NORMAL)
-            trivialAlgorithm(x1, y1, x2, y2);
-        else if (mode == RasterizerMode.SHIFT) {
-            Point endPoint = snapToHVOrDiagonal(new Point(x1, y1), new Point(x2, y2));
-            trivialAlgorithm(x1, y1, endPoint.getX(), endPoint.getY());
+    public void rasterize(Point a, Point b) {
+        if (rasterizerMode == RasterizerMode.NORMAL)
+            trivialAlgorithm(a.getX(), a.getY(), b.getX(), b.getY());
+        else if (rasterizerMode == RasterizerMode.SHIFT) {
+            Point endPoint = snapToHVOrDiagonal(a, b);
+            trivialAlgorithm(a.getX(), a.getY(), endPoint.getX(), endPoint.getY());
         } else
             return;
     }
 
     @Override
     public void rasterize(Line line) {
-        rasterize(line.getX1(), line.getY1(), line.getX2(), line.getY2());
+        rasterize(line.getPointA(), line.getPointB());
     }
 
     private void trivialAlgorithm(int x1, int y1, int x2, int y2) {
@@ -70,7 +70,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
             if (colorMode == ColorMode.SOLID && color != null) {
 
-                point1.resizePoint(5, raster);
+                setColorAndSizeToPoint(6, color.getRGB(), point1);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -83,10 +83,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, color.getRGB());
                 }
 
-                point2.resizePoint(5, raster);
+                setColorAndSizeToPoint(6, color.getRGB(), point2);
             } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
 
-                point1.resizePoint(5, raster);
+                setColorAndSizeToPoint(6, startColor.getRGB(), point1);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -100,7 +100,7 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, computeColor(w, startColor, endColor));
                 }
 
-                point2.resizePoint(5, raster);
+                setColorAndSizeToPoint(6, endColor.getRGB(), point2);
             } else {
                 System.out.println("Color mode is invalid or missing colors to draw");
             }
@@ -129,7 +129,7 @@ public class FilledLineRasterizer extends LineRasterizer {
                 int x = x1;
                 if (colorMode == ColorMode.SOLID && color != null) {
 
-                    point1.resizePoint(5, raster);
+                    setColorAndSizeToPoint(6, color.getRGB(), point1);
 
                     for (int y = startY; y < endY; y++) {
                         if (x >= 0 && x < raster.getWidth())
@@ -137,11 +137,11 @@ public class FilledLineRasterizer extends LineRasterizer {
 
                     }
 
-                    point2.resizePoint(5, raster);
+                    setColorAndSizeToPoint(6, color.getRGB(), point2);
                     return;
                 } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
 
-                    point1.resizePoint(5, raster);
+                    setColorAndSizeToPoint(6, startColor.getRGB(), point1);
 
                     for (int y = startY; y < endY; y++) {
                         float w = (y - y1) / (float) (y2 - y1);
@@ -151,7 +151,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
                     }
 
-                    point2.resizePoint(5, raster);
+                    setColorAndSizeToPoint(6, endColor.getRGB(), point2);
                     return;
                 } else {
                     System.out.println("Color mode is invalid or missing colors to draw");
@@ -160,7 +160,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
             if (colorMode == ColorMode.SOLID && color != null) {
 
-                point1.resizePoint(5, raster);
+                setColorAndSizeToPoint(6, color.getRGB(), point1);
 
                 for (int y = startY; y < endY; y++) {
                     int x = Math.round((y - q) / k);
@@ -173,10 +173,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, color.getRGB());
                 }
 
-                point2.resizePoint(5, raster);
+                setColorAndSizeToPoint(6, color.getRGB(), point2);
             } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
 
-                point1.resizePoint(5, raster);
+                setColorAndSizeToPoint(6, startColor.getRGB(), point1);
 
                 for (int y = startY; y < endY; y++) {
                     int x = Math.round((y - q) / k);
@@ -190,7 +190,7 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, computeColor(w, startColor, endColor));
                 }
 
-                point2.resizePoint(5, raster);
+                setColorAndSizeToPoint(6, endColor.getRGB(), point2);
             } else {
                 System.out.println("Color mode is invalid or missing colors to draw");
             }
@@ -231,5 +231,11 @@ public class FilledLineRasterizer extends LineRasterizer {
 
         // revert back
         return ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xFF);
+    }
+
+    private void setColorAndSizeToPoint(int newSize, int newColor, Point point) {
+        point.setColor(newColor);
+        point.setSize(newSize);
+        point.resizePoint(raster);
     }
 }
