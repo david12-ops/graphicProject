@@ -16,7 +16,7 @@ public class LineRasterizer {
     protected Color endColor;
 
     protected ColorMode colorMode;
-    protected RasterizerMode mode;
+    protected RasterizerMode rasterizerMode;
 
     public LineRasterizer(Raster raster, ColorMode colorMode) {
         this.raster = raster;
@@ -31,8 +31,8 @@ public class LineRasterizer {
         this.color = new Color(color);
     }
 
-    public void setRasterizeMode(RasterizerMode mode) {
-        this.mode = mode;
+    public void setRasterizeMode(RasterizerMode rasterizerMode) {
+        this.rasterizerMode = rasterizerMode;
     }
 
     public void setGradientColors(Color startColor, Color endColor) {
@@ -50,7 +50,7 @@ public class LineRasterizer {
     }
 
     public RasterizerMode getRasterizerMode() {
-        return this.mode;
+        return this.rasterizerMode;
     }
 
     public void rasterize(Line line) {

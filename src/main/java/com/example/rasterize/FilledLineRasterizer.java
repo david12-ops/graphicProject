@@ -25,9 +25,9 @@ public class FilledLineRasterizer extends LineRasterizer {
 
     @Override
     public void rasterize(int x1, int y1, int x2, int y2) {
-        if (mode == RasterizerMode.NORMAL)
+        if (rasterizerMode == RasterizerMode.NORMAL)
             trivialAlgorithm(x1, y1, x2, y2);
-        else if (mode == RasterizerMode.SHIFT) {
+        else if (rasterizerMode == RasterizerMode.SHIFT) {
             Point endPoint = snapToHVOrDiagonal(new Point(x1, y1), new Point(x2, y2));
             trivialAlgorithm(x1, y1, endPoint.getX(), endPoint.getY());
         } else
@@ -40,6 +40,11 @@ public class FilledLineRasterizer extends LineRasterizer {
     }
 
     private void trivialAlgorithm(int x1, int y1, int x2, int y2) {
+        if (!(isGradientUsed() || isSolidUsed())) {
+            System.out.println("Color mode is invalid or missing colors to draw");
+            return;
+        }
+
         Point point1;
         Point point2;
         // y = kx + q
@@ -68,9 +73,9 @@ public class FilledLineRasterizer extends LineRasterizer {
             point1 = new Point(x1, y1);
             point2 = new Point(x2, y2);
 
-            if (colorMode == ColorMode.SOLID && color != null) {
+            if (isSolidUsed()) {
 
-                point1.resizePoint(5, raster);
+                point1.resizePoint(6, raster);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -83,10 +88,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, color.getRGB());
                 }
 
-                point2.resizePoint(5, raster);
-            } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
+                point2.resizePoint(6, raster);
+            } else {
 
-                point1.resizePoint(5, raster);
+                point1.resizePoint(6, raster);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -100,9 +105,7 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, computeColor(w, startColor, endColor));
                 }
 
-                point2.resizePoint(5, raster);
-            } else {
-                System.out.println("Color mode is invalid or missing colors to draw");
+                point2.resizePoint(6, raster);
             }
 
         } else {
@@ -121,49 +124,25 @@ public class FilledLineRasterizer extends LineRasterizer {
             // only valid bounds
             int startY = Math.max(0, y1);
             int endY = Math.min(raster.getHeight() - 1, y2);
+            boolean isInfiniteK = false;
+            int x = 0;
 
             point1 = new Point(x1, y1);
             point2 = new Point(x2, y2);
 
             if (Float.isInfinite(k)) {
-                int x = x1;
-                if (colorMode == ColorMode.SOLID && color != null) {
-
-                    point1.resizePoint(5, raster);
-
-                    for (int y = startY; y < endY; y++) {
-                        if (x >= 0 && x < raster.getWidth())
-                            raster.setPixel(x, y, color.getRGB());
-
-                    }
-
-                    point2.resizePoint(5, raster);
-                    return;
-                } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
-
-                    point1.resizePoint(5, raster);
-
-                    for (int y = startY; y < endY; y++) {
-                        float w = (y - y1) / (float) (y2 - y1);
-
-                        if (x >= 0 && x < raster.getWidth())
-                            raster.setPixel(x, y, computeColor(w, startColor, endColor));
-
-                    }
-
-                    point2.resizePoint(5, raster);
-                    return;
-                } else {
-                    System.out.println("Color mode is invalid or missing colors to draw");
-                }
+                x = x1;
+                isInfiniteK = true;
             }
 
-            if (colorMode == ColorMode.SOLID && color != null) {
+            if (isSolidUsed()) {
 
-                point1.resizePoint(5, raster);
+                point1.resizePoint(6, raster);
 
                 for (int y = startY; y < endY; y++) {
-                    int x = Math.round((y - q) / k);
+                    if (!isInfiniteK) {
+                        x = Math.round((y - q) / k);
+                    }
 
                     // skip drawing when x is outside raster
                     if (x < 0 || x >= raster.getWidth()) {
@@ -173,13 +152,16 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, color.getRGB());
                 }
 
-                point2.resizePoint(5, raster);
-            } else if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
+                point2.resizePoint(6, raster);
+            } else {
 
-                point1.resizePoint(5, raster);
+                point1.resizePoint(6, raster);
 
                 for (int y = startY; y < endY; y++) {
-                    int x = Math.round((y - q) / k);
+                    if (!isInfiniteK) {
+                        x = Math.round((y - q) / k);
+                    }
+
                     float w = (y - y1) / (float) (y2 - y1);
 
                     // skip drawing when x is outside raster
@@ -190,9 +172,7 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y, computeColor(w, startColor, endColor));
                 }
 
-                point2.resizePoint(5, raster);
-            } else {
-                System.out.println("Color mode is invalid or missing colors to draw");
+                point2.resizePoint(6, raster);
             }
         }
     }
@@ -231,5 +211,13 @@ public class FilledLineRasterizer extends LineRasterizer {
 
         // revert back
         return ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xFF);
+    }
+
+    private boolean isGradientUsed() {
+        return colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null);
+    }
+
+    private boolean isSolidUsed() {
+        return colorMode == ColorMode.SOLID && color != null;
     }
 }
