@@ -13,8 +13,7 @@ import javax.swing.SwingUtilities;
 
 import com.example.enums.ColorMode;
 import com.example.enums.RasterizerMode;
-import com.example.fill.SeedFill;
-import com.example.fill.SeedFiller;
+import com.example.fill.ScanLine;
 import com.example.model.Line;
 import com.example.model.Point;
 import com.example.model.Polygon;
@@ -27,16 +26,16 @@ import com.example.rasterize.PolygonRasterizer;
 import com.example.view.Panel;
 
 public class Controller2D implements Controller {
-
     /*
      * TODO - spojení polygonu pri shift
      * TODO - neumí ze zacatku po klikaní zobrazit polygon (zobrazí až po tažení)
-     * TODO - nespojuje podle nejbližšího okolního bodu
      * TODO - vyplňování bude zle ovlivněno ve chvíli kdy se použije u vykreslení
      * gradient
      * TODO - kreslení obdelníku neumí
      * TODO - zlepsit orezavani
-     * TODO - scanLine algoritmus nefunguje uplně dobre
+     * TODO - nespojuje podle nejbližšího okolního bodu
+     * 
+     * TODO - scanLine algoritmus nefunguje uplně dobre 1.
      */
 
     private final Panel panel;
@@ -58,7 +57,7 @@ public class Controller2D implements Controller {
     }
 
     public void initObjects(Raster raster) {
-        lineRasterizer = new FilledLineRasterizer(raster, ColorMode.SOLID);
+        lineRasterizer = new FilledLineRasterizer(raster, ColorMode.GRADIENT);
         // lineRasterizer = new LineRasterizerGraphics(raster, ColorMode.GRADIENT);
 
         lineRasterizer.setColor(0x00ff00);
@@ -84,10 +83,10 @@ public class Controller2D implements Controller {
                     Raster ptRaster = createPatternRaster(100, 100);
 
                     // with pattern
-                    // ScanLine scanLine = new ScanLine(panel.getRaster(), ptRaster);
-                    // scanLine.fill(polygon);
-                    // update();
-                    // return;
+                    ScanLine scanLine = new ScanLine(panel.getRaster(), ptRaster);
+                    scanLine.fill(polygon);
+                    update();
+                    return;
 
                     // with color
                     // ScanLine scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
@@ -96,11 +95,11 @@ public class Controller2D implements Controller {
                     // return;
 
                     // with pattern
-                    SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
-                            panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
-                    seedFill.fill();
-                    update();
-                    return;
+                    // SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
+                    // panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
+                    // seedFill.fill();
+                    // update();
+                    // return;
 
                     // with color
                     // SeedFiller seedFill = new SeedFill(panel.getRaster(),
@@ -138,6 +137,7 @@ public class Controller2D implements Controller {
 
                         if (nearesPoint != null && polygon.getSize() > 3) {
                             polygon.removePoint(nearesPoint);
+
                             redraw();
                         }
                         return;
@@ -164,7 +164,6 @@ public class Controller2D implements Controller {
                     polygon.addPoint(pressedPoint);
                     polygon.addPoint(previewPoint);
                 } else {
-
                     polygon.addPoint(pressedPoint);
                 }
 
