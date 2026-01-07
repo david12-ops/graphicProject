@@ -1,21 +1,25 @@
 package com.example.controller;
 
+import java.awt.Color;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 import javax.swing.SwingUtilities;
 
 import com.example.enums.ColorMode;
 import com.example.enums.RasterizerMode;
-import com.example.fill.ScanLine;
+import com.example.fill.SeedFill;
+import com.example.fill.SeedFiller;
 import com.example.model.Line;
 import com.example.model.Point;
 import com.example.model.Polygon;
 import com.example.raster.Raster;
+import com.example.raster.RasterBufferedImage;
 import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
 
@@ -23,13 +27,17 @@ import com.example.rasterize.PolygonRasterizer;
 import com.example.view.Panel;
 
 public class Controller2D implements Controller {
-    // TODO - spojení polygonu pri shift
-    // TODO - neumí ze zacatku po klikaní zobrazit polygon (zobrazí až po tažení)
-    // TODO - nespojuje podle nejbližšího okolního bodu
-    // TODO - zlepsit orezavani
-    // TODO - kreslení obdelníku neumí
-    // TODO - malovani pomoci vzoru neumi
-    // TODO - scanLine algoritmus nefunguje uplně dobre
+
+    /*
+     * TODO - spojení polygonu pri shift
+     * TODO - neumí ze zacatku po klikaní zobrazit polygon (zobrazí až po tažení)
+     * TODO - nespojuje podle nejbližšího okolního bodu
+     * TODO - vyplňování bude zle ovlivněno ve chvíli kdy se použije u vykreslení
+     * gradient
+     * TODO - kreslení obdelníku neumí
+     * TODO - zlepsit orezavani
+     * TODO - scanLine algoritmus nefunguje uplně dobre
+     */
 
     private final Panel panel;
 
@@ -72,33 +80,51 @@ public class Controller2D implements Controller {
                     return;
 
                 if (SwingUtilities.isMiddleMouseButton(e)) {
-                    // List<Color> colors = lineRasterizer.getColors();
+                    List<Color> colors = lineRasterizer.getColors();
+                    Raster ptRaster = createPatternRaster(100, 100);
 
-                    // SeedFill seedFill = new SeedFill(
-                    // panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
-                    // 0xFFA52A2A,
-                    // e.getX(), e.getY());
+                    // with pattern
+                    // ScanLine scanLine = new ScanLine(panel.getRaster(), ptRaster);
+                    // scanLine.fill(polygon);
+                    // update();
+                    // return;
+
+                    // with color
+                    // ScanLine scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
+                    // scanLine.fill(polygon);
+                    // update();
+                    // return;
+
+                    // with pattern
+                    SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
+                            panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
+                    seedFill.fill();
+                    update();
+                    return;
+
+                    // with color
+                    // SeedFiller seedFill = new SeedFill(panel.getRaster(),
+                    // panel.getRaster().getPixel(e.getX(), e.getY()), 0xFFA52A2A, e.getX(),
+                    // e.getY());
                     // seedFill.fill();
                     // update();
                     // return;
 
-                    ScanLine scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
-                    scanLine.fill(polygon);
-                    update();
-                    return;
-
-                    // if (colors.isEmpty()) {
-                    // System.out.println("Color mode is invalid or missing colors to draw");
+                    // with fillColor
+                    // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(),
+                    // colors.get(0).getRGB(), 0xFFA52A2A, e.getX(),
+                    // e.getY());
+                    // seedFillBorder.fill();
+                    // update();
                     // return;
-                    // } else if (colors.size() == 1) {
-                    // SeedFillBorder seedFillBorder = new SeedFillBorder(panel.getRaster(),
+
+                    // with pattern
+                    // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(), ptRaster,
                     // colors.get(0).getRGB(),
-                    // 0xFFA52A2A,
                     // e.getX(), e.getY());
                     // seedFillBorder.fill();
                     // update();
                     // return;
-                    // }
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
@@ -228,5 +254,28 @@ public class Controller2D implements Controller {
     private void clearPreview() {
         previewPoint = null;
         pressedPoint = null;
+    }
+
+    private Raster createPatternRaster(int width, int height) {
+
+        if (width < 0 || height < 0)
+            return null;
+
+        Raster patternRaster = new RasterBufferedImage(width, height);
+
+        int lightGray = 0xDDDDDD;
+        int darkGray = 0x777777;
+
+        for (int py = 0; py < height; py++) {
+            for (int px = 0; px < width; px++) {
+                if ((px + py) % 2 == 0) {
+                    patternRaster.setPixel(px, py, lightGray);
+                } else {
+                    patternRaster.setPixel(px, py, darkGray);
+                }
+            }
+        }
+
+        return patternRaster;
     }
 }

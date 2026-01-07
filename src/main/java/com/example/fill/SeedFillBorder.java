@@ -3,15 +3,15 @@ package com.example.fill;
 import java.util.Stack;
 
 import com.example.model.Point;
-import com.example.model.Polygon;
 import com.example.raster.Raster;
 
-public class SeedFillBorder implements Filler, PatternFill {
+public class SeedFillBorder extends PatternPainter implements SeedFiller {
     private Raster raster;
     private int x, y;
     private int borderColor, fillColor;
 
     public SeedFillBorder(Raster raster, int borderColor, int fillColor, int x, int y) {
+        super(null);
         this.raster = raster;
         this.fillColor = fillColor;
         this.borderColor = borderColor;
@@ -19,9 +19,23 @@ public class SeedFillBorder implements Filler, PatternFill {
         this.y = y;
     }
 
+    public SeedFillBorder(Raster raster, Raster patternRaster, int borderColor, int x, int y) {
+        super(patternRaster);
+        this.raster = raster;
+        this.borderColor = borderColor;
+        this.fillColor = -1;
+        this.x = x;
+        this.y = y;
+    }
+
     private void seedFill(int x, int y) {
+        int startColor = raster.getPixel(x, y);
+
         Stack<Point> stack = new Stack<>();
         stack.push(new Point(x, y));
+
+        if (startColor == borderColor)
+            return;
 
         while (!stack.empty()) {
             Point p = stack.pop();
@@ -34,10 +48,15 @@ public class SeedFillBorder implements Filler, PatternFill {
             if (pixel == -1)
                 continue;
 
-            if (pixel == borderColor || pixel == fillColor)
+            if (pixel == borderColor)
                 continue;
 
-            raster.setPixel(p.getX(), p.getY(), fillColor);
+            if (pixel != startColor)
+                continue;
+
+            int color = (patternRaster != null && fillColor == -1) ? paint(p.getX(), p.getY()) : fillColor;
+
+            raster.setPixel(p.getX(), p.getY(), color);
 
             stack.push(new Point(p.getX() + 1, p.getY()));
             stack.push(new Point(p.getX() - 1, p.getY()));
@@ -48,22 +67,6 @@ public class SeedFillBorder implements Filler, PatternFill {
 
     @Override
     public void fill() {
-        if (fillColor == borderColor)
-            return;
-
         seedFill(x, y);
     }
-
-    @Override
-    public void fill(Polygon polygon) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'fill'");
-    }
-
-    @Override
-    public int paint(int x, int y) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'paint'");
-    }
-
 }

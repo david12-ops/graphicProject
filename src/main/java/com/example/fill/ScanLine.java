@@ -8,19 +8,26 @@ import com.example.model.Point;
 import com.example.model.Polygon;
 import com.example.raster.Raster;
 
-public class ScanLine implements Filler, PatternFill {
+public class ScanLine extends PatternPainter implements PolygonFiller {
 
     private Raster raster;
 
-    List<Line> lines = new ArrayList<>();
-    List<Line> tempLines = new ArrayList<>();
-    List<Integer> intersections = new ArrayList<>();
+    private List<Line> lines = new ArrayList<>();
+    private List<Line> tempLines = new ArrayList<>();
+    private List<Integer> intersections = new ArrayList<>();
     int ymin = Integer.MAX_VALUE, ymax = Integer.MIN_VALUE;
     private int fillColor;
 
     public ScanLine(Raster raster, int fillColor) {
+        super(null);
         this.raster = raster;
         this.fillColor = fillColor;
+    }
+
+    public ScanLine(Raster raster, Raster patternRaster) {
+        super(patternRaster);
+        this.raster = raster;
+        this.fillColor = -1;
     }
 
     private void scanLine(Polygon polygon) {
@@ -59,25 +66,16 @@ public class ScanLine implements Filler, PatternFill {
                 int x2 = intersections.get(i + 1);
 
                 for (int x = x1; x <= x2; x++) {
-                    raster.setPixel(x, y, fillColor);
+                    int color = (patternRaster != null && fillColor == -1) ? paint(x, y) : fillColor;
+
+                    raster.setPixel(x, y, color);
                 }
             }
         }
     }
 
     @Override
-    public void fill() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'fill'");
-    }
-
-    @Override
     public void fill(Polygon polygon) {
         scanLine(polygon);
-    }
-
-    @Override
-    public int paint(int x, int y) {
-        return 0;
     }
 }

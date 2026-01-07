@@ -3,20 +3,27 @@ package com.example.fill;
 import java.util.Stack;
 
 import com.example.model.Point;
-import com.example.model.Polygon;
 import com.example.raster.Raster;
 
-public class SeedFill implements Filler, PatternFill {
+public class SeedFill extends PatternPainter implements SeedFiller {
     private Raster raster;
     private int x, y;
     private int backgroundColor, fillColor;
 
-    // TODO - resit stret s gradient (pointy nemají stejnou barvu)
-
     public SeedFill(Raster raster, int backgroundColor, int fillColor, int x, int y) {
+        super(null);
         this.raster = raster;
         this.backgroundColor = backgroundColor;
         this.fillColor = fillColor;
+        this.x = x;
+        this.y = y;
+    }
+
+    public SeedFill(Raster raster, Raster patternRaster, int backgroundColor, int x, int y) {
+        super(patternRaster);
+        this.raster = raster;
+        this.backgroundColor = backgroundColor;
+        this.fillColor = -1;
         this.x = x;
         this.y = y;
     }
@@ -39,7 +46,9 @@ public class SeedFill implements Filler, PatternFill {
             if (pixel != backgroundColor)
                 continue;
 
-            raster.setPixel(p.getX(), p.getY(), fillColor);
+            int color = (patternRaster != null && fillColor == -1) ? paint(p.getX(), p.getY()) : fillColor;
+
+            raster.setPixel(p.getX(), p.getY(), color);
 
             stack.push(new Point(p.getX() + 1, p.getY()));
             stack.push(new Point(p.getX() - 1, p.getY()));
@@ -50,21 +59,9 @@ public class SeedFill implements Filler, PatternFill {
 
     @Override
     public void fill() {
-        if (fillColor == backgroundColor)
+        if (patternRaster == null && backgroundColor == fillColor)
             return;
 
         seedFill(x, y);
-    }
-
-    @Override
-    public void fill(Polygon polygon) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'fill'");
-    }
-
-    @Override
-    public int paint(int x, int y) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'paint'");
     }
 }
