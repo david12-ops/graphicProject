@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import java.awt.Cursor;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
@@ -87,9 +88,6 @@ public class Controller2D implements Controller {
              */
             @Override
             public void mousePressed(MouseEvent e) {
-                if (e.isControlDown())
-                    return;
-
                 if (SwingUtilities.isMiddleMouseButton(e)) {
                     Filler seedFill = new SeedFill(
                             panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
@@ -99,12 +97,14 @@ public class Controller2D implements Controller {
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
+                    panel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
                     pressedPoint = new Point(e.getX(), e.getY());
                     previewPoint = null;
                 }
 
                 if (SwingUtilities.isRightMouseButton(e)) {
                     if (e.isShiftDown()) {
+                        panel.setCursor(Cursor.getDefaultCursor());
                         Point nearesPoint = polygon.getNearesPoint(e.getX(), e.getY());
 
                         if (nearesPoint != null && polygon.getSize() > 3) {
@@ -128,6 +128,7 @@ public class Controller2D implements Controller {
             public void mouseReleased(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
                     draggedVertex = null;
+                    panel.setCursor(Cursor.getDefaultCursor());
                     return;
                 }
 
@@ -142,6 +143,8 @@ public class Controller2D implements Controller {
 
                     polygon.addPoint(pressedPoint);
                 }
+
+                panel.setCursor(Cursor.getDefaultCursor());
 
                 clearPreview();
                 redraw();
@@ -158,6 +161,7 @@ public class Controller2D implements Controller {
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e) && draggedVertex != null) {
+                    panel.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
                     draggedVertex.set(e.getX(), e.getY());
 
                     panel.clear();
