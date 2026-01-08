@@ -18,12 +18,15 @@ public class LineRasterizer {
     protected ColorMode colorMode;
     protected RasterizerMode rasterizerMode;
 
-    public LineRasterizer(Raster raster, ColorMode colorMode) {
+    public LineRasterizer(Raster raster) {
         this.raster = raster;
-        this.colorMode = colorMode;
         this.solidColor = null;
         this.startColor = null;
         this.endColor = null;
+    }
+
+    public void setColorMode(ColorMode colorMode) {
+        this.colorMode = colorMode;
     }
 
     public void setSolidColor(Color solidColor) {

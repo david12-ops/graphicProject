@@ -58,13 +58,10 @@ public class Controller2D implements Controller {
      * @param raster Raster used for drawing operations
      */
     public void initObjects(Raster raster) {
-        lineRasterizer = new FilledLineRasterizer(raster, ColorMode.GRADIENT);
-        // lineRasterizer = new LineRasterizerGraphics(raster, ColorMode.GRADIENT);
-
+        lineRasterizer = new FilledLineRasterizer(raster);
+        lineRasterizer.setColorMode(ColorMode.SOLID);
         lineRasterizer.setSolidColor(0x00ff00);
-        lineRasterizer.setGradientColors(
-                new java.awt.Color(0xff0000),
-                new java.awt.Color(0x0000ff));
+        // lineRasterizer = new LineRasterizerGraphics(raster);
 
         polygonRasterizer = new PolygonRasterizer(lineRasterizer);
         polygon = new Polygon();
@@ -157,9 +154,21 @@ public class Controller2D implements Controller {
              * Handles mouse dragging:
              * - Moves polygon vertices
              * - Draws preview lines
+             * - Control press switchs edge color to gradient
+             * (ctrl needs to be pressed down in every action for gradient)
              */
             @Override
             public void mouseDragged(MouseEvent e) {
+                if (e.isControlDown()) {
+                    lineRasterizer.setColorMode(ColorMode.GRADIENT);
+                    lineRasterizer.setGradientColors(
+                            new java.awt.Color(0xff0000),
+                            new java.awt.Color(0x0000ff));
+                } else {
+                    lineRasterizer.setColorMode(ColorMode.SOLID);
+                    lineRasterizer.setSolidColor(0x00ff00);
+                }
+
                 if (SwingUtilities.isRightMouseButton(e) && draggedVertex != null) {
                     panel.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
                     draggedVertex.set(e.getX(), e.getY());

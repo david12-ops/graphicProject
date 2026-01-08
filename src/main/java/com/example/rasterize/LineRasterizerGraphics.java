@@ -13,11 +13,10 @@ public class LineRasterizerGraphics extends LineRasterizer {
     /**
      * Creates a rasterizer algorithm instance.
      * 
-     * @param raster    Raster where the line drawing algorithm will be performed
-     * @param colorMode Decides which color will be used for drawing line
+     * @param raster Raster where the line drawing algorithm will be performed
      */
-    public LineRasterizerGraphics(Raster raster, ColorMode colorMode) {
-        super(raster, colorMode);
+    public LineRasterizerGraphics(Raster raster) {
+        super(raster);
     }
 
     /**
