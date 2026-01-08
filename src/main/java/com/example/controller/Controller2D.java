@@ -58,10 +58,11 @@ public class Controller2D implements Controller {
      * @param raster Raster used for drawing operations
      */
     public void initObjects(Raster raster) {
+        // lineRasterizer = new LineRasterizerGraphics(raster);
         lineRasterizer = new FilledLineRasterizer(raster);
+
         lineRasterizer.setColorMode(ColorMode.SOLID);
         lineRasterizer.setSolidColor(0x00ff00);
-        // lineRasterizer = new LineRasterizerGraphics(raster);
 
         polygonRasterizer = new PolygonRasterizer(lineRasterizer);
         polygon = new Polygon();
