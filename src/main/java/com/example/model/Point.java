@@ -24,12 +24,20 @@ public class Point {
         return y;
     }
 
+    /**
+     * Draws a visible square representation of the point.
+     * 
+     * The point is centered at its coordinates and rendered as a square
+     * of the given size to improve visibility.
+     *
+     * @param size   Size of the square in pixels
+     * @param raster Raster where the point will be drawn
+     */
     public void resizePoint(int size, Raster raster) {
-        // namalovani ctverce (point) na zacatku a konci usecky
-        // aby byl videt - pouzito centrovani bodu -> -velikost/2 do +velikost/2
+
+        // Draw a centered square around the point
         for (int dx = -size / 2; dx <= size / 2; dx++) {
             for (int dy = -size / 2; dy <= size / 2; dy++) {
-                // souradnice pixelku - bere se ten co uz je + offset (dx,dy) pro videlost bodu
                 int px = this.getX() + dx;
                 int py = this.getY() + dy;
 
@@ -37,5 +45,4 @@ public class Point {
             }
         }
     }
-
 }

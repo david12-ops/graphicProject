@@ -11,6 +11,7 @@ import javax.swing.SwingUtilities;
 
 import com.example.enums.ColorMode;
 import com.example.enums.RasterizerMode;
+import com.example.fill.Filler;
 import com.example.fill.SeedFill;
 import com.example.model.Line;
 import com.example.model.Point;
@@ -21,11 +22,12 @@ import com.example.rasterize.LineRasterizer;
 import com.example.rasterize.PolygonRasterizer;
 import com.example.view.Panel;
 
+/**
+ * Controller responsible for handling user interaction
+ * and coordinating rasterization of lines and polygons
+ * in a 2D drawing panel.
+ */
 public class Controller2D implements Controller {
-    // TODO - spojení polygonu pri shift
-    // TODO - neumí ze zacatku po klikaní zobrazit polygon (zobrazí až po tažení)
-    // TODO - nespojuje podle nejbližšího okolního bodu
-
     private final Panel panel;
 
     private LineRasterizer lineRasterizer;
@@ -38,17 +40,27 @@ public class Controller2D implements Controller {
 
     private Point draggedVertex;
 
+    /**
+     * Creates a new 2D controller for the given panel.
+     * 
+     * @param panel Panel used for rendering and input handling
+     */
     public Controller2D(Panel panel) {
         this.panel = panel;
         initObjects(panel.getRaster());
         initListeners(panel);
     }
 
+    /**
+     * Initializes rasterizers and drawable objects.
+     *
+     * @param raster Raster used for drawing operations
+     */
     public void initObjects(Raster raster) {
         lineRasterizer = new FilledLineRasterizer(raster, ColorMode.GRADIENT);
         // lineRasterizer = new LineRasterizerGraphics(raster, ColorMode.GRADIENT);
 
-        lineRasterizer.setColor(0x00ff00);
+        lineRasterizer.setSolidColor(0x00ff00);
         lineRasterizer.setGradientColors(
                 new java.awt.Color(0xff0000),
                 new java.awt.Color(0x0000ff));
@@ -57,17 +69,29 @@ public class Controller2D implements Controller {
         polygon = new Polygon();
     }
 
+    /**
+     * Registers mouse, keyboard, and component listeners
+     * for user interaction with the panel.
+     *
+     * @param panel Panel to attach listeners to
+     */
     @Override
     public void initListeners(Panel panel) {
         panel.addMouseListener(new MouseAdapter() {
 
+            /**
+             * Handles mouse press events:
+             * - Left click starts line drawing
+             * - Right click selects or removes polygon vertices
+             * - Middle click performs seed fill
+             */
             @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isControlDown())
                     return;
 
                 if (SwingUtilities.isMiddleMouseButton(e)) {
-                    SeedFill seedFill = new SeedFill(
+                    Filler seedFill = new SeedFill(
                             panel.getRaster(), panel.getRaster().getPixel(e.getX(), e.getY()),
                             e.getX(), e.getY());
                     seedFill.fill();
@@ -96,6 +120,10 @@ public class Controller2D implements Controller {
 
             }
 
+            /**
+             * Finalizes drawing or vertex manipulation
+             * when the mouse button is released.
+             */
             @Override
             public void mouseReleased(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
@@ -121,6 +149,12 @@ public class Controller2D implements Controller {
         });
 
         panel.addMouseMotionListener(new MouseAdapter() {
+
+            /**
+             * Handles mouse dragging:
+             * - Moves polygon vertices
+             * - Draws preview lines
+             */
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e) && draggedVertex != null) {
@@ -150,6 +184,10 @@ public class Controller2D implements Controller {
 
         panel.addKeyListener(new KeyAdapter() {
 
+            /**
+             * Handles keyboard shortcuts.
+             * Pressing 'C' clears the drawing.
+             */
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_C) {
@@ -159,6 +197,11 @@ public class Controller2D implements Controller {
         });
 
         panel.addComponentListener(new ComponentAdapter() {
+
+            /**
+             * Reinitializes raster and objects
+             * when the panel is resized.
+             */
             @Override
             public void componentResized(ComponentEvent e) {
                 panel.resize();
@@ -167,10 +210,16 @@ public class Controller2D implements Controller {
         });
     }
 
+    /**
+     * Repaints the panel.
+     */
     private void update() {
         panel.repaint();
     }
 
+    /**
+     * Clears the panel and removes all polygon data.
+     */
     private void hardClear() {
         panel.clear();
         polygon.clearAllPoints();
@@ -181,12 +230,14 @@ public class Controller2D implements Controller {
         update();
     }
 
+    /**
+     * Redraws the entire polygon and its edges.
+     */
     private void redraw() {
         panel.clear();
 
         int polygonSize = polygon.getSize();
 
-        // draw polyline
         if (polygonSize >= 2) {
             for (int i = 0; i < polygonSize - 1; i++) {
                 lineRasterizer.rasterize(new Line(polygon.getPoint(i), polygon.getPoint(i + 1)));
@@ -198,6 +249,9 @@ public class Controller2D implements Controller {
         update();
     }
 
+    /**
+     * Clears preview line state.
+     */
     private void clearPreview() {
         previewPoint = null;
         pressedPoint = null;

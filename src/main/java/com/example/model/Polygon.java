@@ -27,6 +27,17 @@ public class Polygon {
             return null;
     }
 
+    /**
+     * Finds the point closest to the given coordinates.
+     * 
+     * The distance is computed using squared Euclidean distance
+     * to avoid unnecessary square root calculations.
+     *
+     * @param x X-coordinate to compare
+     * @param y Y-coordinate to compare
+     * @return Nearest point to the given coordinates,
+     *         or {@code null} if no points exist
+     */
     public Point getNearesPoint(int x, int y) {
         double minDist = Double.MAX_VALUE;
         Point draggedVertex = null;
