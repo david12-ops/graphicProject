@@ -32,16 +32,16 @@ public class LineRasterizer {
         this.colorMode = colorMode;
     }
 
+    public void setRasterizeMode(RasterizerMode rasterizerMode) {
+        this.rasterizerMode = rasterizerMode;
+    }
+
     public void setSolidColor(Color solidColor) {
         this.solidColor = solidColor;
     }
 
     public void setSolidColor(int solidColor) {
         this.solidColor = new Color(solidColor);
-    }
-
-    public void setRasterizeMode(RasterizerMode rasterizerMode) {
-        this.rasterizerMode = rasterizerMode;
     }
 
     public void setGradientColors(Color startColor, Color endColor) {

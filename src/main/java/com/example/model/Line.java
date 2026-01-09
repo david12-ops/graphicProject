@@ -43,16 +43,6 @@ public class Line {
     }
 
     /**
-     * Shortens the edge by one pixel at the bottom end.
-     * 
-     * Used to avoid double-counting intersections
-     * on shared polygon vertices.
-     */
-    public void shorten() {
-        b = new Point(b.getX(), b.getY() - 1);
-    }
-
-    /**
      * Determines whether a horizontal scanline
      * intersects this edge at the given y-coordinate.
      *
@@ -71,7 +61,7 @@ public class Line {
      * @return X-coordinate of the intersection point
      */
     public int intersection(int y) {
-        return (int) Math.floor(k * y + q);
+        return (int) Math.floor(k * (y + 0.5f) + q);
     }
 
     public Point getPointA() {
@@ -80,5 +70,11 @@ public class Line {
 
     public Point getPointB() {
         return this.b;
+    }
+
+    @Override
+    public String toString() {
+        return "Start point: " + "x " + a.getX() + ", y " + a.getY() + "\n" + "End point: " + "x " + b.getX() + ", y "
+                + b.getY() + "\n" + "k: " + k + ", q" + q;
     }
 }

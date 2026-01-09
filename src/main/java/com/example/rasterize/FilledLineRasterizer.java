@@ -76,8 +76,8 @@ public class FilledLineRasterizer extends LineRasterizer {
      * Chooses the dominant axis (X or Y) to avoid gaps
      * and supports both solid and gradient coloring.
      * Implemented clip the for cycle to only valid bounds
-     * {@code -  Math.max(0, x1); Math.min(raster.getWidth() - 1, x2); - for X}
-     * {@code -  Math.max(0, y1); Math.min(raster.getHeight() - 1, y2); - for Y}
+     * {@code Math.max(0, x1); Math.min(raster.getWidth() - 1, x2);} - for X,
+     * {@code Math.max(0, y1); Math.min(raster.getHeight() - 1, y2);} - for Y
      * 
      * @param x1 Start x-coordinate
      * @param y1 Start y-coordinate

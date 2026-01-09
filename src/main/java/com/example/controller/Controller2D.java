@@ -14,7 +14,8 @@ import javax.swing.SwingUtilities;
 
 import com.example.enums.ColorMode;
 import com.example.enums.RasterizerMode;
-import com.example.fill.ScanLine;
+import com.example.fill.SeedFillBorder;
+import com.example.fill.SeedFiller;
 import com.example.model.Line;
 import com.example.model.Point;
 import com.example.model.Polygon;
@@ -33,15 +34,19 @@ import com.example.view.Panel;
  */
 public class Controller2D implements Controller {
     /*
-     * TODO - spojení polygonu pri shift
-     * TODO - neumí ze zacatku po klikaní zobrazit polygon (zobrazí až po tažení)
-     * TODO - vyplňování bude zle ovlivněno ve chvíli kdy se použije u vykreslení
-     * gradient
-     * TODO - kreslení obdelníku neumí
-     * TODO - zlepsit orezavani
-     * TODO - nespojuje podle nejbližšího okolního bodu
-     * 
-     * TODO - scanLine algoritmus nefunguje uplně dobre 1.
+     * TODO – connecting polygons, snapping points, deleting points while holding
+     * Shift
+     * TODO – unable to display the polygon sometimes immediately after clicking (it
+     * appears sometimes only after dragging)
+     * TODO – improve clipping
+     * TODO – the scan-line algorithm does not work completely correctly
+     * TODO – drawing a rectangle as an entity in the model. The controller in its
+     * current form is not able to meaningfully contain so many functions
+     * without modes, and a runnable application would not be able
+     * to switch modes without user interaction and functions that
+     * would implement it.
+     * TODO – also filling can have some mode to use all filling algorithms
+     * (seed fill/border fill, scan-line)
      */
 
     private final Panel panel;
@@ -103,25 +108,22 @@ public class Controller2D implements Controller {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isMiddleMouseButton(e)) {
-                    List<Color> colors = lineRasterizer.getColors();
+                    List<Color> setColors = lineRasterizer.getColors();
                     Raster ptRaster = createPatternRaster(100, 100);
 
+                    /*
+                     * Scan-line algorithm is more ralible with gradient then seedFill and
+                     * seedFillBorder
+                     */
                     // with pattern
-                    ScanLine scanLine = new ScanLine(panel.getRaster(), ptRaster);
-                    scanLine.fill(polygon);
-                    update();
-                    return;
-
-                    // with color
-                    // ScanLine scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
+                    // ScanLine scanLine = new ScanLine(panel.getRaster(), ptRaster);
                     // scanLine.fill(polygon);
                     // update();
                     // return;
 
-                    // with pattern
-                    // SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
-                    // panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
-                    // seedFill.fill();
+                    // with color
+                    // ScanLine scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
+                    // scanLine.fill(polygon);
                     // update();
                     // return;
 
@@ -133,7 +135,14 @@ public class Controller2D implements Controller {
                     // update();
                     // return;
 
-                    // with fillColor
+                    // with pattern
+                    // SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
+                    // panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
+                    // seedFill.fill();
+                    // update();
+                    // return;
+
+                    // with color
                     // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(),
                     // colors.get(0).getRGB(), 0xFFA52A2A, e.getX(),
                     // e.getY());
@@ -142,16 +151,17 @@ public class Controller2D implements Controller {
                     // return;
 
                     // with pattern
-                    // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(), ptRaster,
-                    // colors.get(0).getRGB(),
-                    // e.getX(), e.getY());
-                    // seedFillBorder.fill();
-                    // update();
-                    // return;
+                    SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(), ptRaster,
+                            setColors.get(0).getRGB(),
+                            e.getX(), e.getY());
+                    seedFillBorder.fill();
+                    update();
+                    return;
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     panel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+
                     pressedPoint = new Point(e.getX(), e.getY());
                     previewPoint = null;
                 }
@@ -241,9 +251,10 @@ public class Controller2D implements Controller {
                 }
 
                 // Prewiev
+                lineRasterizer.setRasterizeMode(e.isShiftDown() ? RasterizerMode.SHIFT : RasterizerMode.NORMAL);
+
                 Point end = new Point(e.getX(), e.getY());
                 previewPoint = end;
-                lineRasterizer.setRasterizeMode(e.isShiftDown() ? RasterizerMode.SHIFT : RasterizerMode.NORMAL);
 
                 panel.clear();
                 polygonRasterizer.rasterize(polygon);

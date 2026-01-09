@@ -70,4 +70,9 @@ public class Polygon {
     public void clearAllPoints() {
         this.points.clear();
     }
+
+    @Override
+    public String toString() {
+        return "Points: " + this.points.toString();
+    }
 }

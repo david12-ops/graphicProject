@@ -1,5 +1,6 @@
 package com.example.fill;
 
+import java.awt.Color;
 import java.util.Stack;
 
 import com.example.model.Point;
@@ -15,7 +16,7 @@ import com.example.raster.Raster;
 public class SeedFillBorder extends PatternPainter implements SeedFiller {
     private Raster raster;
     private int x, y;
-    private int borderColor, fillColor;
+    private Color borderColor, fillColor;
 
     /**
      * Creates a border-based seed fill using a solid fill color.
@@ -29,8 +30,8 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
     public SeedFillBorder(Raster raster, int borderColor, int fillColor, int x, int y) {
         super(null);
         this.raster = raster;
-        this.fillColor = fillColor;
-        this.borderColor = borderColor;
+        this.fillColor = new Color(fillColor);
+        this.borderColor = new Color(borderColor);
         this.x = x;
         this.y = y;
     }
@@ -47,8 +48,8 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
     public SeedFillBorder(Raster raster, Raster patternRaster, int borderColor, int x, int y) {
         super(patternRaster);
         this.raster = raster;
-        this.borderColor = borderColor;
-        this.fillColor = -1;
+        this.borderColor = new Color(borderColor);
+        this.fillColor = null;
         this.x = x;
         this.y = y;
     }
@@ -69,7 +70,7 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
         Stack<Point> stack = new Stack<>();
         stack.push(new Point(x, y));
 
-        if (startColor == borderColor)
+        if (startColor == borderColor.getRGB())
             return;
 
         while (!stack.empty()) {
@@ -85,14 +86,14 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
             if (pixel == -1)
                 continue;
 
-            if (pixel == borderColor)
+            if (pixel == borderColor.getRGB())
                 continue;
 
             // Only fill pixels matching the starting color
             if (pixel != startColor)
                 continue;
 
-            int color = (patternRaster != null && fillColor == -1) ? paint(p.getX(), p.getY()) : fillColor;
+            int color = (patternRaster != null && fillColor == null) ? paint(p.getX(), p.getY()) : fillColor.getRGB();
 
             raster.setPixel(p.getX(), p.getY(), color);
 
@@ -108,6 +109,17 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
      */
     @Override
     public void fill() {
+
+        if (borderColor == null) {
+            System.out.println("Border color is required");
+            return;
+        }
+
+        if (fillColor == null && patternRaster == null) {
+            System.out.println("Color or pattern for filling is required");
+            return;
+        }
+
         seedFill(x, y);
     }
 }

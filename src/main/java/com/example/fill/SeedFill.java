@@ -1,5 +1,6 @@
 package com.example.fill;
 
+import java.awt.Color;
 import java.util.Stack;
 
 import com.example.model.Point;
@@ -14,7 +15,7 @@ import com.example.raster.Raster;
 public class SeedFill extends PatternPainter implements SeedFiller {
     private Raster raster;
     private int x, y;
-    private int backgroundColor, fillColor;
+    private Color backgroundColor, fillColor;
 
     /**
      * Creates a seed fill using a solid fill color.
@@ -28,8 +29,8 @@ public class SeedFill extends PatternPainter implements SeedFiller {
     public SeedFill(Raster raster, int backgroundColor, int fillColor, int x, int y) {
         super(null);
         this.raster = raster;
-        this.backgroundColor = backgroundColor;
-        this.fillColor = fillColor;
+        this.backgroundColor = new Color(backgroundColor);
+        this.fillColor = new Color(fillColor);
         this.x = x;
         this.y = y;
     }
@@ -46,8 +47,8 @@ public class SeedFill extends PatternPainter implements SeedFiller {
     public SeedFill(Raster raster, Raster patternRaster, int backgroundColor, int x, int y) {
         super(patternRaster);
         this.raster = raster;
-        this.backgroundColor = backgroundColor;
-        this.fillColor = -1;
+        this.backgroundColor = new Color(backgroundColor);
+        this.fillColor = null;
         this.x = x;
         this.y = y;
     }
@@ -78,10 +79,10 @@ public class SeedFill extends PatternPainter implements SeedFiller {
             if (pixel == -1)
                 continue;
 
-            if (pixel != backgroundColor)
+            if (pixel != backgroundColor.getRGB())
                 continue;
 
-            int color = (patternRaster != null && fillColor == -1) ? paint(p.getX(), p.getY()) : fillColor;
+            int color = (patternRaster != null && fillColor == null) ? paint(p.getX(), p.getY()) : fillColor.getRGB();
 
             raster.setPixel(p.getX(), p.getY(), color);
 
@@ -100,8 +101,16 @@ public class SeedFill extends PatternPainter implements SeedFiller {
      */
     @Override
     public void fill() {
-        if (patternRaster == null && backgroundColor == fillColor)
+
+        if (fillColor == null && patternRaster == null) {
+            System.out.println("Color or pattern for filling is required");
             return;
+        }
+
+        if (fillColor != null && backgroundColor.getRGB() == fillColor.getRGB()) {
+            System.out.println("Fill color equals background color");
+            return;
+        }
 
         seedFill(x, y);
     }
