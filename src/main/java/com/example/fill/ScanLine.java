@@ -12,7 +12,6 @@ public class ScanLine extends PatternPainter implements PolygonFiller {
 
     private Raster raster;
 
-    private List<Line> lines = new ArrayList<>();
     private List<Line> tempLines = new ArrayList<>();
     private List<Integer> intersections = new ArrayList<>();
     int ymin = Integer.MAX_VALUE, ymax = Integer.MIN_VALUE;

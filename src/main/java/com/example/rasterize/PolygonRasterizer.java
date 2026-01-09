@@ -6,10 +6,23 @@ import com.example.model.Polygon;
 public class PolygonRasterizer {
     private LineRasterizer lineRasterizer;
 
+    /**
+     * Creates a polygon rasterizer using the given line rasterizer.
+     *
+     * @param lineRasterizer Line rasterizer used to draw polygon edges
+     */
     public PolygonRasterizer(LineRasterizer lineRasterizer) {
         this.lineRasterizer = lineRasterizer;
     }
 
+    /**
+     * Rasterizes a polygon by drawing its edges.
+     * 
+     * The polygon is closed automatically by connecting
+     * the last point to the first one.
+     *
+     * @param polygon Polygon to rasterize
+     */
     public void rasterize(Polygon polygon) {
         if (polygon.getSize() <= 2)
             return;

@@ -14,24 +14,30 @@ public class LineRasterizer {
 
     protected Raster raster;
 
-    protected Color color;
+    protected Color solidColor;
     protected Color startColor;
     protected Color endColor;
 
     protected ColorMode colorMode;
     protected RasterizerMode rasterizerMode;
 
-    public LineRasterizer(Raster raster, ColorMode colorMode) {
+    public LineRasterizer(Raster raster) {
         this.raster = raster;
+        this.solidColor = null;
+        this.startColor = null;
+        this.endColor = null;
+    }
+
+    public void setColorMode(ColorMode colorMode) {
         this.colorMode = colorMode;
     }
 
-    public void setColor(Color color) {
-        this.color = color;
+    public void setSolidColor(Color solidColor) {
+        this.solidColor = solidColor;
     }
 
-    public void setColor(int color) {
-        this.color = new Color(color);
+    public void setSolidColor(int solidColor) {
+        this.solidColor = new Color(solidColor);
     }
 
     public void setRasterizeMode(RasterizerMode rasterizerMode) {
@@ -56,6 +62,16 @@ public class LineRasterizer {
         return this.rasterizerMode;
     }
 
+    /**
+     * Returns a list of colors currently used by the rasterizer.
+     * 
+     * If the color mode is {@link ColorMode#GRADIENT}, the list contains
+     * the start and end colors in this order.
+     * If the color mode is {@link ColorMode#SOLID}, the list contains
+     * only the solid color.
+     *
+     * @return list of active colors based on the current color mode
+     */
     public List<Color> getColors() {
         List<Color> colorList = new ArrayList<>();
 
@@ -64,11 +80,11 @@ public class LineRasterizer {
             colorList.add(endColor);
         }
 
-        if (colorMode == ColorMode.SOLID)
-            colorList.add(color);
+        if (colorMode == ColorMode.SOLID) {
+            colorList.add(solidColor);
+        }
 
         return colorList;
-
     }
 
     public void rasterize(Line line) {

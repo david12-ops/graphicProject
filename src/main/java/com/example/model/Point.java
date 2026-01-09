@@ -8,7 +8,6 @@ public class Point {
 
     private int x, y;
     private int color;
-    private int size;
 
     public Point(int x, int y) {
         this.x = x;
@@ -20,16 +19,12 @@ public class Point {
         this.y = y;
     }
 
-    public void setSize(int size) {
-        this.size = size;
+    public void setColor(Color color) {
+        this.color = color.getRGB();
     }
 
     public void setColor(int color) {
         this.color = color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color.getRGB();
     }
 
     public int getX() {
@@ -40,16 +35,20 @@ public class Point {
         return y;
     }
 
-    public void resizePoint(Raster raster) {
-        // namalovani ctverce (point) na zacatku a konci usecky
-        // aby byl videt - pouzito centrovani bodu -> -velikost/2 do +velikost/2
+    /**
+     * Draws a visible square representation of the point.
+     * 
+     * The point is centered at its coordinates and rendered as a square
+     * of the given size to improve visibility.
+     *
+     * @param size   Size of the square in pixels
+     * @param raster Raster where the point will be drawn
+     */
+    public void resizePoint(int size, Raster raster) {
 
-        if (size == 0 || color == 0)
-            return;
-
+        // Draw a centered square around the point
         for (int dx = -size / 2; dx <= size / 2; dx++) {
             for (int dy = -size / 2; dy <= size / 2; dy++) {
-                // souradnice pixelku - bere se ten co uz je + offset (dx,dy) pro videlost bodu
                 int px = this.getX() + dx;
                 int py = this.getY() + dy;
 
@@ -57,5 +56,4 @@ public class Point {
             }
         }
     }
-
 }

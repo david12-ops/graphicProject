@@ -8,21 +8,47 @@ import com.example.model.Line;
 import com.example.model.Point;
 import com.example.raster.Raster;
 
-/* 
-Nevýhoda: je to funkce - „jednomu x odpovídá právě jedno y“ 
-jak řešit svislou úsečku?
-násobení a sčítání v plovoucí řádové čárce
-neefektivní!
-Výhoda: postup použitelný i pro složitější křivky
-Poznatek : nutné rešení vertikální úsečky (formule (y - q) / k -> k != 0 -> x2 != x1)
-*/
+/*
+ * Disadvantages:
+ * - This is a function where one x corresponds to exactly one y
+ * - Requires special handling of vertical lines
+ * - Uses floating-point arithmetic (multiplication and addition)
+ * - Inefficient
+ *
+ * Advantages:
+ * - The approach can be extended to more complex curves
+ *
+ * Note:
+ * - Vertical line handling is required
+ * - Formula (y - q) / k is valid only if k != 0 (i.e., x2 != x1)
+ */
 
+/**
+ * Line rasterizer using a simple (trivial) line drawing algorithm.
+ * 
+ * Supports solid and gradient coloring, endpoint visualization,
+ * and snapping to horizontal, vertical, or diagonal directions.
+ */
 public class FilledLineRasterizer extends LineRasterizer {
 
-    public FilledLineRasterizer(Raster raster, ColorMode colorMode) {
-        super(raster, colorMode);
+    /**
+     * Creates a rasterizer algorithm instance.
+     * 
+     * @param raster Raster where the line drawing algorithm will be performed
+     */
+    public FilledLineRasterizer(Raster raster) {
+        super(raster);
     }
 
+    /**
+     * Rasterizes a line defined by two points.
+     * 
+     * If SHIFT mode is active, the line endpoint is snapped
+     * to horizontal, vertical, or diagonal direction.
+     *
+     * @param x1 Start point a (x - a.getX, y - a.getY)
+     * @param y1 End point b (x - b.getX, y - b.getY)
+     */
     @Override
     public void rasterize(Point a, Point b) {
         if (rasterizerMode == RasterizerMode.NORMAL)
@@ -34,14 +60,35 @@ public class FilledLineRasterizer extends LineRasterizer {
             return;
     }
 
+    /**
+     * Rasterizes a line model object.
+     *
+     * @param line Line to rasterize
+     */
     @Override
     public void rasterize(Line line) {
         rasterize(line.getPointA(), line.getPointB());
     }
 
+    /**
+     * Draws a line using a simple analytical (trivial) algorithm.
+     *
+     * Chooses the dominant axis (X or Y) to avoid gaps
+     * and supports both solid and gradient coloring.
+     * Implemented clip the for cycle to only valid bounds
+     * {@code -  Math.max(0, x1); Math.min(raster.getWidth() - 1, x2); - for X}
+     * {@code -  Math.max(0, y1); Math.min(raster.getHeight() - 1, y2); - for Y}
+     * 
+     * @param x1 Start x-coordinate
+     * @param y1 Start y-coordinate
+     * @param x2 End x-coordinate
+     * @param y2 End y-coordinate
+     */
     private void trivialAlgorithm(int x1, int y1, int x2, int y2) {
         if (!(isGradientUsed() || isSolidUsed())) {
-            System.out.println("Color mode is invalid or missing colors to draw");
+            System.out.println(
+                    "Color mode is invalid or missing colors to draw.");
+            System.out.println("Check if colors are set with color mode that use them.");
             return;
         }
 
@@ -65,8 +112,6 @@ public class FilledLineRasterizer extends LineRasterizer {
                 y2 = t;
             }
 
-            // Clipping - instead of checking if to goes out, i will clip the for cycle to
-            // only valid bounds
             int startX = Math.max(0, x1);
             int endX = Math.min(raster.getWidth() - 1, x2);
 
@@ -75,7 +120,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
             if (isSolidUsed()) {
 
-                setColorAndSizeToPoint(6, color.getRGB(), point1);
+                setColorAndSizeToPoint(6, solidColor.getRGB(), point1);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -85,10 +130,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                         continue;
                     }
 
-                    raster.setPixel(x, y, color.getRGB());
+                    raster.setPixel(x, y, solidColor.getRGB());
                 }
 
-                setColorAndSizeToPoint(6, color.getRGB(), point2);
+                setColorAndSizeToPoint(6, solidColor.getRGB(), point2);
             } else {
 
                 setColorAndSizeToPoint(6, startColor.getRGB(), point1);
@@ -120,8 +165,6 @@ public class FilledLineRasterizer extends LineRasterizer {
                 y2 = t;
             }
 
-            // Clipping - instead of checking if to goes out, i will clip the for cycle to
-            // only valid bounds
             int startY = Math.max(0, y1);
             int endY = Math.min(raster.getHeight() - 1, y2);
             boolean isInfiniteK = false;
@@ -137,7 +180,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
             if (isSolidUsed()) {
 
-                setColorAndSizeToPoint(6, color.getRGB(), point1);
+                setColorAndSizeToPoint(6, solidColor.getRGB(), point1);
 
                 for (int y = startY; y < endY; y++) {
                     if (!isInfiniteK) {
@@ -149,10 +192,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                         continue;
                     }
 
-                    raster.setPixel(x, y, color.getRGB());
+                    raster.setPixel(x, y, solidColor.getRGB());
                 }
 
-                setColorAndSizeToPoint(6, color.getRGB(), point2);
+                setColorAndSizeToPoint(6, solidColor.getRGB(), point2);
             } else {
 
                 setColorAndSizeToPoint(6, startColor.getRGB(), point1);
@@ -177,6 +220,14 @@ public class FilledLineRasterizer extends LineRasterizer {
         }
     }
 
+    /**
+     * Snaps the second point to horizontal, vertical,
+     * or diagonal direction relative to the first point.
+     *
+     * @param a Start point
+     * @param b Original end point
+     * @return Snapped end point
+     */
     private Point snapToHVOrDiagonal(Point a, Point b) {
         int dx = b.getX() - a.getX();
         int dy = b.getY() - a.getY();
@@ -198,6 +249,14 @@ public class FilledLineRasterizer extends LineRasterizer {
                 a.getY() + Integer.signum(dy) * d);
     }
 
+    /**
+     * Computes interpolated color between two colors.
+     *
+     * @param w          Interpolation factor in range ⟨0,1⟩
+     * @param startColor Starting color
+     * @param endColor   Ending color
+     * @return Interpolated RGB color
+     */
     private int computeColor(float w, Color startColor, Color endColor) {
         if (w < 0f)
             w = 0f;
@@ -213,17 +272,32 @@ public class FilledLineRasterizer extends LineRasterizer {
         return ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xFF);
     }
 
+    /**
+     * Sets visual properties of a point and redraws it.
+     * 
+     * Updates the point's color and size, then renders
+     * the point on the raster.
+     *
+     * @param newSize  New size of the point in pixels
+     * @param newColor New color of the point (RGB)
+     * @param point    Point to be updated and redrawn
+     */
     private void setColorAndSizeToPoint(int newSize, int newColor, Point point) {
         point.setColor(newColor);
-        point.setSize(newSize);
-        point.resizePoint(raster);
+        point.resizePoint(newSize, raster);
     }
 
+    /**
+     * Checks whether gradient color mode is correctly configured.
+     */
     private boolean isGradientUsed() {
         return colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null);
     }
 
+    /**
+     * Checks whether solid color mode is correctly configured.
+     */
     private boolean isSolidUsed() {
-        return colorMode == ColorMode.SOLID && color != null;
+        return colorMode == ColorMode.SOLID && solidColor != null;
     }
 }

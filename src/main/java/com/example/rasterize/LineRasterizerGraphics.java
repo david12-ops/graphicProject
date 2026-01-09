@@ -11,13 +11,28 @@ import com.example.raster.RasterBufferedImage;
 
 public class LineRasterizerGraphics extends LineRasterizer {
 
-    public LineRasterizerGraphics(Raster raster, ColorMode colorMode) {
-        super(raster, colorMode);
+    /**
+     * Creates a rasterizer algorithm instance.
+     * 
+     * @param raster Raster where the line drawing algorithm will be performed
+     */
+    public LineRasterizerGraphics(Raster raster) {
+        super(raster);
     }
 
+    /**
+     * Rasterizes a line using Java2D drawing.
+     * 
+     * Supports both solid color and gradient color modes.
+     * When gradient mode is active, a {@link GradientPaint} is used
+     * to interpolate colors between the start and end points.
+     *
+     * @param x1 Start point a (x - a.getX, y - a.getY)
+     * @param y1 End point b (x - b.getX, y - b.getY)
+     */
     @Override
     public void rasterize(Point a, Point b) {
-        Graphics g = ((RasterBufferedImage) raster).getImage().getGraphics();
+        Graphics g = ((RasterBufferedImage) raster).getImg().getGraphics();
         Graphics2D g2;
 
         if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
@@ -27,11 +42,13 @@ public class LineRasterizerGraphics extends LineRasterizer {
 
             g2.setPaint(gradientPaint);
             g2.drawLine(a.getX(), a.getY(), b.getX(), b.getY());
-        } else if (colorMode == ColorMode.SOLID && color != null) {
-            g.setColor(this.color);
+        } else if (colorMode == ColorMode.SOLID && solidColor != null) {
+            g.setColor(this.solidColor);
             g.drawLine(a.getX(), a.getY(), b.getX(), b.getY());
         } else {
-            System.out.println("Color mode is invalid or missing colors to draw");
+            System.out.println(
+                    "Color mode is invalid or missing colors to draw.");
+            System.out.println("Check if colors are set with color mode that use them.");
         }
     }
 }

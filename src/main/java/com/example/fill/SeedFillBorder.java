@@ -5,11 +5,27 @@ import java.util.Stack;
 import com.example.model.Point;
 import com.example.raster.Raster;
 
+/**
+ * Implements a border-based seed fill algorithm.
+ * 
+ * Filling continues until a border color is reached.
+ * Supports both solid color fill and pattern-based fill.
+ * Uses an iterative approach to avoid recursion overflow.
+ */
 public class SeedFillBorder extends PatternPainter implements SeedFiller {
     private Raster raster;
     private int x, y;
     private int borderColor, fillColor;
 
+    /**
+     * Creates a border-based seed fill using a solid fill color.
+     *
+     * @param raster      Target raster to be filled
+     * @param borderColor Color defining the boundary of the fill area
+     * @param fillColor   Fill color (RGB)
+     * @param x           Starting x-coordinate
+     * @param y           Starting y-coordinate
+     */
     public SeedFillBorder(Raster raster, int borderColor, int fillColor, int x, int y) {
         super(null);
         this.raster = raster;
@@ -19,6 +35,15 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
         this.y = y;
     }
 
+    /**
+     * Creates a border-based seed fill using a repeating pattern.
+     *
+     * @param raster        Target raster to be filled
+     * @param patternRaster Raster defining the fill pattern
+     * @param borderColor   Color defining the boundary of the fill area
+     * @param x             Starting x-coordinate
+     * @param y             Starting y-coordinate
+     */
     public SeedFillBorder(Raster raster, Raster patternRaster, int borderColor, int x, int y) {
         super(patternRaster);
         this.raster = raster;
@@ -28,6 +53,16 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
         this.y = y;
     }
 
+    /**
+     * Performs the border-based seed fill using an explicit stack.
+     * 
+     * Filling stops when the border color is encountered.
+     * Neighboring pixels are processed in four directions
+     * (left, right, up, down).
+     *
+     * @param x Starting x-coordinate
+     * @param y Starting y-coordinate
+     */
     private void seedFill(int x, int y) {
         int startColor = raster.getPixel(x, y);
 
@@ -40,17 +75,20 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
         while (!stack.empty()) {
             Point p = stack.pop();
 
+            // Bounds check
             if (p.getX() < 0 || p.getY() < 0 || p.getX() >= raster.getWidth() || p.getY() >= raster.getHeight())
                 continue;
 
             int pixel = raster.getPixel(p.getX(), p.getY());
 
+            // Skip invalid pixels or border
             if (pixel == -1)
                 continue;
 
             if (pixel == borderColor)
                 continue;
 
+            // Only fill pixels matching the starting color
             if (pixel != startColor)
                 continue;
 
@@ -65,6 +103,9 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
         }
     }
 
+    /**
+     * Starts the border-based seed fill operation.
+     */
     @Override
     public void fill() {
         seedFill(x, y);
