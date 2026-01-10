@@ -1,5 +1,7 @@
 package com.example.view;
 
+import com.example.enums.FillColorMode;
+import com.example.enums.FillTool;
 import com.example.raster.Raster;
 import com.example.raster.RasterBufferedImage;
 
@@ -11,6 +13,8 @@ import java.util.TimerTask;
 public class Panel extends JPanel {
 
     private RasterBufferedImage raster;
+    private FillTool fillTool = FillTool.SCANLINE;
+    private FillColorMode fillColorMode = FillColorMode.PATTERN;
 
     public Raster getRaster() {
         return raster;
@@ -31,6 +35,22 @@ public class Panel extends JPanel {
         super.paintComponent(g);
         raster.repaint(g);
         // pro zájemce - co dělá observer - https://stackoverflow.com/a/1684476
+    }
+
+    public void setFillTool(FillTool fillTool) {
+        this.fillTool = fillTool;
+    }
+
+    public void setFillColorMode(FillColorMode fillColorMode) {
+        this.fillColorMode = fillColorMode;
+    }
+
+    public FillTool getFillTool() {
+        return this.fillTool;
+    }
+
+    public FillColorMode getFillColorMode() {
+        return this.fillColorMode;
     }
 
     public void resize() {

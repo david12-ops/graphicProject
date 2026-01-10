@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -7,13 +8,19 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 import javax.swing.SwingUtilities;
 
 import com.example.enums.ColorMode;
+import com.example.enums.FillColorMode;
+import com.example.enums.FillTool;
 import com.example.enums.RasterizerMode;
 import com.example.fill.PolygonFiller;
 import com.example.fill.ScanLine;
+import com.example.fill.SeedFill;
+import com.example.fill.SeedFiller;
+import com.example.fill.SeedFillBorder;
 import com.example.model.Line;
 import com.example.model.Point;
 import com.example.model.Polygon;
@@ -105,7 +112,7 @@ public class Controller2D implements Controller {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isMiddleMouseButton(e)) {
-                    // List<Color> setColors = lineRasterizer.getColors();
+                    List<Color> setColors = lineRasterizer.getColors();
                     Raster ptRaster = createPatternRaster(100, 100);
 
                     /*
@@ -113,47 +120,67 @@ public class Controller2D implements Controller {
                      * seedFillBorder
                      */
                     // with pattern
-                    PolygonFiller scanLine = new ScanLine(panel.getRaster(), ptRaster);
-                    scanLine.fill(polygon);
-                    update();
-                    return;
+                    if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() == FillColorMode.PATTERN) {
+                        System.out.println("Used scan-line with pattern filling");
+                        PolygonFiller scanLine = new ScanLine(panel.getRaster(), ptRaster);
+                        scanLine.fill(polygon);
+                        update();
+                        return;
+                    }
 
                     // with color
-                    // PolygonFiller scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
-                    // scanLine.fill(polygon);
-                    // update();
-                    // return;
-
-                    // with color
-                    // SeedFiller seedFill = new SeedFill(panel.getRaster(),
-                    // panel.getRaster().getPixel(e.getX(), e.getY()), 0xFFA52A2A, e.getX(),
-                    // e.getY());
-                    // seedFill.fill();
-                    // update();
-                    // return;
+                    if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() == FillColorMode.COLOR) {
+                        System.out.println("Used scan-line with color filling");
+                        PolygonFiller scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
+                        scanLine.fill(polygon);
+                        update();
+                        return;
+                    }
 
                     // with pattern
-                    // SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
-                    // panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
-                    // seedFill.fill();
-                    // update();
-                    // return;
+                    if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() == FillColorMode.PATTERN) {
+                        System.out.println("Used seed fill with pattern filling");
+                        SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
+                                panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
+                        seedFill.fill();
+                        update();
+                        return;
+                    }
 
                     // with color
-                    // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(),
-                    // setColors.get(0).getRGB(), 0xFFA52A2A, e.getX(),
-                    // e.getY());
-                    // seedFillBorder.fill();
-                    // update();
-                    // return;
+                    if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() == FillColorMode.COLOR) {
+                        System.out.println("Used seed fill with color filling");
+                        SeedFiller seedFill = new SeedFill(panel.getRaster(),
+                                panel.getRaster().getPixel(e.getX(), e.getY()), 0xFFA52A2A, e.getX(),
+                                e.getY());
+                        seedFill.fill();
+                        update();
+                        return;
+                    }
 
                     // with pattern
-                    // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(), ptRaster,
-                    // setColors.get(0).getRGB(),
-                    // e.getX(), e.getY());
-                    // seedFillBorder.fill();
-                    // update();
-                    // return;
+                    if (panel.getFillTool() == FillTool.SEEDFILLBORDER
+                            && panel.getFillColorMode() == FillColorMode.PATTERN) {
+                        System.out.println("Used seed fill border with pattern filling");
+                        SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(), ptRaster,
+                                setColors.get(0).getRGB(),
+                                e.getX(), e.getY());
+                        seedFillBorder.fill();
+                        update();
+                        return;
+                    }
+
+                    // with color
+                    if (panel.getFillTool() == FillTool.SEEDFILLBORDER
+                            && panel.getFillColorMode() == FillColorMode.COLOR) {
+                        System.out.println("Used seed fill border with color filling");
+                        SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(),
+                                setColors.get(0).getRGB(), 0xFFA52A2A, e.getX(),
+                                e.getY());
+                        seedFillBorder.fill();
+                        update();
+                        return;
+                    }
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
@@ -179,7 +206,6 @@ public class Controller2D implements Controller {
                     draggedVertex = polygon.getNearesPoint(e.getX(), e.getY());
                     return;
                 }
-
             }
 
             /**
