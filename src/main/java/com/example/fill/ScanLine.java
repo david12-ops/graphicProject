@@ -54,6 +54,27 @@ public class ScanLine extends PatternPainter implements PolygonFiller {
     }
 
     /**
+     * Sorts the intersection x-coordinates using the insertion sort algorithm.
+     * 
+     * The list is sorted in ascending order (from left to right),
+     * which is suitable for scan-line polygon filling.
+     *
+     * @param intersections list of intersection coordinates to sort
+     */
+    private void insertionSort(List<Double> intersections) {
+        for (int i = 1; i < intersections.size(); i++) {
+            double key = intersections.get(i);
+            int j = i - 1;
+
+            while (j >= 0 && intersections.get(j) > key) {
+                intersections.set(j + 1, intersections.get(j));
+                j = j - 1;
+            }
+            intersections.set(j + 1, key);
+        }
+    }
+
+    /**
      * Performs the scan-line polygon filling.
      * 
      * Steps:
@@ -99,7 +120,7 @@ public class ScanLine extends PatternPainter implements PolygonFiller {
                 }
             }
 
-            intersections.sort(Double::compareTo);
+            insertionSort(intersections);
 
             for (int i = 0; i + 1 < intersections.size(); i += 2) {
                 double x1 = intersections.get(i);
