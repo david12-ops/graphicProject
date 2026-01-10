@@ -73,6 +73,6 @@ public class Polygon {
 
     @Override
     public String toString() {
-        return "Points: " + this.points.toString();
+        return "Points: " + this.points.toString() + "\n";
     }
 }

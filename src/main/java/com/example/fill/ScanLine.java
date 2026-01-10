@@ -26,7 +26,7 @@ public class ScanLine extends PatternPainter implements PolygonFiller {
     private Raster raster;
 
     private List<Line> tempLines = new ArrayList<>();
-    private List<Integer> intersections = new ArrayList<>();
+    private List<Double> intersections = new ArrayList<>();
     private Color fillColor;
 
     /**
@@ -99,24 +99,16 @@ public class ScanLine extends PatternPainter implements PolygonFiller {
                 }
             }
 
-            intersections.sort(Integer::compareTo);
-
-            List<Integer> filtered = new ArrayList<>();
-            for (int i = 0; i < intersections.size(); i++) {
-                int x = intersections.get(i);
-
-                if (i == 0 || x != intersections.get(i - 1)) {
-                    filtered.add(x);
-                }
-            }
-
-            intersections = filtered;
+            intersections.sort(Double::compareTo);
 
             for (int i = 0; i + 1 < intersections.size(); i += 2) {
-                int x1 = intersections.get(i);
-                int x2 = intersections.get(i + 1);
+                double x1 = intersections.get(i);
+                double x2 = intersections.get(i + 1);
 
-                for (int x = x1; x < x2; x++) {
+                int xLeft = (int) Math.ceil(x1);
+                int xRight = (int) Math.floor(x2);
+
+                for (int x = xLeft; x <= xRight; x++) {
                     int color = (patternRaster != null && fillColor == null) ? paint(x, y) : fillColor.getRGB();
                     raster.setPixel(x, y, color);
                 }

@@ -3,10 +3,10 @@ package com.example.model;
 public class Line {
 
     private Point a, b;
-    private float k, q;
+    private double k, q;
 
     public Line(int x1, int y1, int x2, int y2) {
-        this.a = new Point(x1, x2);
+        this.a = new Point(x1, y1);
         this.b = new Point(x2, y2);
     }
 
@@ -37,7 +37,7 @@ public class Line {
      */
     public void compute() {
         if (a.getY() != b.getY()) {
-            this.k = (b.getX() - a.getX()) / (b.getY() - a.getY());
+            this.k = (b.getX() - a.getX()) / (double) (b.getY() - a.getY());
             this.q = a.getX() - k * a.getY();
         }
     }
@@ -60,8 +60,8 @@ public class Line {
      * @param y Y-coordinate of the scanline
      * @return X-coordinate of the intersection point
      */
-    public int intersection(int y) {
-        return (int) Math.floor(k * (y + 0.5f) + q);
+    public double intersection(int y) {
+        return k * y + q;
     }
 
     public Point getPointA() {
@@ -75,6 +75,6 @@ public class Line {
     @Override
     public String toString() {
         return "Start point: " + "x " + a.getX() + ", y " + a.getY() + "\n" + "End point: " + "x " + b.getX() + ", y "
-                + b.getY() + "\n" + "k: " + k + ", q" + q;
+                + b.getY() + "\n" + "k: " + k + ", q" + q + "\n";
     }
 }
