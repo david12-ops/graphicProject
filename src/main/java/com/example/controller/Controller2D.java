@@ -49,8 +49,6 @@ public class Controller2D implements Controller {
      * without modes, and a runnable application would not be able
      * to switch modes without user interaction and functions that
      * would implement it.
-     * TODO – also filling can have some mode to use all filling algorithms
-     * (seed fill/border fill, scan-line)
      */
 
     private final Panel panel;
