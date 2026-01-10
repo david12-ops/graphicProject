@@ -40,7 +40,8 @@ public class Rectangle extends Polygon {
      * @param b         Second point of the base edge
      * @param heigPoint Point defining the height and orientation of the rectangle
      */
-    public void createRectangle(Point a, Point b, Point heigPoint) {
+    private void createRectangle(Point a, Point b, Point heigPoint) {
+        clearAllPoints();
 
         // Direction vector AB
         int dx = b.getX() - a.getX();
@@ -49,12 +50,22 @@ public class Rectangle extends Polygon {
         // Length of AB
         double length = Math.sqrt(dx * dx + dy * dy);
 
+        if (length == 0) {
+            return;
+        }
+
         // Normalized perpendicular vector to AB
         double nx = -dy / length;
         double ny = dx / length;
 
         // Height of the rectangle (projection onto the normal)
         double height = (heigPoint.getX() - a.getX()) * nx + (heigPoint.getY() - a.getY()) * ny;
+
+        if (height < 0) {
+            height = -height;
+            nx = -nx;
+            ny = -ny;
+        }
 
         Point p1 = a;
         Point p2 = b;
