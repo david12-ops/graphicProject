@@ -116,13 +116,13 @@ public class Controller2D implements Controller {
                      * seedFillBorder
                      */
                     // with pattern
-                    // ScanLine scanLine = new ScanLine(panel.getRaster(), ptRaster);
+                    // PolygonFiller scanLine = new ScanLine(panel.getRaster(), ptRaster);
                     // scanLine.fill(polygon);
                     // update();
                     // return;
 
                     // with color
-                    // ScanLine scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
+                    // PolygonFiller scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
                     // scanLine.fill(polygon);
                     // update();
                     // return;
@@ -144,7 +144,7 @@ public class Controller2D implements Controller {
 
                     // with color
                     // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(),
-                    // colors.get(0).getRGB(), 0xFFA52A2A, e.getX(),
+                    // setColors.get(0).getRGB(), 0xFFA52A2A, e.getX(),
                     // e.getY());
                     // seedFillBorder.fill();
                     // update();
