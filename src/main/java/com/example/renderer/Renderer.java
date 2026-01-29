@@ -20,7 +20,7 @@ public class Renderer {
         this.proj = proj;
     }
 
-    public void renderSolid(Solid solid) {
+    public void renderSolid(Solid solid, boolean isSelected) {
         for (int i = 0; i < solid.getIb().size() - 1; i += 2) {
             int indexA = solid.getIb().get(i);
             int indexB = solid.getIb().get(i + 1);
@@ -43,20 +43,39 @@ public class Renderer {
             pointB = pointB.mul(proj);
 
             // TODO: Ořezání - slide 88
+            if (outsideEdge(pointA) && outsideEdge(pointB))
+                continue;
+
+            if (pointA.getW() <= 0 || pointB.getW() <= 0)
+                continue;
 
             // TODO: Dehomogenizace - x, y, z, w = x/w, y/w, z/w, w/w = NDC
-            // pouzor raději ošetřit dělení nulou
-            pointA = pointA.mul(1 / pointA.getW());
-            pointB = pointB.mul(1 / pointB.getW());
+            pointA = pointA.mul(1.0 / pointA.getW());
+            pointB = pointB.mul(1.0 / pointB.getW());
 
             // Transformace do okna obrazovky = NDC -> screen space
             Vec3D vecA = transformToWindow(pointA);
             Vec3D vecB = transformToWindow(pointB);
 
+            // int c1 = isSelected ? 0xFFFF0000 : v1.getColorARGB(); // Red if selected
+            // int c2 = isSelected ? 0xFFFF0000 : v2.getColorARGB();
+
             lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int) Math.round(vecA.getY())),
                     new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
-
         }
+    }
+
+    private boolean outsideEdge(Point3D p) {
+        // všechna x jsou větší než -w a
+        // všechna x jsou menší než w a
+        // všechna y jsou větší než -w a
+        // šechna y jsou menší než w a
+        // šechna z jsou větší než 0 a
+        // všechna z jsou menší než w => splněné všechny podmínky => bod je mimo hranici
+
+        return p.getX() > -p.getW() && p.getX() < p.getW() &&
+                p.getY() > -p.getW() && p.getY() < p.getW() && p.getZ() > 0
+                && p.getZ() < p.getW();
     }
 
     private Vec3D transformToWindow(Point3D p) {
