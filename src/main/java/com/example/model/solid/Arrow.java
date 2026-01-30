@@ -24,5 +24,4 @@ public class Arrow extends Solid {
         ib.add(3);
         ib.add(4);
     }
-
 }
