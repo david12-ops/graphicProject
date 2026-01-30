@@ -1,19 +1,27 @@
 package com.example.controller;
 
 import java.awt.event.MouseEvent;
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 
+import com.example.enums.ColorMode;
+import com.example.enums.RasterizerMode;
 import com.example.model.Scene;
+import com.example.model.solid.Arrow;
+import com.example.model.solid.AxisX;
+import com.example.model.solid.AxisY;
+import com.example.model.solid.AxisZ;
 import com.example.raster.Raster;
+import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
-import com.example.rasterize.LineRasterizerGraphics;
 import com.example.renderer.Renderer;
 import com.example.transforms.Camera;
 import com.example.transforms.Mat4;
 import com.example.transforms.Mat4OrthoRH;
 import com.example.transforms.Mat4PerspRH;
+import com.example.transforms.Mat4Scale;
 import com.example.transforms.Vec3D;
 import com.example.view.Panel;
 
@@ -63,7 +71,17 @@ public class Controller3D implements Controller {
      * @param raster Raster used for drawing operations
      */
     public void initObjects(Raster raster) {
-        lineRasterizer = new LineRasterizerGraphics(raster);
+        lineRasterizer = new FilledLineRasterizer(raster);
+
+        lineRasterizer.setRasterizeMode(RasterizerMode.NORMAL);
+        lineRasterizer.setColorMode(ColorMode.GRADIENT);
+        lineRasterizer.setGradientColors(
+                new Color(0xff0000),
+                new Color(0x0000ff));
+
+        // lineRasterizer.setColorMode(ColorMode.SOLID);
+        // lineRasterizer.setSolidColor(0x00ff00);
+
         this.scene = new Scene();
 
         initCamera();
@@ -80,9 +98,10 @@ public class Controller3D implements Controller {
 
     private void initCamera() {
         camera = new Camera()
-                .withPosition(new Vec3D(6, 6, 3))
-                .withAzimuth(Math.toRadians(150))
-                .withZenith(Math.toRadians(-25));
+                .withPosition(new Vec3D(0.5, -1.5, 1.5))
+                .withAzimuth(Math.toRadians(90))
+                .withZenith(Math.toRadians(-25))
+                .withFirstPerson(true);
     }
 
     private void initProjection() {
@@ -91,10 +110,11 @@ public class Controller3D implements Controller {
 
         if (perspectiveProjection) {
             projectionMatrix = new Mat4PerspRH(
-                    Math.toRadians(60),
-                    height / width,
+                    Math.toRadians(90),
+                    width / height,
                     0.1,
                     100);
+
         } else {
             projectionMatrix = new Mat4OrthoRH((width / height) * 10,
                     10,
@@ -106,7 +126,21 @@ public class Controller3D implements Controller {
     private void initScene() {
         scene.clear();
         // axes
-        // scene.addSolid(new Axis(0.5));
+        AxisX axisX = new AxisX();
+        AxisY axisY = new AxisY();
+        AxisZ axisZ = new AxisZ();
+
+        // each axis is length 5 units
+        axisX.setModel(new Mat4Scale(5, 1, 1));
+        axisY.setModel(new Mat4Scale(1, 5, 1));
+        axisZ.setModel(new Mat4Scale(1, 1, 5));
+
+        scene.addSolid(axisX);
+        scene.addSolid(axisY);
+        scene.addSolid(axisZ);
+
+        // Arrow
+        scene.addSolid(new Arrow());
 
         // cube
         // scene.addSolid(cube);
@@ -129,17 +163,40 @@ public class Controller3D implements Controller {
 
     @Override
     public void initListeners(Panel panel) {
+        panel.setFocusable(true);
+        panel.setFocusTraversalKeysEnabled(false);
+
         panel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                panel.requestFocusInWindow();
 
+                lastMouseX = e.getX();
+                lastMouseY = e.getY();
+
+                mousePressed = true;
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                mousePressed = false;
             }
         });
 
         panel.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
+                if (mousePressed) {
+                    int dx = e.getX() - lastMouseX;
+                    int dy = e.getY() - lastMouseY;
 
+                    camera = camera.addAzimuth(-dx * ROTATE_SPEED);
+                    camera = camera.addZenith(-dy * ROTATE_SPEED);
+
+                    lastMouseX = e.getX();
+                    lastMouseY = e.getY();
+
+                    render();
+                }
             }
         });
 
@@ -149,19 +206,19 @@ public class Controller3D implements Controller {
                 switch (e.getKeyCode()) {
                     // Cam up
                     case KeyEvent.VK_UP:
-                        camera.forward(MOVE_SPEED);
+                        camera = camera.forward(MOVE_SPEED);
                         break;
                     // Cam down
                     case KeyEvent.VK_DOWN:
-                        camera.backward(MOVE_SPEED);
+                        camera = camera.backward(MOVE_SPEED);
                         break;
                     // Cam left
                     case KeyEvent.VK_LEFT:
-                        camera.left(ROTATE_SPEED);
+                        camera = camera.left(MOVE_SPEED);
                         break;
                     // Cam right
                     case KeyEvent.VK_RIGHT:
-                        camera.right(ROTATE_SPEED);
+                        camera = camera.right(MOVE_SPEED);
                         break;
                     // Change projection mode
                     case KeyEvent.VK_P:
@@ -189,6 +246,7 @@ public class Controller3D implements Controller {
                     default:
                         break;
                 }
+                render();
             }
 
             @Override
@@ -215,12 +273,8 @@ public class Controller3D implements Controller {
     private void render() {
         panel.getRaster().clear();
 
-        renderer = new Renderer(
-                lineRasterizer,
-                panel.getRaster().getWidth(),
-                panel.getRaster().getHeight(),
-                camera.getViewMatrix(),
-                projectionMatrix);
+        renderer.setView(camera.getViewMatrix());
+        renderer.setProj(projectionMatrix);
 
         for (int i = 0; i < scene.getSolids().size(); i++) {
             renderer.renderSolid(scene.getSolids().get(i), i == activeSolidIndex);
