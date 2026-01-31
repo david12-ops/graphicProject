@@ -120,7 +120,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
             if (isSolidUsed()) {
 
-                setColorAndSizeToPoint(6, solidColor.getRGB(), point1);
+                setColorAndSizeToPoint(6, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB(), point1);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -130,13 +130,13 @@ public class FilledLineRasterizer extends LineRasterizer {
                         continue;
                     }
 
-                    raster.setPixel(x, y, solidColor.getRGB());
+                    raster.setPixel(x, y, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB());
                 }
 
-                setColorAndSizeToPoint(6, solidColor.getRGB(), point2);
+                setColorAndSizeToPoint(6, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB(), point2);
             } else {
 
-                setColorAndSizeToPoint(6, startColor.getRGB(), point1);
+                setColorAndSizeToPoint(6, selectedColor == null ? startColor.getRGB() : selectedColor.getRGB(), point1);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -147,10 +147,11 @@ public class FilledLineRasterizer extends LineRasterizer {
                         continue;
                     }
 
-                    raster.setPixel(x, y, computeColor(w, startColor, endColor));
+                    raster.setPixel(x, y,
+                            selectedColor == null ? computeColor(w, startColor, endColor) : selectedColor.getRGB());
                 }
 
-                setColorAndSizeToPoint(6, endColor.getRGB(), point2);
+                setColorAndSizeToPoint(6, selectedColor == null ? endColor.getRGB() : selectedColor.getRGB(), point2);
             }
 
         } else {
@@ -180,7 +181,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
             if (isSolidUsed()) {
 
-                setColorAndSizeToPoint(6, solidColor.getRGB(), point1);
+                setColorAndSizeToPoint(6, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB(), point1);
 
                 for (int y = startY; y < endY; y++) {
                     if (!isInfiniteK) {
@@ -192,13 +193,13 @@ public class FilledLineRasterizer extends LineRasterizer {
                         continue;
                     }
 
-                    raster.setPixel(x, y, solidColor.getRGB());
+                    raster.setPixel(x, y, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB());
                 }
 
-                setColorAndSizeToPoint(6, solidColor.getRGB(), point2);
+                setColorAndSizeToPoint(6, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB(), point2);
             } else {
 
-                setColorAndSizeToPoint(6, startColor.getRGB(), point1);
+                setColorAndSizeToPoint(6, selectedColor == null ? startColor.getRGB() : selectedColor.getRGB(), point1);
 
                 for (int y = startY; y < endY; y++) {
                     if (!isInfiniteK) {
@@ -212,10 +213,11 @@ public class FilledLineRasterizer extends LineRasterizer {
                         continue;
                     }
 
-                    raster.setPixel(x, y, computeColor(w, startColor, endColor));
+                    raster.setPixel(x, y,
+                            selectedColor == null ? computeColor(w, startColor, endColor) : selectedColor.getRGB());
                 }
 
-                setColorAndSizeToPoint(6, endColor.getRGB(), point2);
+                setColorAndSizeToPoint(6, selectedColor == null ? endColor.getRGB() : selectedColor.getRGB(), point2);
             }
         }
     }

@@ -37,13 +37,19 @@ public class LineRasterizerGraphics extends LineRasterizer {
 
         if (colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null)) {
             g2 = (Graphics2D) g;
-            GradientPaint gradientPaint = new GradientPaint(
-                    a.getX(), a.getY(), startColor, b.getX(), b.getY(), endColor);
 
-            g2.setPaint(gradientPaint);
+            if (selectedColor == null) {
+                GradientPaint gradientPaint = new GradientPaint(
+                        a.getX(), a.getY(), startColor, b.getX(), b.getY(), endColor);
+
+                g2.setPaint(gradientPaint);
+            } else {
+                g2.setColor(this.selectedColor);
+            }
+
             g2.drawLine(a.getX(), a.getY(), b.getX(), b.getY());
         } else if (colorMode == ColorMode.SOLID && solidColor != null) {
-            g.setColor(this.solidColor);
+            g.setColor(this.selectedColor == null ? this.solidColor : this.selectedColor);
             g.drawLine(a.getX(), a.getY(), b.getX(), b.getY());
         } else {
             System.out.println(

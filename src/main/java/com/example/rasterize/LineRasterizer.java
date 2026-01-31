@@ -17,6 +17,7 @@ public class LineRasterizer {
     protected Color solidColor;
     protected Color startColor;
     protected Color endColor;
+    protected Color selectedColor;
 
     protected ColorMode colorMode;
     protected RasterizerMode rasterizerMode;
@@ -42,6 +43,14 @@ public class LineRasterizer {
 
     public void setSolidColor(int solidColor) {
         this.solidColor = new Color(solidColor);
+    }
+
+    public void setSelectedColor(Color selectedColor) {
+        this.selectedColor = selectedColor;
+    }
+
+    public void setSelectedColor(int selectedColor) {
+        this.selectedColor = new Color(selectedColor);
     }
 
     public void setGradientColors(Color startColor, Color endColor) {
