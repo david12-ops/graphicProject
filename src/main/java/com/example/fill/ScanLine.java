@@ -5,8 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.model.Line;
-import com.example.model.Point;
-import com.example.model.Polygon;
+import com.example.model.solid.Solid;
 import com.example.raster.Raster;
 
 /**
@@ -21,7 +20,7 @@ import com.example.raster.Raster;
  * solid color filling,
  * pattern filling via {@link PatternPainter}
  */
-public class ScanLine extends PatternPainter implements PolygonFiller {
+public class ScanLine extends PatternPainter implements SolidFiller {
 
     private Raster raster;
 
@@ -75,81 +74,75 @@ public class ScanLine extends PatternPainter implements PolygonFiller {
     }
 
     /**
-     * Performs the scan-line polygon filling.
+     * Performs the scan-line solid filling.
      * 
      * Steps:
      * 
-     * Builds a list of polygon edges (ignoring horizontal ones).
-     * Finds the vertical range of the polygon.
-     * For each scan line:
-     * 
-     * computes intersections with edges,
-     * sorts and filters duplicate intersections,
-     * fills pixels between pairs of intersections.
      *
-     * @param polygon Polygon to be filled
+     * @param solid Solid to be filled
      */
-    private void scanLine(Polygon polygon) {
-        int ymin = Integer.MAX_VALUE;
-        int ymax = Integer.MIN_VALUE;
-        tempLines.clear();
+    private void scanLine(Solid solid) {
+        // int ymin = Integer.MAX_VALUE;
+        // int ymax = Integer.MIN_VALUE;
+        // tempLines.clear();
 
-        for (int i = 0; i < polygon.getSize(); i++) {
-            Point a = polygon.getPoint(i);
-            Point b = polygon.getPoint((i + 1) % polygon.getSize());
+        // for (int i = 0; i < polygon.getSize(); i++) {
+        // Point a = polygon.getPoint(i);
+        // Point b = polygon.getPoint((i + 1) % polygon.getSize());
 
-            if (a.getY() == b.getY())
-                continue;
+        // if (a.getY() == b.getY())
+        // continue;
 
-            Line e = new Line(a, b);
-            e.normalize();
-            e.compute();
+        // Line e = new Line(a, b);
+        // e.normalize();
+        // e.compute();
 
-            tempLines.add(e);
+        // tempLines.add(e);
 
-            ymin = Math.min(ymin, e.getPointA().getY());
-            ymax = Math.max(ymax, e.getPointB().getY());
-        }
+        // ymin = Math.min(ymin, e.getPointA().getY());
+        // ymax = Math.max(ymax, e.getPointB().getY());
+        // }
 
-        for (int y = ymin; y < ymax; y++) {
-            intersections.clear();
+        // for (int y = ymin; y < ymax; y++) {
+        // intersections.clear();
 
-            for (Line tl : tempLines) {
-                if (tl.isIntersection(y)) {
-                    intersections.add(tl.intersection(y));
-                }
-            }
+        // for (Line tl : tempLines) {
+        // if (tl.isIntersection(y)) {
+        // intersections.add(tl.intersection(y));
+        // }
+        // }
 
-            insertionSort(intersections);
+        // insertionSort(intersections);
 
-            for (int i = 0; i + 1 < intersections.size(); i += 2) {
-                double x1 = intersections.get(i);
-                double x2 = intersections.get(i + 1);
+        // for (int i = 0; i + 1 < intersections.size(); i += 2) {
+        // double x1 = intersections.get(i);
+        // double x2 = intersections.get(i + 1);
 
-                int xLeft = (int) Math.ceil(x1);
-                int xRight = (int) Math.floor(x2);
+        // int xLeft = (int) Math.ceil(x1);
+        // int xRight = (int) Math.floor(x2);
 
-                for (int x = xLeft; x <= xRight; x++) {
-                    int color = (patternRaster != null && fillColor == null) ? paint(x, y) : fillColor.getRGB();
-                    raster.setPixel(x, y, color);
-                }
-            }
-        }
+        // for (int x = xLeft; x <= xRight; x++) {
+        // int color = (patternRaster != null && fillColor == null) ? paint(x, y) :
+        // fillColor.getRGB();
+        // raster.setPixel(x, y, color);
+        // }
+        // }
+        // }
     }
 
     /**
-     * Fills the given polygon using the scan-line algorithm.
+     * Fills the given solid using the scan-line algorithm.
      *
-     * @param polygon Polygon to fill
+     * @param solid Solid to fill
      */
     @Override
-    public void fill(Polygon polygon) {
+    public void fill(Solid solid) {
 
         if (fillColor == null && patternRaster == null) {
             System.out.println("Color or pattern for filling is required");
             return;
         }
 
-        scanLine(polygon);
+        scanLine(solid);
     }
 }
