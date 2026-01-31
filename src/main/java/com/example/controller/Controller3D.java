@@ -1,19 +1,44 @@
 package com.example.controller;
 
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.util.List;
+
+import javax.swing.SwingUtilities;
+
 import java.awt.Color;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 
 import com.example.enums.ColorMode;
+import com.example.enums.FillColorMode;
+import com.example.enums.FillTool;
 import com.example.enums.RasterizerMode;
+import com.example.enums.SolidAction;
+import com.example.enums.SolidState;
+import com.example.fill.ScanLine;
+import com.example.fill.SeedFill;
+import com.example.fill.SeedFillBorder;
+import com.example.fill.SeedFiller;
+import com.example.fill.SolidFiller;
 import com.example.model.Scene;
 import com.example.model.solid.Arrow;
 import com.example.model.solid.AxisX;
 import com.example.model.solid.AxisY;
 import com.example.model.solid.AxisZ;
+import com.example.model.solid.BezierCurve;
+import com.example.model.solid.CoonsCurve;
+import com.example.model.solid.Cube;
+import com.example.model.solid.Cylinder;
+import com.example.model.solid.FergusonCurve;
+import com.example.model.solid.Pyramid;
+import com.example.model.solid.Solid;
 import com.example.raster.Raster;
+import com.example.raster.RasterBufferedImage;
 import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
 import com.example.renderer.Renderer;
@@ -21,7 +46,11 @@ import com.example.transforms.Camera;
 import com.example.transforms.Mat4;
 import com.example.transforms.Mat4OrthoRH;
 import com.example.transforms.Mat4PerspRH;
+import com.example.transforms.Mat4RotX;
+import com.example.transforms.Mat4RotY;
+import com.example.transforms.Mat4RotZ;
 import com.example.transforms.Mat4Scale;
+import com.example.transforms.Mat4Transl;
 import com.example.transforms.Vec3D;
 import com.example.view.Panel;
 
@@ -48,8 +77,15 @@ public class Controller3D implements Controller {
     private boolean perspectiveProjection = true;
     private Mat4 projectionMatrix;
 
-    // Active solid index (starting at 0,1 are axes)
-    private int activeSolidIndex = 1;
+    // Active solid index (starting at 0, 1 are axes)
+    private int activeSolidIndex = 0;
+
+    // TODO - implement another solid models (cube, pyramid, cylinder, bezier,
+    // ferguson, coons)
+    // TODO - implement (update) all algorithm for filling color - in progress
+
+    // TODO - implement proofing for edges of solid models
+    // TODO - implement rotation for every solid model
 
     /**
      * Creates a new 2D controller for the given panel.
@@ -143,22 +179,28 @@ public class Controller3D implements Controller {
         scene.addSolid(new Arrow());
 
         // cube
+        Cube cube = new Cube();
         // scene.addSolid(cube);
 
         // Pyramid
+        Pyramid pyramid = new Pyramid();
         // scene.addSolid(pyramid);
 
         // Cylinder
+        Cylinder cylinder = new Cylinder();
         // scene.addSolid(cylinder);
 
         // Bezier curve
+        BezierCurve bezier = new BezierCurve();
         // scene.addSolid(bezier);
 
         // Ferguson curve
+        FergusonCurve ferguson = new FergusonCurve();
         // scene.addSolid(ferguson);
 
         // Coons curve
-        // scene.addSolid(coons);
+        CoonsCurve coonsCurve = new CoonsCurve();
+        // Sscene.addSolid(coonsCurve);
     }
 
     @Override
@@ -166,7 +208,104 @@ public class Controller3D implements Controller {
         panel.setFocusable(true);
         panel.setFocusTraversalKeysEnabled(false);
 
+        panel.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                Solid activeSolid = getActiveSolid();
+
+                if (activeSolid == null) {
+                    return;
+                }
+
+                double scale = (e.getUnitsToScroll() > 0) ? 1.1 : 0.9;
+                activeSolid.setModel(new Mat4Scale(scale).mul(activeSolid.getModel()));
+
+                render();
+            }
+        });
+
         panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isMiddleMouseButton(e)) {
+                    List<Color> setColors = lineRasterizer.getColors();
+                    Raster ptRaster = createPatternRaster(100, 100);
+
+                    /*
+                     * Scan-line algorithm is more ralible with gradient then seedFill and
+                     * seedFillBorder
+                     */
+                    // with pattern
+                    if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() == FillColorMode.PATTERN) {
+                        System.out.println("Used scan-line with pattern filling");
+                        SolidFiller scanLine = new ScanLine(panel.getRaster(), ptRaster);
+                        scanLine.fill(getActiveSolid());
+
+                        render();
+                        return;
+                    }
+
+                    // with color
+                    if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() == FillColorMode.COLOR) {
+                        System.out.println("Used scan-line with color filling");
+                        SolidFiller scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
+                        scanLine.fill(getActiveSolid());
+
+                        render();
+                        return;
+                    }
+
+                    // with pattern
+                    if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() == FillColorMode.PATTERN) {
+                        System.out.println("Used seed fill with pattern filling");
+                        SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
+                                panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
+                        seedFill.fill();
+
+                        render();
+                        return;
+                    }
+
+                    // with color
+                    if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() == FillColorMode.COLOR) {
+                        System.out.println("Used seed fill with color filling");
+                        SeedFiller seedFill = new SeedFill(panel.getRaster(),
+                                panel.getRaster().getPixel(e.getX(), e.getY()), 0xFFA52A2A, e.getX(),
+                                e.getY());
+                        seedFill.fill();
+
+                        render();
+                        return;
+                    }
+
+                    // with pattern
+                    if (panel.getFillTool() == FillTool.SEEDFILLBORDER
+                            && panel.getFillColorMode() == FillColorMode.PATTERN) {
+                        System.out.println("Used seed fill border with pattern filling");
+                        SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(), ptRaster,
+                                setColors.get(0).getRGB(),
+                                e.getX(), e.getY());
+                        seedFillBorder.fill();
+
+                        render();
+                        return;
+                    }
+
+                    // with color
+                    if (panel.getFillTool() == FillTool.SEEDFILLBORDER
+                            && panel.getFillColorMode() == FillColorMode.COLOR) {
+                        System.out.println("Used seed fill border with color filling");
+                        SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(),
+                                setColors.get(0).getRGB(), 0xFFA52A2A, e.getX(),
+                                e.getY());
+                        seedFillBorder.fill();
+
+                        render();
+                        return;
+                    }
+                }
+            }
+
             @Override
             public void mousePressed(MouseEvent e) {
                 panel.requestFocusInWindow();
@@ -203,6 +342,12 @@ public class Controller3D implements Controller {
         panel.addKeyListener(new KeyListener() {
             @Override
             public void keyPressed(KeyEvent e) {
+                Solid activeSolid = getActiveSolid();
+
+                if (activeSolid == null) {
+                    return;
+                }
+
                 switch (e.getKeyCode()) {
                     // Cam up
                     case KeyEvent.VK_UP:
@@ -241,8 +386,12 @@ public class Controller3D implements Controller {
                     case KeyEvent.VK_TAB:
                         activeSolidIndex++;
                         if (activeSolidIndex >= scene.getSolids().size()) {
-                            activeSolidIndex = 1;
+                            activeSolidIndex = 0;
                         }
+                        // Move
+                        // new Mat4Transl(-0.1, 0, 0)) (X,Y,Z) -> (-0.1 nebo 0.1) pro každou souradnici
+                        // Rotation
+                        // new Mat4RotX(-0.1) nebo (0.1)
                     default:
                         break;
                 }
@@ -260,14 +409,53 @@ public class Controller3D implements Controller {
             }
         });
 
-        panel.addComponentListener(new java.awt.event.ComponentAdapter() {
+        panel.addComponentListener(new ComponentAdapter() {
             @Override
-            public void componentResized(java.awt.event.ComponentEvent e) {
+            public void componentResized(ComponentEvent e) {
                 panel.resize();
                 initObjects(panel.getRaster());
                 render();
             }
         });
+    }
+
+    private Solid getActiveSolid() {
+        if (scene.getSolids().isEmpty())
+            return null;
+
+        if (activeSolidIndex >= scene.getSolids().size()) {
+            activeSolidIndex = 0;
+        }
+
+        return scene.getSolids().get(activeSolidIndex);
+    }
+
+    private void updateSolid(Solid solid, SolidAction action, Mat4Transl translationValue,
+            Object rotationValue) {
+
+        if ((solid == null || action == null) || (translationValue == null && rotationValue == null))
+            return;
+
+        switch (action) {
+            case ROTATION:
+                if (rotationValue instanceof Mat4RotX) {
+                    solid.setModel(((Mat4RotX) rotationValue).mul(solid.getModel()));
+                }
+
+                if (rotationValue instanceof Mat4RotY) {
+                    solid.setModel(((Mat4RotY) rotationValue).mul(solid.getModel()));
+                }
+
+                if (rotationValue instanceof Mat4RotZ) {
+                    solid.setModel(((Mat4RotZ) rotationValue).mul(solid.getModel()));
+                }
+                break;
+            case PROOFING:
+                solid.setModel(solid.getModel().mul(translationValue));
+                break;
+            default:
+                break;
+        }
     }
 
     private void render() {
@@ -277,9 +465,37 @@ public class Controller3D implements Controller {
         renderer.setProj(projectionMatrix);
 
         for (int i = 0; i < scene.getSolids().size(); i++) {
-            renderer.renderSolid(scene.getSolids().get(i), i == activeSolidIndex);
+            if (i == activeSolidIndex)
+                scene.getSolids().get(i).setState(SolidState.SELECTED);
+            else
+                scene.getSolids().get(i).setState(SolidState.NORMAL);
+
+            renderer.renderSolid(scene.getSolids().get(i));
         }
 
         panel.repaint();
+    }
+
+    private Raster createPatternRaster(int width, int height) {
+
+        if (width < 0 || height < 0)
+            return null;
+
+        Raster patternRaster = new RasterBufferedImage(width, height);
+
+        int lightGray = 0xDDDDDD;
+        int darkGray = 0x777777;
+
+        for (int py = 0; py < height; py++) {
+            for (int px = 0; px < width; px++) {
+                if ((px + py) % 2 == 0) {
+                    patternRaster.setPixel(px, py, lightGray);
+                } else {
+                    patternRaster.setPixel(px, py, darkGray);
+                }
+            }
+        }
+
+        return patternRaster;
     }
 }
