@@ -80,12 +80,13 @@ public class Controller3D implements Controller {
     // Active solid index (starting at 0, 1 are axes)
     private int activeSolidIndex = 0;
 
+    // TODO - implement (update) all algorithm for filling color - in progress -
+    // optional
+
     // TODO - implement another solid models (cube, pyramid, cylinder, bezier,
     // ferguson, coons)
-    // TODO - implement (update) all algorithm for filling color - in progress
-
-    // TODO - implement proofing for edges of solid models
-    // TODO - implement rotation for every solid model
+    // TODO - implement proofing for edges of solid models - check
+    // TODO - implement rotation for every solid model - check
 
     /**
      * Creates a new 2D controller for the given panel.
@@ -388,10 +389,57 @@ public class Controller3D implements Controller {
                         if (activeSolidIndex >= scene.getSolids().size()) {
                             activeSolidIndex = 0;
                         }
-                        // Move
-                        // new Mat4Transl(-0.1, 0, 0)) (X,Y,Z) -> (-0.1 nebo 0.1) pro každou souradnici
-                        // Rotation
-                        // new Mat4RotX(-0.1) nebo (0.1)
+                        break;
+
+                    // Move
+                    // AXIS X
+                    case KeyEvent.VK_Q:
+                        updateSolid(activeSolid, SolidAction.PROOFING, new Mat4Transl(-0.1, 0, 0), null);
+                        break;
+                    case KeyEvent.VK_W:
+                        updateSolid(activeSolid, SolidAction.PROOFING, new Mat4Transl(0.1, 0, 0), null);
+                        break;
+
+                    // AXIS Y
+                    case KeyEvent.VK_A:
+                        updateSolid(activeSolid, SolidAction.PROOFING, new Mat4Transl(0, -0.1, 0), null);
+                        break;
+                    case KeyEvent.VK_S:
+                        updateSolid(activeSolid, SolidAction.PROOFING, new Mat4Transl(0, 0.1, 0), null);
+                        break;
+
+                    // AXIS Z
+                    case KeyEvent.VK_C:
+                        updateSolid(activeSolid, SolidAction.PROOFING, new Mat4Transl(0, 0, -0.1), null);
+                        break;
+                    case KeyEvent.VK_V:
+                        updateSolid(activeSolid, SolidAction.PROOFING, new Mat4Transl(0, 0, 0.1), null);
+                        break;
+
+                    // Rotation
+                    // AXIS X
+                    case KeyEvent.VK_I:
+                        updateSolid(activeSolid, SolidAction.ROTATION, null, new Mat4RotX(-0.1));
+                        break;
+                    case KeyEvent.VK_O:
+                        updateSolid(activeSolid, SolidAction.ROTATION, null, new Mat4RotX(0.1));
+                        break;
+
+                    // AXIS Y
+                    case KeyEvent.VK_K:
+                        updateSolid(activeSolid, SolidAction.ROTATION, null, new Mat4RotY(-0.1));
+                        break;
+                    case KeyEvent.VK_L:
+                        updateSolid(activeSolid, SolidAction.ROTATION, null, new Mat4RotY(0.1));
+                        break;
+
+                    // AXIS Z
+                    case KeyEvent.VK_N:
+                        updateSolid(activeSolid, SolidAction.ROTATION, null, new Mat4RotZ(-0.1));
+                        break;
+                    case KeyEvent.VK_M:
+                        updateSolid(activeSolid, SolidAction.ROTATION, null, new Mat4RotZ(0.1));
+                        break;
                     default:
                         break;
                 }
