@@ -5,6 +5,7 @@ import com.example.model.solid.Solid;
 import com.example.transforms.Mat4;
 import com.example.transforms.Point3D;
 import com.example.transforms.Vec3D;
+import com.example.enums.SolidState;
 import com.example.model.Point;
 
 public class Renderer {
@@ -20,7 +21,7 @@ public class Renderer {
         this.proj = proj;
     }
 
-    public void renderSolid(Solid solid, boolean isSelected) {
+    public void renderSolid(Solid solid) {
         for (int i = 0; i < solid.getIb().size() - 1; i += 2) {
             int indexA = solid.getIb().get(i);
             int indexB = solid.getIb().get(i + 1);
@@ -50,8 +51,10 @@ public class Renderer {
             Vec3D vecA = transformToWindow(pointA);
             Vec3D vecB = transformToWindow(pointB);
 
-            // int c1 = isSelected ? 0xFFFF0000 : v1.getColorARGB(); // Red if selected
-            // int c2 = isSelected ? 0xFFFF0000 : v2.getColorARGB();
+            if (solid.getState() == SolidState.SELECTED)
+                lineRasterizer.setSelectedColor(0xffff00); // Yellow if selected
+            else
+                lineRasterizer.setSelectedColor(null);
 
             lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int) Math.round(vecA.getY())),
                     new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
