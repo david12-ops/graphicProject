@@ -43,6 +43,7 @@ import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
 import com.example.renderer.Renderer;
 import com.example.transforms.Camera;
+import com.example.transforms.Col;
 import com.example.transforms.Mat4;
 import com.example.transforms.Mat4OrthoRH;
 import com.example.transforms.Mat4PerspRH;
@@ -51,6 +52,7 @@ import com.example.transforms.Mat4RotY;
 import com.example.transforms.Mat4RotZ;
 import com.example.transforms.Mat4Scale;
 import com.example.transforms.Mat4Transl;
+import com.example.transforms.Point3D;
 import com.example.transforms.Vec3D;
 import com.example.view.Panel;
 
@@ -180,27 +182,42 @@ public class Controller3D implements Controller {
         scene.addSolid(new Arrow());
 
         // cube
-        Cube cube = new Cube();
+        Cube cube = new Cube(2.0, new Col(255, 240, 200));
         // scene.addSolid(cube);
 
         // Pyramid
-        Pyramid pyramid = new Pyramid();
+        Pyramid pyramid = new Pyramid(2.0, new Col(0, 255, 255));
         // scene.addSolid(pyramid);
 
         // Cylinder
-        Cylinder cylinder = new Cylinder();
+        Cylinder cylinder = new Cylinder(1.0, 2.0, 32, new Col(255, 0, 128));
         // scene.addSolid(cylinder);
 
         // Bezier curve
-        BezierCurve bezier = new BezierCurve();
+        BezierCurve bezier = new BezierCurve(List.of(
+                new Point3D(-1, 1, 2),
+                new Point3D(1, -1, 2),
+                new Point3D(-1, 1, 0),
+                new Point3D(1, -1, 0)),
+                100, new Col(255, 128, 128));
         // scene.addSolid(bezier);
 
         // Ferguson curve
-        FergusonCurve ferguson = new FergusonCurve();
+        FergusonCurve ferguson = new FergusonCurve(List.of(
+                new Point3D(-1, 1, 2),
+                new Point3D(1, -1, 0),
+                new Point3D(0, 0, -2),
+                new Point3D(0, 0, -2)),
+                100, new Col(128, 255, 128));
         // scene.addSolid(ferguson);
 
         // Coons curve
-        CoonsCurve coonsCurve = new CoonsCurve();
+        CoonsCurve coonsCurve = new CoonsCurve(List.of(
+                new Point3D(-1, 1, 2),
+                new Point3D(1, -1, 2),
+                new Point3D(-1, 1, 0),
+                new Point3D(1, -1, 0)),
+                100, new Col(128, 128, 255));
         // Sscene.addSolid(coonsCurve);
     }
 
