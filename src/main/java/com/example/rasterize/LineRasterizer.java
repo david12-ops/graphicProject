@@ -9,6 +9,7 @@ import com.example.enums.RasterizerMode;
 import com.example.model.Line;
 import com.example.model.Point;
 import com.example.raster.Raster;
+import com.example.transforms.Col;
 
 public class LineRasterizer {
 
@@ -37,6 +38,7 @@ public class LineRasterizer {
         this.rasterizerMode = rasterizerMode;
     }
 
+    // solid color setters
     public void setSolidColor(Color solidColor) {
         this.solidColor = solidColor;
     }
@@ -45,6 +47,14 @@ public class LineRasterizer {
         this.solidColor = new Color(solidColor);
     }
 
+    public void setSolidColor(Col color) {
+        if (color == null)
+            this.solidColor = null;
+        else
+            this.solidColor = new Color(color.getRGB());
+    }
+
+    // selected color setters
     public void setSelectedColor(Color selectedColor) {
         this.selectedColor = selectedColor;
     }
@@ -53,6 +63,14 @@ public class LineRasterizer {
         this.selectedColor = new Color(selectedColor);
     }
 
+    public void setSelectedColor(Col selectedColor) {
+        if (selectedColor == null)
+            this.selectedColor = null;
+        else
+            this.selectedColor = new Color(selectedColor.getRGB());
+    }
+
+    // colors for gradient setters
     public void setGradientColors(Color startColor, Color endColor) {
         this.startColor = startColor;
         this.endColor = endColor;
@@ -61,6 +79,16 @@ public class LineRasterizer {
     public void setGradientColors(int startColor, int endColor) {
         this.startColor = new Color(startColor);
         this.endColor = new Color(endColor);
+    }
+
+    public void setGradientColors(Col startColor, Col endColor) {
+        if (startColor != null && endColor != null) {
+            this.startColor = new Color(startColor.getRGB());
+            this.endColor = new Color(endColor.getRGB());
+        } else {
+            this.startColor = null;
+            this.endColor = null;
+        }
     }
 
     public ColorMode getColorMode() {

@@ -92,8 +92,6 @@ public class FilledLineRasterizer extends LineRasterizer {
             return;
         }
 
-        Point point1;
-        Point point2;
         // y = kx + q
         float k = (y2 - y1) / (float) (x2 - x1);
         float q = y1 - k * x1;
@@ -115,12 +113,7 @@ public class FilledLineRasterizer extends LineRasterizer {
             int startX = Math.max(0, x1);
             int endX = Math.min(raster.getWidth() - 1, x2);
 
-            point1 = new Point(x1, y1);
-            point2 = new Point(x2, y2);
-
             if (isSolidUsed()) {
-
-                setColorAndSizeToPoint(6, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB(), point1);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -132,11 +125,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
                     raster.setPixel(x, y, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB());
                 }
-
-                setColorAndSizeToPoint(6, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB(), point2);
             } else {
-
-                setColorAndSizeToPoint(6, selectedColor == null ? startColor.getRGB() : selectedColor.getRGB(), point1);
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
@@ -150,8 +139,6 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y,
                             selectedColor == null ? computeColor(w, startColor, endColor) : selectedColor.getRGB());
                 }
-
-                setColorAndSizeToPoint(6, selectedColor == null ? endColor.getRGB() : selectedColor.getRGB(), point2);
             }
 
         } else {
@@ -171,17 +158,12 @@ public class FilledLineRasterizer extends LineRasterizer {
             boolean isInfiniteK = false;
             int x = 0;
 
-            point1 = new Point(x1, y1);
-            point2 = new Point(x2, y2);
-
             if (Float.isInfinite(k)) {
                 x = x1;
                 isInfiniteK = true;
             }
 
             if (isSolidUsed()) {
-
-                setColorAndSizeToPoint(6, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB(), point1);
 
                 for (int y = startY; y < endY; y++) {
                     if (!isInfiniteK) {
@@ -195,11 +177,7 @@ public class FilledLineRasterizer extends LineRasterizer {
 
                     raster.setPixel(x, y, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB());
                 }
-
-                setColorAndSizeToPoint(6, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB(), point2);
             } else {
-
-                setColorAndSizeToPoint(6, selectedColor == null ? startColor.getRGB() : selectedColor.getRGB(), point1);
 
                 for (int y = startY; y < endY; y++) {
                     if (!isInfiniteK) {
@@ -216,8 +194,6 @@ public class FilledLineRasterizer extends LineRasterizer {
                     raster.setPixel(x, y,
                             selectedColor == null ? computeColor(w, startColor, endColor) : selectedColor.getRGB());
                 }
-
-                setColorAndSizeToPoint(6, selectedColor == null ? endColor.getRGB() : selectedColor.getRGB(), point2);
             }
         }
     }
@@ -272,21 +248,6 @@ public class FilledLineRasterizer extends LineRasterizer {
 
         // revert back
         return ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xFF);
-    }
-
-    /**
-     * Sets visual properties of a point and redraws it.
-     * 
-     * Updates the point's color and size, then renders
-     * the point on the raster.
-     *
-     * @param newSize  New size of the point in pixels
-     * @param newColor New color of the point (RGB)
-     * @param point    Point to be updated and redrawn
-     */
-    private void setColorAndSizeToPoint(int newSize, int newColor, Point point) {
-        point.setColor(newColor);
-        point.resizePoint(newSize, raster);
     }
 
     /**
