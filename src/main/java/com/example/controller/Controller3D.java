@@ -32,10 +32,7 @@ import com.example.model.solid.AxisY;
 import com.example.model.solid.AxisZ;
 import com.example.model.solid.BezierCurve;
 import com.example.model.solid.CoonsCurve;
-import com.example.model.solid.Cube;
-import com.example.model.solid.Cylinder;
 import com.example.model.solid.FergusonCurve;
-import com.example.model.solid.Pyramid;
 import com.example.model.solid.Solid;
 import com.example.raster.Raster;
 import com.example.raster.RasterBufferedImage;
@@ -115,11 +112,12 @@ public class Controller3D implements Controller {
         lineRasterizer.setRasterizeMode(RasterizerMode.NORMAL);
         lineRasterizer.setColorMode(ColorMode.GRADIENT);
         lineRasterizer.setGradientColors(
-                new Color(0xff0000),
-                new Color(0x0000ff));
+                new Col(255, 0, 0), // red
+                new Col(0, 0, 255) // blue
+        );
 
         // lineRasterizer.setColorMode(ColorMode.SOLID);
-        // lineRasterizer.setSolidColor(0x00ff00);
+        // lineRasterizer.setSolidColor(new Col(0, 255, 0)); // green
 
         this.scene = new Scene();
 
@@ -182,43 +180,46 @@ public class Controller3D implements Controller {
         scene.addSolid(new Arrow());
 
         // cube
-        Cube cube = new Cube(2.0, new Col(255, 240, 200));
+        // Cube cube = new Cube(2.0);
         // scene.addSolid(cube);
 
         // Pyramid
-        Pyramid pyramid = new Pyramid(2.0, new Col(0, 255, 255));
+        // Pyramid pyramid = new Pyramid(2.0);
         // scene.addSolid(pyramid);
 
         // Cylinder
-        Cylinder cylinder = new Cylinder(1.0, 2.0, 32, new Col(255, 0, 128));
+        // Cylinder cylinder = new Cylinder(1.0, 2.0, 32);
         // scene.addSolid(cylinder);
 
         // Bezier curve
-        BezierCurve bezier = new BezierCurve(List.of(
+        BezierCurve bezier = new BezierCurve(new Point3D[] {
                 new Point3D(-1, 1, 2),
                 new Point3D(1, -1, 2),
                 new Point3D(-1, 1, 0),
-                new Point3D(1, -1, 0)),
-                100, new Col(255, 128, 128));
-        // scene.addSolid(bezier);
+                new Point3D(1, -1, 0) },
+                100);
+        bezier.compute();
+        scene.addSolid(bezier);
 
         // Ferguson curve
-        FergusonCurve ferguson = new FergusonCurve(List.of(
+        FergusonCurve ferguson = new FergusonCurve(new Point3D[] {
                 new Point3D(-1, 1, 2),
                 new Point3D(1, -1, 0),
                 new Point3D(0, 0, -2),
-                new Point3D(0, 0, -2)),
-                100, new Col(128, 255, 128));
-        // scene.addSolid(ferguson);
+                new Point3D(0, 0, -2) },
+                100);
+        ferguson.compute();
+        scene.addSolid(ferguson);
 
         // Coons curve
-        CoonsCurve coonsCurve = new CoonsCurve(List.of(
+        CoonsCurve coonsCurve = new CoonsCurve(new Point3D[] {
                 new Point3D(-1, 1, 2),
                 new Point3D(1, -1, 2),
                 new Point3D(-1, 1, 0),
-                new Point3D(1, -1, 0)),
-                100, new Col(128, 128, 255));
-        // Sscene.addSolid(coonsCurve);
+                new Point3D(1, -1, 0) },
+                100);
+        coonsCurve.compute();
+        scene.addSolid(coonsCurve);
     }
 
     @Override
