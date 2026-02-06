@@ -2,6 +2,7 @@ package com.example.renderer;
 
 import com.example.rasterize.LineRasterizer;
 import com.example.model.solid.Solid;
+import com.example.transforms.Col;
 import com.example.transforms.Mat4;
 import com.example.transforms.Point3D;
 import com.example.transforms.Vec3D;
@@ -9,6 +10,7 @@ import com.example.enums.SolidState;
 import com.example.model.Point;
 
 public class Renderer {
+    // TODO - resize end and start point
     private LineRasterizer lineRasterizer;
     private int width, height;
     private Mat4 view, proj;
@@ -52,9 +54,9 @@ public class Renderer {
             Vec3D vecB = transformToWindow(pointB);
 
             if (solid.getState() == SolidState.SELECTED)
-                lineRasterizer.setSelectedColor(0xffff00); // Yellow if selected
+                lineRasterizer.setSelectedColor(new Col(255, 255, 0)); // Yellow if selected
             else
-                lineRasterizer.setSelectedColor(null);
+                lineRasterizer.setSelectedColor((Col) null);
 
             lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int) Math.round(vecA.getY())),
                     new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
