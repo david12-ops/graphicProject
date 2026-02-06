@@ -1,11 +1,29 @@
 package com.example.model.solid;
 
-import java.util.List;
-
-import com.example.transforms.Col;
+import com.example.transforms.Cubic;
 import com.example.transforms.Point3D;
 
 public class BezierCurve extends Solid {
-    public BezierCurve(List<Point3D> points, int segments, Col color) {
+
+    private int segments;
+    private Cubic cubicCoons;
+
+    public BezierCurve(Point3D[] points, int segments) {
+        this.segments = segments;
+        this.cubicCoons = new Cubic(Cubic.BEZIER, points);
+    }
+
+    public void compute() {
+        for (int i = 0; i <= segments; i++) {
+            double distance = (double) i / segments;
+            Point3D point3d = cubicCoons.compute(distance);
+
+            this.vb.add(point3d);
+        }
+
+        for (int i = 0; i < vb.size() - 1; i++) {
+            ib.add(i);
+            ib.add(i + 1);
+        }
     }
 }
