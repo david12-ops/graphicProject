@@ -1,10 +1,7 @@
 package com.example.view;
 
-import java.awt.event.KeyEvent;
-
 import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JRadioButtonMenuItem;
 
 import com.example.enums.FillColorMode;
@@ -14,30 +11,23 @@ import com.example.enums.FillTool;
  * With this component you can choose filling algorithm and color or pattern
  * that will be used for filling.
  */
-public class Menu {
+public class FillingMenu {
 
-    private JMenuBar menuBar;
+    private final Panel panel;
+    private final JMenu fillingMenu = new JMenu("Filling menu");
+
     private FillTool fillTool = FillTool.SCANLINE;
     private FillColorMode fillColorMode = FillColorMode.PATTERN;
 
-    private final Panel panel;
-
-    public Menu(Panel panel) {
+    public FillingMenu(Panel panel) {
         this.panel = panel;
-        // Create menu bar FIRST
-        menuBar = new JMenuBar();
 
         // Create menu
-        JMenu menu = new JMenu("Filling menu");
-        menu.setMnemonic(KeyEvent.VK_A);
-        menu.getAccessibleContext().setAccessibleDescription(
+        fillingMenu.getAccessibleContext().setAccessibleDescription(
                 "Menu for picking filling algorithm and color/pattern");
 
-        // Add menu to menu bar
-        menuBar.add(menu);
-
         // ---- radio buttons ----
-        menu.addSeparator();
+        fillingMenu.addSeparator();
         ButtonGroup toolGroup = new ButtonGroup();
 
         JRadioButtonMenuItem scanLine = new JRadioButtonMenuItem("Scan-line", true);
@@ -46,17 +36,17 @@ public class Menu {
             onMenuChanged();
         });
 
-        scanLine.setMnemonic(KeyEvent.VK_R);
         toolGroup.add(scanLine);
-        menu.add(scanLine);
+        fillingMenu.add(scanLine);
 
         JRadioButtonMenuItem seedFill = new JRadioButtonMenuItem("Seed fill");
         seedFill.addActionListener(e -> {
             fillTool = FillTool.SEEDFILL;
             onMenuChanged();
         });
+
         toolGroup.add(seedFill);
-        menu.add(seedFill);
+        fillingMenu.add(seedFill);
 
         JRadioButtonMenuItem seedFillBorder = new JRadioButtonMenuItem("Seed fill border");
         seedFillBorder.addActionListener(e -> {
@@ -65,10 +55,10 @@ public class Menu {
         });
 
         toolGroup.add(seedFillBorder);
-        menu.add(seedFillBorder);
+        fillingMenu.add(seedFillBorder);
 
-        // ---- checkboxes ----
-        menu.addSeparator();
+        // ---- radio buttons ----
+        fillingMenu.addSeparator();
         ButtonGroup fillModeGroup = new ButtonGroup();
 
         JRadioButtonMenuItem pattern = new JRadioButtonMenuItem("Fill with pattern", true);
@@ -78,7 +68,7 @@ public class Menu {
         });
 
         fillModeGroup.add(pattern);
-        menu.add(pattern);
+        fillingMenu.add(pattern);
 
         JRadioButtonMenuItem color = new JRadioButtonMenuItem("Fill with color");
         color.addActionListener(e -> {
@@ -87,7 +77,7 @@ public class Menu {
         });
 
         fillModeGroup.add(color);
-        menu.add(color);
+        fillingMenu.add(color);
     }
 
     private void onMenuChanged() {
@@ -97,15 +87,15 @@ public class Menu {
         panel.repaint();
     }
 
-    public JMenuBar getMenuBar() {
-        return menuBar;
+    public JMenu getJmenu() {
+        return fillingMenu;
     }
 
     public FillColorMode getFillColorMode() {
         return fillColorMode;
     }
 
-    public FillTool geFillTool() {
+    public FillTool getFillTool() {
         return fillTool;
     }
 }

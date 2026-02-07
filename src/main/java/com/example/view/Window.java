@@ -6,11 +6,16 @@ import javax.swing.*;
 
 public class Window extends JFrame {
     private final Panel panel;
-    private Menu menu;
+    private FillingMenu fillingMenu;
+    private DrawColorMenu drawColorMenu;
+    private final JMenuBar menuBar = new JMenuBar();
 
     public Window() {
         panel = new Panel();
-        menu = new Menu(panel);
+
+        fillingMenu = new FillingMenu(panel);
+        drawColorMenu = new DrawColorMenu(panel);
+
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setTitle("2D Graphics Project");
         setVisible(true);
@@ -21,7 +26,10 @@ public class Window extends JFrame {
 
         setLocationRelativeTo(null);
 
-        setJMenuBar(menu.getMenuBar());
+        menuBar.add(fillingMenu.getJmenu());
+        menuBar.add(drawColorMenu.getJmenu());
+
+        setJMenuBar(menuBar);
 
         // lepší až na konci, aby to neukradla nějaká komponenta v případně složitějším
         // UI

@@ -1,5 +1,6 @@
 package com.example.view;
 
+import com.example.enums.ColorMode;
 import com.example.enums.FillColorMode;
 import com.example.enums.FillTool;
 import com.example.raster.Raster;
@@ -15,6 +16,7 @@ public class Panel extends JPanel {
     private RasterBufferedImage raster;
     private FillTool fillTool = FillTool.SCANLINE;
     private FillColorMode fillColorMode = FillColorMode.PATTERN;
+    private ColorMode colorMode = ColorMode.SOLID;
 
     public Raster getRaster() {
         return raster;
@@ -51,6 +53,14 @@ public class Panel extends JPanel {
 
     public FillColorMode getFillColorMode() {
         return this.fillColorMode;
+    }
+
+    public ColorMode getColorMode() {
+        return colorMode;
+    }
+
+    public void setColorMode(ColorMode colorMode) {
+        this.colorMode = colorMode;
     }
 
     public void resize() {
