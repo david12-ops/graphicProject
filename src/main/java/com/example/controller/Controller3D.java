@@ -79,8 +79,11 @@ public class Controller3D implements Controller {
     // Active solid index (starting at 0, 1 are axes)
     private int activeSolidIndex = 0;
 
+    private ColorMode colorMode;
+
     // TODO - implement (update) all algorithm for filling color - in progress -
     // optional
+    // TODO - resize end and start point - optional
 
     // TODO - implement another solid models (cube, pyramid, cylinder, bezier,
     // ferguson, coons)
@@ -107,17 +110,12 @@ public class Controller3D implements Controller {
      * @param raster Raster used for drawing operations
      */
     public void initObjects(Raster raster) {
+        colorMode = panel.getColorMode();
+
         lineRasterizer = new FilledLineRasterizer(raster);
 
         lineRasterizer.setRasterizeMode(RasterizerMode.NORMAL);
-        lineRasterizer.setColorMode(ColorMode.GRADIENT);
-        lineRasterizer.setGradientColors(
-                new Col(255, 0, 0), // red
-                new Col(0, 0, 255) // blue
-        );
-
-        // lineRasterizer.setColorMode(ColorMode.SOLID);
-        // lineRasterizer.setSolidColor(new Col(0, 255, 0)); // green
+        setRasterizerDrawingColor();
 
         this.scene = new Scene();
 
@@ -258,7 +256,7 @@ public class Controller3D implements Controller {
                     if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() == FillColorMode.PATTERN) {
                         System.out.println("Used scan-line with pattern filling");
                         SolidFiller scanLine = new ScanLine(panel.getRaster(), ptRaster);
-                        scanLine.fill(getActiveSolid());
+                        scanLine.fill(getActiveSolid(), e.getX(), e.getY());
 
                         render();
                         return;
@@ -268,7 +266,7 @@ public class Controller3D implements Controller {
                     if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() == FillColorMode.COLOR) {
                         System.out.println("Used scan-line with color filling");
                         SolidFiller scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
-                        scanLine.fill(getActiveSolid());
+                        scanLine.fill(getActiveSolid(), e.getX(), e.getY());
 
                         render();
                         return;
@@ -527,6 +525,11 @@ public class Controller3D implements Controller {
     private void render() {
         panel.getRaster().clear();
 
+        if (colorMode != panel.getColorMode()) {
+            colorMode = panel.getColorMode();
+            setRasterizerDrawingColor();
+        }
+
         renderer.setView(camera.getViewMatrix());
         renderer.setProj(projectionMatrix);
 
@@ -540,6 +543,24 @@ public class Controller3D implements Controller {
         }
 
         panel.repaint();
+    }
+
+    private void setRasterizerDrawingColor() {
+        if (colorMode == ColorMode.GRADIENT) {
+            lineRasterizer.setColorMode(ColorMode.GRADIENT);
+            lineRasterizer.setGradientColors(
+                    new Col(255, 0, 0), // red
+                    new Col(0, 0, 255) // blue
+            );
+        } else if (colorMode == ColorMode.SOLID) {
+            lineRasterizer.setColorMode(ColorMode.SOLID);
+            lineRasterizer.setSolidColor(new Col(0, 255, 0)); // green
+        } else {
+            System.err.println("Invalid ColorMode, falling back to SOLID");
+
+            lineRasterizer.setColorMode(ColorMode.SOLID);
+            lineRasterizer.setSolidColor(new Col(0, 255, 0)); // green
+        }
     }
 
     private Raster createPatternRaster(int width, int height) {
