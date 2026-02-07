@@ -10,7 +10,7 @@ import com.example.enums.SolidState;
 import com.example.model.Point;
 
 public class Renderer {
-    // TODO - resize end and start point
+
     private LineRasterizer lineRasterizer;
     private int width, height;
     private Mat4 view, proj;
