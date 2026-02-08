@@ -7,7 +7,6 @@ import java.util.List;
 
 import javax.swing.SwingUtilities;
 
-import java.awt.Color;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
@@ -113,6 +112,7 @@ public class Controller3D implements Controller {
         colorMode = panel.getColorMode();
 
         lineRasterizer = new FilledLineRasterizer(raster);
+        // lineRasterizer = new LineRasterizerGraphics(raster);
 
         lineRasterizer.setRasterizeMode(RasterizerMode.NORMAL);
         setRasterizerDrawingColor();
@@ -245,7 +245,7 @@ public class Controller3D implements Controller {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isMiddleMouseButton(e)) {
-                    List<Color> setColors = lineRasterizer.getColors();
+                    List<Col> setColors = lineRasterizer.getColors();
                     Raster ptRaster = createPatternRaster(100, 100);
 
                     /*
@@ -265,7 +265,7 @@ public class Controller3D implements Controller {
                     // with color
                     if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() == FillColorMode.COLOR) {
                         System.out.println("Used scan-line with color filling");
-                        SolidFiller scanLine = new ScanLine(panel.getRaster(), 0xFFA52A2A);
+                        SolidFiller scanLine = new ScanLine(panel.getRaster(), new Col(165, 42, 42, 255));
                         scanLine.fill(getActiveSolid(), e.getX(), e.getY());
 
                         render();
@@ -276,7 +276,7 @@ public class Controller3D implements Controller {
                     if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() == FillColorMode.PATTERN) {
                         System.out.println("Used seed fill with pattern filling");
                         SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
-                                panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
+                                new Col(panel.getRaster().getPixel(e.getX(), e.getY())), e.getX(), e.getY());
                         seedFill.fill();
 
                         render();
@@ -287,7 +287,8 @@ public class Controller3D implements Controller {
                     if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() == FillColorMode.COLOR) {
                         System.out.println("Used seed fill with color filling");
                         SeedFiller seedFill = new SeedFill(panel.getRaster(),
-                                panel.getRaster().getPixel(e.getX(), e.getY()), 0xFFA52A2A, e.getX(),
+                                new Col(panel.getRaster().getPixel(e.getX(), e.getY())), new Col(165, 42, 42, 255),
+                                e.getX(),
                                 e.getY());
                         seedFill.fill();
 
@@ -300,7 +301,7 @@ public class Controller3D implements Controller {
                             && panel.getFillColorMode() == FillColorMode.PATTERN) {
                         System.out.println("Used seed fill border with pattern filling");
                         SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(), ptRaster,
-                                setColors.get(0).getRGB(),
+                                setColors.get(0),
                                 e.getX(), e.getY());
                         seedFillBorder.fill();
 
@@ -313,7 +314,7 @@ public class Controller3D implements Controller {
                             && panel.getFillColorMode() == FillColorMode.COLOR) {
                         System.out.println("Used seed fill border with color filling");
                         SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(),
-                                setColors.get(0).getRGB(), 0xFFA52A2A, e.getX(),
+                                setColors.get(0), new Col(165, 42, 42, 255), e.getX(),
                                 e.getY());
                         seedFillBorder.fill();
 
@@ -556,8 +557,6 @@ public class Controller3D implements Controller {
             lineRasterizer.setColorMode(ColorMode.SOLID);
             lineRasterizer.setSolidColor(new Col(0, 255, 0)); // green
         } else {
-            System.err.println("Invalid ColorMode, falling back to SOLID");
-
             lineRasterizer.setColorMode(ColorMode.SOLID);
             lineRasterizer.setSolidColor(new Col(0, 255, 0)); // green
         }
