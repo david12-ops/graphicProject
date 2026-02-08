@@ -1,12 +1,11 @@
 package com.example.rasterize;
 
-import java.awt.Color;
-
 import com.example.enums.ColorMode;
 import com.example.enums.RasterizerMode;
 import com.example.model.Line;
 import com.example.model.Point;
 import com.example.raster.Raster;
+import com.example.transforms.Col;
 
 /*
  * Disadvantages:
@@ -235,19 +234,22 @@ public class FilledLineRasterizer extends LineRasterizer {
      * @param endColor   Ending color
      * @return Interpolated RGB color
      */
-    private int computeColor(float w, Color startColor, Color endColor) {
+    private int computeColor(float w, Col startColor, Col endColor) {
         if (w < 0f)
             w = 0f;
         else if (w > 1f)
             w = 1f;
 
-        // For each channel (R, G, B):
-        int r = Math.round(startColor.getRed() * (1 - w) + endColor.getRed() * w);
-        int g = Math.round(startColor.getGreen() * (1 - w) + endColor.getGreen() * w);
-        int b = Math.round(startColor.getBlue() * (1 - w) + endColor.getBlue() * w);
+        double iw = 1.0 - w;
+
+        // For each channel (A, R, G, B):
+        int a = (int) Math.round(startColor.getA() * 255.0);
+        int r = (int) Math.round((startColor.getR() * iw + endColor.getR() * w) * 255.0);
+        int g = (int) Math.round((startColor.getG() * iw + endColor.getG() * w) * 255.0);
+        int b = (int) Math.round((startColor.getB() * iw + endColor.getB() * w) * 255.0);
 
         // revert back
-        return ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xFF);
+        return (((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF));
     }
 
     /**

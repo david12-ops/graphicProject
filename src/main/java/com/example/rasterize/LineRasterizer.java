@@ -1,6 +1,5 @@
 package com.example.rasterize;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,10 +14,10 @@ public class LineRasterizer {
 
     protected Raster raster;
 
-    protected Color solidColor;
-    protected Color startColor;
-    protected Color endColor;
-    protected Color selectedColor;
+    protected Col solidColor;
+    protected Col startColor;
+    protected Col endColor;
+    protected Col selectedColor;
 
     protected ColorMode colorMode;
     protected RasterizerMode rasterizerMode;
@@ -39,56 +38,32 @@ public class LineRasterizer {
     }
 
     // solid color setters
-    public void setSolidColor(Color solidColor) {
+    public void setSolidColor(Col solidColor) {
         this.solidColor = solidColor;
     }
 
     public void setSolidColor(int solidColor) {
-        this.solidColor = new Color(solidColor);
-    }
-
-    public void setSolidColor(Col color) {
-        if (color == null)
-            this.solidColor = null;
-        else
-            this.solidColor = new Color(color.getRGB());
+        this.solidColor = new Col(solidColor);
     }
 
     // selected color setters
-    public void setSelectedColor(Color selectedColor) {
+    public void setSelectedColor(Col selectedColor) {
         this.selectedColor = selectedColor;
     }
 
     public void setSelectedColor(int selectedColor) {
-        this.selectedColor = new Color(selectedColor);
-    }
-
-    public void setSelectedColor(Col selectedColor) {
-        if (selectedColor == null)
-            this.selectedColor = null;
-        else
-            this.selectedColor = new Color(selectedColor.getRGB());
+        this.selectedColor = new Col(selectedColor);
     }
 
     // colors for gradient setters
-    public void setGradientColors(Color startColor, Color endColor) {
+    public void setGradientColors(Col startColor, Col endColor) {
         this.startColor = startColor;
         this.endColor = endColor;
     }
 
     public void setGradientColors(int startColor, int endColor) {
-        this.startColor = new Color(startColor);
-        this.endColor = new Color(endColor);
-    }
-
-    public void setGradientColors(Col startColor, Col endColor) {
-        if (startColor != null && endColor != null) {
-            this.startColor = new Color(startColor.getRGB());
-            this.endColor = new Color(endColor.getRGB());
-        } else {
-            this.startColor = null;
-            this.endColor = null;
-        }
+        this.startColor = new Col(startColor);
+        this.endColor = new Col(endColor);
     }
 
     public ColorMode getColorMode() {
@@ -109,8 +84,8 @@ public class LineRasterizer {
      *
      * @return list of active colors based on the current color mode
      */
-    public List<Color> getColors() {
-        List<Color> colorList = new ArrayList<>();
+    public List<Col> getColors() {
+        List<Col> colorList = new ArrayList<>();
 
         if (colorMode == ColorMode.GRADIENT) {
             colorList.add(startColor);
