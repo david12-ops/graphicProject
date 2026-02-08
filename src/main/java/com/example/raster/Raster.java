@@ -13,4 +13,6 @@ public interface Raster {
     int getPixel(int x, int y);
 
     void setPixel(int x, int y, int color);
+
+    boolean isInsideRaster(int x, int y);
 }
