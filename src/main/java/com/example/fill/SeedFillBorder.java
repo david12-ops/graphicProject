@@ -1,10 +1,10 @@
 package com.example.fill;
 
-import java.awt.Color;
 import java.util.Stack;
 
 import com.example.model.Point;
 import com.example.raster.Raster;
+import com.example.transforms.Col;
 
 /**
  * Implements a border-based seed fill algorithm.
@@ -16,7 +16,7 @@ import com.example.raster.Raster;
 public class SeedFillBorder extends PatternPainter implements SeedFiller {
     private Raster raster;
     private int x, y;
-    private Color borderColor, fillColor;
+    private Col borderColor, fillColor;
 
     /**
      * Creates a border-based seed fill using a solid fill color.
@@ -27,11 +27,11 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
      * @param x           Starting x-coordinate
      * @param y           Starting y-coordinate
      */
-    public SeedFillBorder(Raster raster, int borderColor, int fillColor, int x, int y) {
+    public SeedFillBorder(Raster raster, Col borderColor, Col fillColor, int x, int y) {
         super(null);
         this.raster = raster;
-        this.fillColor = new Color(fillColor);
-        this.borderColor = new Color(borderColor);
+        this.fillColor = fillColor;
+        this.borderColor = borderColor;
         this.x = x;
         this.y = y;
     }
@@ -45,10 +45,10 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
      * @param x             Starting x-coordinate
      * @param y             Starting y-coordinate
      */
-    public SeedFillBorder(Raster raster, Raster patternRaster, int borderColor, int x, int y) {
+    public SeedFillBorder(Raster raster, Raster patternRaster, Col borderColor, int x, int y) {
         super(patternRaster);
         this.raster = raster;
-        this.borderColor = new Color(borderColor);
+        this.borderColor = borderColor;
         this.fillColor = null;
         this.x = x;
         this.y = y;
@@ -70,30 +70,26 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
         Stack<Point> stack = new Stack<>();
         stack.push(new Point(x, y));
 
-        if (startColor == borderColor.getRGB())
+        if (startColor == borderColor.getARGB())
             return;
 
         while (!stack.empty()) {
             Point p = stack.pop();
 
             // Bounds check
-            if (p.getX() < 0 || p.getY() < 0 || p.getX() >= raster.getWidth() || p.getY() >= raster.getHeight())
+            if (!raster.isInsideRaster(p.getX(), p.getY()))
                 continue;
 
             int pixel = raster.getPixel(p.getX(), p.getY());
 
-            // Skip invalid pixels or border
-            if (pixel == -1)
-                continue;
-
-            if (pixel == borderColor.getRGB())
+            if (pixel == borderColor.getARGB())
                 continue;
 
             // Only fill pixels matching the starting color
             if (pixel != startColor)
                 continue;
 
-            int color = (patternRaster != null && fillColor == null) ? paint(p.getX(), p.getY()) : fillColor.getRGB();
+            int color = (patternRaster != null && fillColor == null) ? paint(p.getX(), p.getY()) : fillColor.getARGB();
 
             raster.setPixel(p.getX(), p.getY(), color);
 

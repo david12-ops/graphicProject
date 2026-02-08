@@ -1,6 +1,5 @@
 package com.example.fill;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +8,7 @@ import com.example.model.Point;
 import com.example.model.Polygon;
 import com.example.model.solid.Solid;
 import com.example.raster.Raster;
+import com.example.transforms.Col;
 
 /**
  * Implementation of polygon filling using the Scan-Line algorithm.
@@ -28,7 +28,7 @@ public class ScanLine extends PatternPainter implements SolidFiller, PolygonFill
 
     private List<Line> tempLines = new ArrayList<>();
     private List<Double> intersections = new ArrayList<>();
-    private Color fillColor;
+    private Col fillColor;
 
     /**
      * Creates a scan-line filler with a solid fill color.
@@ -36,10 +36,10 @@ public class ScanLine extends PatternPainter implements SolidFiller, PolygonFill
      * @param raster    Target raster
      * @param fillColor Color used to fill the polygon
      */
-    public ScanLine(Raster raster, int fillColor) {
+    public ScanLine(Raster raster, Col fillColor) {
         super(null);
         this.raster = raster;
-        this.fillColor = new Color(fillColor);
+        this.fillColor = fillColor;
     }
 
     /**
