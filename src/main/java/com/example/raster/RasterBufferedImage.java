@@ -73,7 +73,7 @@ public class RasterBufferedImage implements Raster {
      */
     @Override
     public void setPixel(int x, int y, int color) {
-        if (x >= 0 && y >= 0 && x < image.getWidth() && y < image.getHeight())
+        if (isInsideRaster(x, y))
             image.setRGB(x, y, color);
     }
 
@@ -86,11 +86,7 @@ public class RasterBufferedImage implements Raster {
      */
     @Override
     public int getPixel(int x, int y) {
-        if (x >= 0 && y >= 0 && x < image.getWidth() && y < image.getHeight()) {
-            return image.getRGB(x, y);
-        }
-
-        return -1;
+        return image.getRGB(x, y);
     }
 
     /**
@@ -130,5 +126,25 @@ public class RasterBufferedImage implements Raster {
     @Override
     public void setClearColor(int color) {
         this.color = color;
+    }
+
+    /**
+     * Checks whether the given pixel coordinates lie inside the raster bounds.
+     *
+     * <p>
+     * A coordinate is considered inside if:
+     * <ul>
+     * <li>{@code x} is in the range {@code [0, image.getWidth())}</li>
+     * <li>{@code y} is in the range {@code [0, image.getHeight())}</li>
+     * </ul>
+     *
+     * @param x the x-coordinate of the pixel
+     * @param y the y-coordinate of the pixel
+     * @return {@code true} if the coordinates are inside the raster,
+     *         {@code false} otherwise
+     */
+    @Override
+    public boolean isInsideRaster(int x, int y) {
+        return x >= 0 && y >= 0 && x < image.getWidth() && y < image.getHeight();
     }
 }
