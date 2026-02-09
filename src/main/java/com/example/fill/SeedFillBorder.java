@@ -54,6 +54,10 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
         this.y = y;
     }
 
+    private int normalize(int argb) {
+        return argb | 0xFF000000; // force alpha = 255
+    }
+
     /**
      * Performs the border-based seed fill using an explicit stack.
      * 
@@ -70,7 +74,7 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
         Stack<Point> stack = new Stack<>();
         stack.push(new Point(x, y));
 
-        if (startColor == borderColor.getARGB())
+        if (normalize(startColor) == normalize(borderColor.getARGB()))
             return;
 
         while (!stack.empty()) {
@@ -82,7 +86,7 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
 
             int pixel = raster.getPixel(p.getX(), p.getY());
 
-            if (pixel == borderColor.getARGB())
+            if (normalize(pixel) == normalize(borderColor.getARGB()))
                 continue;
 
             // Only fill pixels matching the starting color

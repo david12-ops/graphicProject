@@ -15,7 +15,8 @@ import com.example.transforms.Col;
 public class SeedFill extends PatternPainter implements SeedFiller {
     private Raster raster;
     private int x, y;
-    private Col backgroundColor, fillColor;
+    private Col fillColor;
+    private int backgroundColor;
 
     /**
      * Creates a seed fill using a solid fill color.
@@ -26,7 +27,7 @@ public class SeedFill extends PatternPainter implements SeedFiller {
      * @param x               Starting x-coordinate
      * @param y               Starting y-coordinate
      */
-    public SeedFill(Raster raster, Col backgroundColor, Col fillColor, int x, int y) {
+    public SeedFill(Raster raster, int backgroundColor, Col fillColor, int x, int y) {
         super(null);
         this.raster = raster;
         this.backgroundColor = backgroundColor;
@@ -44,13 +45,17 @@ public class SeedFill extends PatternPainter implements SeedFiller {
      * @param x               Starting x-coordinate
      * @param y               Starting y-coordinate
      */
-    public SeedFill(Raster raster, Raster patternRaster, Col backgroundColor, int x, int y) {
+    public SeedFill(Raster raster, Raster patternRaster, int backgroundColor, int x, int y) {
         super(patternRaster);
         this.raster = raster;
         this.backgroundColor = backgroundColor;
         this.fillColor = null;
         this.x = x;
         this.y = y;
+    }
+
+    private int normalize(int argb) {
+        return argb | 0xFF000000; // force alpha = 255
     }
 
     /**
@@ -75,10 +80,17 @@ public class SeedFill extends PatternPainter implements SeedFiller {
 
             int pixel = raster.getPixel(p.getX(), p.getY());
 
-            if (pixel != backgroundColor.getARGB())
+            if (normalize(pixel) != normalize(backgroundColor))
                 continue;
 
-            int color = (patternRaster != null && fillColor == null) ? paint(p.getX(), p.getY()) : fillColor.getARGB();
+            int color;
+            if (patternRaster != null) {
+                color = paint(p.getX(), p.getY());
+            } else if (fillColor != null) {
+                color = fillColor.getARGB();
+            } else {
+                continue; // or throw IllegalStateException
+            }
 
             raster.setPixel(p.getX(), p.getY(), color);
 
@@ -103,7 +115,9 @@ public class SeedFill extends PatternPainter implements SeedFiller {
             return;
         }
 
-        if (fillColor != null && backgroundColor.getARGB() == fillColor.getARGB()) {
+        if (fillColor != null &&
+                patternRaster == null
+                && normalize(backgroundColor) == normalize(fillColor.getARGB())) {
             System.out.println("Fill color equals background color");
             return;
         }
