@@ -80,12 +80,13 @@ public class Controller3D implements Controller {
 
     private ColorMode colorMode;
 
-    // TODO - implement (update) all algorithm for filling color - in progress -
-    // optional
-    // TODO - resize end and start point - optional
+    // TODO - scan-line (computing all solid polygons), cannot with seedfill and
+    // seedfillborder refill pattern with solid color, seedfillborder in this state
+    // cannot work with gradient edges
+    // TODO - resize end and start point
 
-    // TODO - implement another solid models (cube, pyramid, cylinder, bezier,
-    // ferguson, coons)
+    // TODO - implement another solid models (cube, pyramid, cylinder)
+
     // TODO - implement proofing for edges of solid models - check
     // TODO - implement rotation for every solid model - check
 
@@ -258,7 +259,7 @@ public class Controller3D implements Controller {
                         SolidFiller scanLine = new ScanLine(panel.getRaster(), ptRaster);
                         scanLine.fill(getActiveSolid(), e.getX(), e.getY());
 
-                        render();
+                        update();
                         return;
                     }
 
@@ -268,7 +269,7 @@ public class Controller3D implements Controller {
                         SolidFiller scanLine = new ScanLine(panel.getRaster(), new Col(165, 42, 42, 255));
                         scanLine.fill(getActiveSolid(), e.getX(), e.getY());
 
-                        render();
+                        update();
                         return;
                     }
 
@@ -276,10 +277,10 @@ public class Controller3D implements Controller {
                     if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() == FillColorMode.PATTERN) {
                         System.out.println("Used seed fill with pattern filling");
                         SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
-                                new Col(panel.getRaster().getPixel(e.getX(), e.getY())), e.getX(), e.getY());
+                                panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
                         seedFill.fill();
 
-                        render();
+                        update();
                         return;
                     }
 
@@ -287,12 +288,12 @@ public class Controller3D implements Controller {
                     if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() == FillColorMode.COLOR) {
                         System.out.println("Used seed fill with color filling");
                         SeedFiller seedFill = new SeedFill(panel.getRaster(),
-                                new Col(panel.getRaster().getPixel(e.getX(), e.getY())), new Col(165, 42, 42, 255),
+                                panel.getRaster().getPixel(e.getX(), e.getY()), new Col(165, 42, 42, 255),
                                 e.getX(),
                                 e.getY());
                         seedFill.fill();
 
-                        render();
+                        update();
                         return;
                     }
 
@@ -305,7 +306,7 @@ public class Controller3D implements Controller {
                                 e.getX(), e.getY());
                         seedFillBorder.fill();
 
-                        render();
+                        update();
                         return;
                     }
 
@@ -318,7 +319,7 @@ public class Controller3D implements Controller {
                                 e.getY());
                         seedFillBorder.fill();
 
-                        render();
+                        update();
                         return;
                     }
                 }
@@ -479,7 +480,6 @@ public class Controller3D implements Controller {
             public void componentResized(ComponentEvent e) {
                 panel.resize();
                 initObjects(panel.getRaster());
-                render();
             }
         });
     }
@@ -524,7 +524,7 @@ public class Controller3D implements Controller {
     }
 
     private void render() {
-        panel.getRaster().clear();
+        panel.clear();
 
         if (colorMode != panel.getColorMode()) {
             colorMode = panel.getColorMode();
@@ -543,7 +543,7 @@ public class Controller3D implements Controller {
             renderer.renderSolid(scene.getSolids().get(i));
         }
 
-        panel.repaint();
+        update();
     }
 
     private void setRasterizerDrawingColor() {
@@ -560,6 +560,13 @@ public class Controller3D implements Controller {
             lineRasterizer.setColorMode(ColorMode.SOLID);
             lineRasterizer.setSolidColor(new Col(0, 255, 0)); // green
         }
+    }
+
+    /**
+     * Repaints the panel.
+     */
+    private void update() {
+        panel.repaint();
     }
 
     private Raster createPatternRaster(int width, int height) {
