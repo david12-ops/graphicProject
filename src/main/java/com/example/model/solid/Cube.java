@@ -6,6 +6,7 @@ public class Cube extends Solid {
     public Cube(double size) {
         double halfSize = size / 2.0;
 
+        // Fill in vb
         // Bottom
         vb.add(new Point3D(-halfSize, -halfSize, -halfSize));
         vb.add(new Point3D(halfSize, -halfSize, -halfSize));
@@ -18,6 +19,7 @@ public class Cube extends Solid {
         vb.add(new Point3D(halfSize, halfSize, halfSize));
         vb.add(new Point3D(-halfSize, halfSize, halfSize));
 
+        // Fill in ib
         // Bottom
         ib.add(0);
         ib.add(1);

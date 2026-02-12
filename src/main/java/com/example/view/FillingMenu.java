@@ -22,7 +22,6 @@ public class FillingMenu {
     public FillingMenu(Panel panel) {
         this.panel = panel;
 
-        // Create menu
         fillingMenu.getAccessibleContext().setAccessibleDescription(
                 "Menu for picking filling algorithm and color/pattern");
 

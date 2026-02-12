@@ -15,9 +15,7 @@ public class DrawColorMenu {
 
     public DrawColorMenu(Panel panel) {
         this.panel = panel;
-        // Create menu bar FIRST
 
-        // Create menu
         drawingColorMenu.getAccessibleContext().setAccessibleDescription(
                 "Menu for picking drawing color");
 

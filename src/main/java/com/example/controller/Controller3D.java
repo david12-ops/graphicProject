@@ -575,27 +575,46 @@ public class Controller3D implements Controller {
         return scene.getSolids().get(activeSolidIndex);
     }
 
+    /**
+     * Updates the model matrix of the given solid according to the specified
+     * action.
+     *
+     * If the action is ROTATION, the provided rotation matrix is
+     * left-multiplied with the current model matrix.
+     *
+     * If the action is PROOFING, the provided translation matrix is
+     * right-multiplied with the current model matrix.
+     *
+     * Transformations are appended on the right side of the model matrix.
+     *
+     * @param solid            the solid whose model matrix will be updated
+     * @param action           the transformation type (ROTATION or PROOFING)
+     * @param translationValue translation matrix (required for PROOFING)
+     * @param rotationValue    rotation matrix (required for ROTATION)
+     */
     private void updateSolid(Solid solid, SolidAction action, Mat4Transl translationValue,
-            Object rotationValue) {
+            Mat4 rotationValue) {
 
-        if ((solid == null || action == null) || (translationValue == null && rotationValue == null))
+        if (solid == null || action == null) {
+            System.out.println("Solid and action are required");
             return;
+        }
 
         switch (action) {
             case ROTATION:
-                if (rotationValue instanceof Mat4RotX) {
-                    solid.setModel(((Mat4RotX) rotationValue).mul(solid.getModel()));
+                if (rotationValue == null) {
+                    System.out.println("Rotation matrix is required.");
+                    return;
                 }
 
-                if (rotationValue instanceof Mat4RotY) {
-                    solid.setModel(((Mat4RotY) rotationValue).mul(solid.getModel()));
-                }
-
-                if (rotationValue instanceof Mat4RotZ) {
-                    solid.setModel(((Mat4RotZ) rotationValue).mul(solid.getModel()));
-                }
+                solid.setModel(rotationValue.mul(solid.getModel()));
                 break;
             case PROOFING:
+                if (translationValue == null) {
+                    System.out.println("Translation matrix is required.");
+                    return;
+                }
+
                 solid.setModel(solid.getModel().mul(translationValue));
                 break;
             default:

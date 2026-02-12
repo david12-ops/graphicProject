@@ -41,31 +41,31 @@ public class Renderer {
             Point3D pointB = solid.getVb().get(indexB);
 
             if (solid.useModelMatrix()) {
-                // Modelovací transformace (model) = model space -> world space
-                // Pohledová tranformace (view) = world space -> view space
-                // Projekční tranformace (projection) = view space -> clip space
+                // Modeling transformation (model) = model space -> world space
+                // View transformation (view) = world space -> view space
+                // Projection transformation (projection) = view space -> clip space
                 pointA = pointA.mul(solid.getModel()).mul(view).mul(proj);
                 pointB = pointB.mul(solid.getModel()).mul(view).mul(proj);
             } else {
-                // Pohledová tranformace (view) = world space -> view space
-                // Projekční tranformace (projection) = view space -> clip space
+                // View transformation (view) = world space -> view space
+                // Projection transformation (projection) = view space -> clip space
                 pointA = pointA.mul(view).mul(proj);
                 pointB = pointB.mul(view).mul(proj);
             }
 
-            // reject points behind camera
+            // Reject points behind camera
             if (pointA.getW() <= 0 || pointB.getW() <= 0)
                 continue;
 
-            // Dehomogenizace
+            // Dehomogenization
             pointA = pointA.mul(1.0 / pointA.getW());
             pointB = pointB.mul(1.0 / pointB.getW());
 
-            // Ořezání v clip space
+            // Crop in clip space
             if (!insideClipVolume(pointA) || !insideClipVolume(pointB))
                 continue;
 
-            // Transformace do okna obrazovky = NDC -> screen space
+            // Transform to screen window = NDC -> screen space
             Vec3D vecA = transformToWindow(pointA);
             Vec3D vecB = transformToWindow(pointB);
 

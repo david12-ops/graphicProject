@@ -4,14 +4,14 @@ import com.example.transforms.Point3D;
 
 public class Arrow extends Solid {
     public Arrow() {
-        // Naplním vb
+        // Fill in vb
         vb.add(new Point3D(0, 0, 0)); // v0
         vb.add(new Point3D(0.8, 0, 0)); // v1
         vb.add(new Point3D(0.8, 0, -0.2)); // v2
         vb.add(new Point3D(1, 0, 0)); // v3
         vb.add(new Point3D(0.8, 0, 0.2)); // v4
 
-        // Naplním ib
+        // Fill in ib
         ib.add(0);
         ib.add(1);
 
