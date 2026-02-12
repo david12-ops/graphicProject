@@ -4,17 +4,48 @@ import com.example.transforms.Point3D;
 
 public class Cube extends Solid {
     public Cube(double size) {
-        computePolygons();
-    }
+        double halfSize = size / 2.0;
 
-    private void computePolygons() {
+        // Bottom
+        vb.add(new Point3D(-halfSize, -halfSize, -halfSize));
+        vb.add(new Point3D(halfSize, -halfSize, -halfSize));
+        vb.add(new Point3D(halfSize, halfSize, -halfSize));
+        vb.add(new Point3D(-halfSize, halfSize, -halfSize));
 
-        for (int i = 0; i < this.ib.size() - 1; i += 2) {
-            int indexA = this.ib.get(i);
-            int indexB = this.ib.get(i + 1);
+        // Top
+        vb.add(new Point3D(-halfSize, -halfSize, halfSize));
+        vb.add(new Point3D(halfSize, -halfSize, halfSize));
+        vb.add(new Point3D(halfSize, halfSize, halfSize));
+        vb.add(new Point3D(-halfSize, halfSize, halfSize));
 
-            Point3D pointA = this.vb.get(indexA);
-            Point3D pointB = this.vb.get(indexB);
-        }
+        // Bottom
+        ib.add(0);
+        ib.add(1);
+        ib.add(1);
+        ib.add(2);
+        ib.add(2);
+        ib.add(3);
+        ib.add(0);
+        ib.add(3);
+
+        // Top
+        ib.add(4);
+        ib.add(5);
+        ib.add(5);
+        ib.add(6);
+        ib.add(6);
+        ib.add(7);
+        ib.add(7);
+        ib.add(4);
+
+        // Vertical
+        ib.add(0);
+        ib.add(4);
+        ib.add(1);
+        ib.add(5);
+        ib.add(2);
+        ib.add(6);
+        ib.add(3);
+        ib.add(7);
     }
 }
