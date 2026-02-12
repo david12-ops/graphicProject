@@ -10,13 +10,19 @@ import com.example.transforms.Point3D;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Solid extends Polygon {
+public abstract class Solid {
     protected List<Point3D> vb = new ArrayList<>();
     protected List<Integer> ib = new ArrayList<>();
-    protected Col color = new Col(0xffffff);
     protected Mat4 model = new Mat4Identity();
-    protected SolidState state = SolidState.NORMAL;
     protected List<Polygon> solidPolygons = new ArrayList<>();
+
+    private SolidState state = SolidState.NORMAL;
+
+    private Col solidColor = new Col(0xffffff);
+    private Col gradientStart;
+    private Col gradientEnd;
+
+    private boolean useModelMatrix = true;
 
     public List<Point3D> getVb() {
         return vb;
@@ -26,8 +32,21 @@ public abstract class Solid extends Polygon {
         return ib;
     }
 
-    public Col getColor() {
-        return color;
+    public Col getSolidColor() {
+        return solidColor;
+    }
+
+    public void setSolidColor(Col solidColor) {
+        this.solidColor = solidColor;
+    }
+
+    public Col[] getColorsForGradient() {
+        return new Col[] { gradientStart, gradientEnd };
+    }
+
+    public void setGradientColor(Col start, Col end) {
+        this.gradientStart = start;
+        this.gradientEnd = end;
     }
 
     public List<Polygon> getSolidPolygons() {
@@ -44,6 +63,14 @@ public abstract class Solid extends Polygon {
 
     public void setState(SolidState state) {
         this.state = state;
+    }
+
+    public boolean useModelMatrix() {
+        return useModelMatrix;
+    }
+
+    public void setUseModelMatrix(boolean useModelMatrix) {
+        this.useModelMatrix = useModelMatrix;
     }
 
     public Mat4 getModel() {
