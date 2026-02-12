@@ -6,6 +6,7 @@ import com.example.transforms.Col;
 import com.example.transforms.Mat4;
 import com.example.transforms.Point3D;
 import com.example.transforms.Vec3D;
+import com.example.enums.ColorMode;
 import com.example.enums.SolidState;
 import com.example.model.Point;
 
@@ -24,6 +25,14 @@ public class Renderer {
     }
 
     public void renderSolid(Solid solid) {
+
+        initColorForRasterizer(solid);
+
+        if (solid.getState() == SolidState.SELECTED)
+            lineRasterizer.setSelectedColor(new Col(255, 255, 0)); // Yellow if selected
+        else
+            lineRasterizer.setSelectedColor((Col) null);
+
         for (int i = 0; i < solid.getIb().size() - 1; i += 2) {
             int indexA = solid.getIb().get(i);
             int indexB = solid.getIb().get(i + 1);
@@ -31,11 +40,18 @@ public class Renderer {
             Point3D pointA = solid.getVb().get(indexA);
             Point3D pointB = solid.getVb().get(indexB);
 
-            // Modelovací transformace (model) = model space -> world space
-            // Pohledová tranformace (view) = world space -> view space
-            // Projekční tranformace (projection) = view space -> clip space
-            pointA = pointA.mul(solid.getModel()).mul(view).mul(proj);
-            pointB = pointB.mul(solid.getModel()).mul(view).mul(proj);
+            if (solid.useModelMatrix()) {
+                // Modelovací transformace (model) = model space -> world space
+                // Pohledová tranformace (view) = world space -> view space
+                // Projekční tranformace (projection) = view space -> clip space
+                pointA = pointA.mul(solid.getModel()).mul(view).mul(proj);
+                pointB = pointB.mul(solid.getModel()).mul(view).mul(proj);
+            } else {
+                // Pohledová tranformace (view) = world space -> view space
+                // Projekční tranformace (projection) = view space -> clip space
+                pointA = pointA.mul(view).mul(proj);
+                pointB = pointB.mul(view).mul(proj);
+            }
 
             // reject points behind camera
             if (pointA.getW() <= 0 || pointB.getW() <= 0)
@@ -53,11 +69,6 @@ public class Renderer {
             Vec3D vecA = transformToWindow(pointA);
             Vec3D vecB = transformToWindow(pointB);
 
-            if (solid.getState() == SolidState.SELECTED)
-                lineRasterizer.setSelectedColor(new Col(255, 255, 0)); // Yellow if selected
-            else
-                lineRasterizer.setSelectedColor((Col) null);
-
             lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int) Math.round(vecA.getY())),
                     new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
         }
@@ -73,6 +84,18 @@ public class Renderer {
         return new Vec3D(p).mul(new Vec3D(1, -1, 1))
                 .add(new Vec3D(1, 1, 0))
                 .mul(new Vec3D((width - 1) / 2., (height - 1) / 2., 1));
+    }
+
+    private void initColorForRasterizer(Solid solid) {
+        if (lineRasterizer.getColorMode() == ColorMode.SOLID)
+            lineRasterizer.setSolidColor(solid.getSolidColor());
+        else if (lineRasterizer.getColorMode() == ColorMode.GRADIENT)
+            lineRasterizer.setGradientColors(solid.getColorsForGradient()[0],
+                    solid.getColorsForGradient()[1]);
+        else {
+            System.err.println("Invalid ColorMode, falling back to SOLID");
+            lineRasterizer.setSolidColor(solid.getSolidColor());
+        }
     }
 
     public void setView(Mat4 view) {
