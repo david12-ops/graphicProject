@@ -75,7 +75,6 @@ public class Controller3D implements Controller {
     private boolean perspectiveProjection = true;
     private Mat4 projectionMatrix;
 
-    // Active solid index (starting at 0, 1 are axes)
     private int activeSolidIndex = 0;
 
     private ColorMode colorMode;
@@ -166,17 +165,46 @@ public class Controller3D implements Controller {
         AxisY axisY = new AxisY();
         AxisZ axisZ = new AxisZ();
 
-        // each axis is length 5 units
-        axisX.setModel(new Mat4Scale(5, 1, 1));
-        axisY.setModel(new Mat4Scale(1, 5, 1));
-        axisZ.setModel(new Mat4Scale(1, 1, 5));
+        axisX.setUseModelMatrix(false);
+        axisY.setUseModelMatrix(false);
+        axisZ.setUseModelMatrix(false);
+
+        // Colors for axes
+        axisX.setSolidColor(new Col(255, 0, 0)); // red
+        axisX.setGradientColor(
+                new Col(120, 0, 0), // dark red
+                new Col(255, 220, 0) // bright yellow
+        );
+
+        axisY.setSolidColor(new Col(0, 255, 0)); // green
+        axisY.setGradientColor(
+                new Col(0, 100, 0), // dark green
+                new Col(0, 255, 200) // bright turquoise
+        );
+
+        axisZ.setSolidColor(new Col(0, 0, 255)); // blue
+        axisZ.setGradientColor(
+                new Col(70, 120, 255), // light blue
+                new Col(180, 100, 255) // blue-violet
+        );
 
         scene.addSolid(axisX);
         scene.addSolid(axisY);
         scene.addSolid(axisZ);
 
         // Arrow
-        scene.addSolid(new Arrow());
+        Arrow arrow = new Arrow();
+
+        // Colors
+        // solid - gold
+        arrow.setSolidColor(new Col(255, 180, 0));
+
+        arrow.setGradientColor(
+                new Col(120, 60, 0), // dark orange
+                new Col(255, 230, 120) // light gold
+        );
+
+        scene.addSolid(arrow);
 
         // cube
         // Cube cube = new Cube(2.0);
@@ -198,6 +226,16 @@ public class Controller3D implements Controller {
                 new Point3D(1, -1, 0) },
                 100);
         bezier.compute();
+
+        // Colors
+        // solid - coral
+        bezier.setSolidColor(new Col(255, 94, 77));
+
+        bezier.setGradientColor(
+                new Col(120, 20, 20), // dark reddish brown
+                new Col(255, 240, 180) // very light apricot
+        );
+
         scene.addSolid(bezier);
 
         // Ferguson curve
@@ -208,6 +246,16 @@ public class Controller3D implements Controller {
                 new Point3D(0, 0, -2) },
                 100);
         ferguson.compute();
+
+        // Colors
+        // solid - purple
+        ferguson.setSolidColor(new Col(131, 58, 180));
+
+        ferguson.setGradientColor(
+                new Col(40, 0, 80), // very dark purple
+                new Col(255, 120, 255) // light pink-purple
+        );
+
         scene.addSolid(ferguson);
 
         // Coons curve
@@ -218,6 +266,15 @@ public class Controller3D implements Controller {
                 new Point3D(1, -1, 0) },
                 100);
         coonsCurve.compute();
+
+        // Colors
+        // solid - light sea green
+        coonsCurve.setSolidColor(new Col(32, 178, 170));
+
+        coonsCurve.setGradientColor(
+                new Col(0, 60, 60), // dark teal
+                new Col(180, 255, 255) // very light cyan
+        );
         scene.addSolid(coonsCurve);
     }
 
@@ -547,18 +604,13 @@ public class Controller3D implements Controller {
     }
 
     private void setRasterizerDrawingColor() {
-        if (colorMode == ColorMode.GRADIENT) {
+        if (colorMode == ColorMode.GRADIENT)
             lineRasterizer.setColorMode(ColorMode.GRADIENT);
-            lineRasterizer.setGradientColors(
-                    new Col(255, 0, 0), // red
-                    new Col(0, 0, 255) // blue
-            );
-        } else if (colorMode == ColorMode.SOLID) {
+        else if (colorMode == ColorMode.SOLID)
             lineRasterizer.setColorMode(ColorMode.SOLID);
-            lineRasterizer.setSolidColor(new Col(0, 255, 0)); // green
-        } else {
+        else {
+            System.err.println("Invalid ColorMode, falling back to SOLID");
             lineRasterizer.setColorMode(ColorMode.SOLID);
-            lineRasterizer.setSolidColor(new Col(0, 255, 0)); // green
         }
     }
 
