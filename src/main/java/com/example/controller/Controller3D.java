@@ -136,8 +136,8 @@ public class Controller3D implements Controller {
     }
 
     private void initProjection() {
-        double height = Math.max(1, panel.getRaster().getHeight());
-        double width = Math.max(1, panel.getRaster().getWidth());
+        double height = Math.max(1, panel.getHeight());
+        double width = Math.max(1, panel.getWidth());
 
         if (perspectiveProjection) {
             projectionMatrix = new Mat4PerspRH(
@@ -559,6 +559,7 @@ public class Controller3D implements Controller {
             public void componentResized(ComponentEvent e) {
                 panel.resize();
                 initObjects(panel.getRaster());
+                render();
             }
         });
     }
