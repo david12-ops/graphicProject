@@ -31,6 +31,8 @@ import com.example.model.solid.AxisY;
 import com.example.model.solid.AxisZ;
 import com.example.model.solid.BezierCurve;
 import com.example.model.solid.CoonsCurve;
+import com.example.model.solid.Cube;
+import com.example.model.solid.Cylinder;
 import com.example.model.solid.FergusonCurve;
 import com.example.model.solid.Solid;
 import com.example.raster.Raster;
@@ -82,15 +84,9 @@ public class Controller3D implements Controller {
     // TODO - scan-line (computing all solid polygons), cannot with seedfill and
     // seedfillborder refill pattern with solid color, seedfillborder in this state
     // cannot work with gradient edges
-    // TODO - resize end and start point
-
-    // TODO - implement another solid models (cube, pyramid, cylinder)
-
-    // TODO - implement proofing for edges of solid models - check
-    // TODO - implement rotation for every solid model - check
 
     /**
-     * Creates a new 2D controller for the given panel.
+     * Creates a new 3D controller for the given panel.
      * 
      * @param panel Panel used for rendering and input handling
      */
@@ -133,7 +129,7 @@ public class Controller3D implements Controller {
 
     private void initCamera() {
         camera = new Camera()
-                .withPosition(new Vec3D(0.5, -1.5, 1.5))
+                .withPosition(new Vec3D(1.1, -1.5, 1.5))
                 .withAzimuth(Math.toRadians(90))
                 .withZenith(Math.toRadians(-25))
                 .withFirstPerson(true);
@@ -196,34 +192,56 @@ public class Controller3D implements Controller {
         Arrow arrow = new Arrow();
 
         // Colors
-        // solid - gold
-        arrow.setSolidColor(new Col(255, 180, 0));
+        // solid - hot pink
+        arrow.setSolidColor(new Col(255, 105, 180));
+        arrow.setModel(new Mat4Transl(1.5, 0, 0));
 
         arrow.setGradientColor(
-                new Col(120, 60, 0), // dark orange
-                new Col(255, 230, 120) // light gold
+                new Col(255, 105, 180), // hot pink
+                new Col(0, 255, 200) // bright turquoise
         );
 
         scene.addSolid(arrow);
 
-        // cube
-        // Cube cube = new Cube(2.0);
-        // scene.addSolid(cube);
+        // Cube
+        Cube cube = new Cube(2.0);
+        cube.setModel(new Mat4Transl(3, 6, 0));
 
-        // Pyramid
-        // Pyramid pyramid = new Pyramid(2.0);
-        // scene.addSolid(pyramid);
+        // Colors
+        // solid - steel blue-gray
+        cube.setSolidColor(new Col(70, 90, 120));
+
+        cube.setGradientColor(
+                new Col(40, 50, 70), // dark steel
+                new Col(160, 180, 210) // light metallic blue
+        );
+
+        scene.addSolid(cube);
 
         // Cylinder
-        // Cylinder cylinder = new Cylinder(1.0, 2.0, 32);
-        // scene.addSolid(cylinder);
+        Cylinder cylinder = new Cylinder(1.0, 2.0, 32);
+        cylinder.setModel(new Mat4Transl(-1.5, 6, 0));
+
+        // Colors
+        // solid - wine red
+        cylinder.setSolidColor(new Col(120, 20, 60));
+
+        cylinder.setGradientColor(
+                new Col(60, 0, 30), // dark wine
+                new Col(200, 80, 140) // light wine-pink
+        );
+
+        scene.addSolid(cylinder);
 
         // Bezier curve
-        BezierCurve bezier = new BezierCurve(new Point3D[] {
-                new Point3D(-1, 1, 2),
-                new Point3D(1, -1, 2),
-                new Point3D(-1, 1, 0),
-                new Point3D(1, -1, 0) },
+        // Points for curves with choosen solid (cube)
+        Point3D p0 = cube.getVb().get(0).mul(new Mat4Transl(3, 6, 0));
+        Point3D p3 = cube.getVb().get(6).mul(new Mat4Transl(3, 6, 0));
+
+        Point3D p1 = new Point3D(6, 10, 4);
+        Point3D p2 = new Point3D(0, -2, 3);
+
+        BezierCurve bezier = new BezierCurve(new Point3D[] { p0, p1, p2, p3 },
                 100);
         bezier.compute();
 
@@ -239,11 +257,14 @@ public class Controller3D implements Controller {
         scene.addSolid(bezier);
 
         // Ferguson curve
-        FergusonCurve ferguson = new FergusonCurve(new Point3D[] {
-                new Point3D(-1, 1, 2),
-                new Point3D(1, -1, 0),
-                new Point3D(0, 0, -2),
-                new Point3D(0, 0, -2) },
+        // Points for curves with choosen solid (cube)
+        Point3D start = p0;
+        Point3D end = p3;
+
+        Point3D t0 = new Point3D(3, 0, 0);
+        Point3D t1 = new Point3D(0, 3, 2);
+
+        FergusonCurve ferguson = new FergusonCurve(new Point3D[] { start, end, t0, t1 },
                 100);
         ferguson.compute();
 
@@ -259,11 +280,11 @@ public class Controller3D implements Controller {
         scene.addSolid(ferguson);
 
         // Coons curve
-        CoonsCurve coonsCurve = new CoonsCurve(new Point3D[] {
-                new Point3D(-1, 1, 2),
-                new Point3D(1, -1, 2),
-                new Point3D(-1, 1, 0),
-                new Point3D(1, -1, 0) },
+        // Points for curves with choosen solid (cube)
+        // The Coons cubic is an approximation, so it does not pass through the
+        // endpoints like the previous two.
+        // p0, p0, p3, p3 - this will cause the curve to come closer to the ends.
+        CoonsCurve coonsCurve = new CoonsCurve(new Point3D[] { p0, p0, p3, p3 },
                 100);
         coonsCurve.compute();
 
@@ -275,6 +296,7 @@ public class Controller3D implements Controller {
                 new Col(0, 60, 60), // dark teal
                 new Col(180, 255, 255) // very light cyan
         );
+
         scene.addSolid(coonsCurve);
     }
 
