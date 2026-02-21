@@ -6,6 +6,9 @@ import com.example.transforms.Col;
 import com.example.transforms.Mat4;
 import com.example.transforms.Point3D;
 import com.example.transforms.Vec3D;
+
+import java.util.Optional;
+
 import com.example.enums.ColorMode;
 import com.example.enums.SolidState;
 import com.example.model.Point;
@@ -57,20 +60,24 @@ public class Renderer {
             if (pointA.getW() <= 0 || pointB.getW() <= 0)
                 continue;
 
-            // Dehomogenization
-            pointA = pointA.mul(1.0 / pointA.getW());
-            pointB = pointB.mul(1.0 / pointB.getW());
-
             // Crop in clip space
             if (!insideClipVolume(pointA) || !insideClipVolume(pointB))
                 continue;
 
+            Optional<Vec3D> dehomogA = pointA.dehomog();
+            Optional<Vec3D> dehomogB = pointB.dehomog();
+
+            // Dehomogenization
+            if (dehomogA.isEmpty() || dehomogB.isEmpty())
+                continue;
+
             // Transform to screen window = NDC -> screen space
-            Vec3D vecA = transformToWindow(pointA);
-            Vec3D vecB = transformToWindow(pointB);
+            Vec3D vecA = transformToWindow(dehomogA.get());
+            Vec3D vecB = transformToWindow(dehomogB.get());
 
             lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int) Math.round(vecA.getY())),
                     new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
+
         }
     }
 
@@ -80,8 +87,8 @@ public class Renderer {
                 && p.getZ() <= p.getW();
     }
 
-    private Vec3D transformToWindow(Point3D p) {
-        return new Vec3D(p).mul(new Vec3D(1, -1, 1))
+    private Vec3D transformToWindow(Vec3D v) {
+        return v.mul(new Vec3D(1, -1, 1))
                 .add(new Vec3D(1, 1, 0))
                 .mul(new Vec3D((width - 1) / 2., (height - 1) / 2., 1));
     }
