@@ -9,6 +9,7 @@ import com.example.model.Line;
 import com.example.model.Point;
 import com.example.raster.Raster;
 import com.example.transforms.Col;
+import com.example.transforms.Vec3D;
 
 public class LineRasterizer {
 
@@ -104,6 +105,10 @@ public class LineRasterizer {
     }
 
     public void rasterize(Point a, Point b) {
+
+    }
+
+    public void rasterize(Vec3D a, Vec3D b) {
 
     }
 }

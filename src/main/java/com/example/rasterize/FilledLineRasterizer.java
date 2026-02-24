@@ -6,6 +6,7 @@ import com.example.model.Line;
 import com.example.model.Point;
 import com.example.raster.Raster;
 import com.example.transforms.Col;
+import com.example.transforms.Vec3D;
 
 /*
  * Disadvantages:
@@ -40,21 +41,27 @@ public class FilledLineRasterizer extends LineRasterizer {
     }
 
     /**
-     * Rasterizes a line defined by two points.
-     * 
-     * If SHIFT mode is active, the line endpoint is snapped
-     * to horizontal, vertical, or diagonal direction.
+     * Rasterizes a line between two 3D vertices using the selected rasterization
+     * mode.
      *
-     * @param x1 Start point a (x - a.getX, y - a.getY)
-     * @param y1 End point b (x - b.getX, y - b.getY)
+     * The X and Y coordinates are used for rasterization (screen space).
+     * The Z coordinate can be used for depth testing (Z-buffer), but is not handled
+     * here.
+     *
+     * If NORMAL mode is selected, the trivial line rasterization algorithm is used.
+     * SHIFT mode is not supported for 3D vertices.
+     *
+     * @param a start vertex of the line in 3D space
+     * @param b end vertex of the line in 3D space
      */
     @Override
-    public void rasterize(Point a, Point b) {
-        if (rasterizerMode == RasterizerMode.NORMAL)
-            trivialAlgorithm(a.getX(), a.getY(), b.getX(), b.getY());
-        else if (rasterizerMode == RasterizerMode.SHIFT) {
-            Point endPoint = snapToHVOrDiagonal(a, b);
-            trivialAlgorithm(a.getX(), a.getY(), endPoint.getX(), endPoint.getY());
+    public void rasterize(Vec3D a, Vec3D b) {
+        if (rasterizerMode == RasterizerMode.NORMAL) {
+            trivialAlgorithm((int) Math.round(a.getX()), (int) Math.round(a.getY()), a.getZ(),
+                    (int) Math.round(b.getX()),
+                    (int) Math.round(b.getY()), b.getZ());
+        } else if (rasterizerMode == RasterizerMode.SHIFT) {
+            System.out.println("Shift mode is not supported for 3D points. Rasterizing without snapping.");
         } else
             return;
     }
@@ -82,8 +89,9 @@ public class FilledLineRasterizer extends LineRasterizer {
      * @param y1 Start y-coordinate
      * @param x2 End x-coordinate
      * @param y2 End y-coordinate
+     * @param z  Depth value (z-coordinate)
      */
-    private void trivialAlgorithm(int x1, int y1, int x2, int y2) {
+    private void trivialAlgorithm(int x1, int y1, double z1, int x2, int y2, double z2) {
         if (!(isGradientUsed() || isSolidUsed())) {
             System.out.println(
                     "Color mode is invalid or missing colors to draw.");
@@ -95,18 +103,18 @@ public class FilledLineRasterizer extends LineRasterizer {
         float k = (y2 - y1) / (float) (x2 - x1);
         float q = y1 - k * x1;
 
+        float t = 0;
+
         if (Math.abs((y2 - y1)) < Math.abs(x2 - x1)) {
 
             if (x2 < x1) {
-
-                int t;
-                t = x1;
+                int p;
+                p = x1;
                 x1 = x2;
-                x2 = t;
-
-                t = y1;
+                x2 = p;
+                p = y1;
                 y1 = y2;
-                y2 = t;
+                y2 = p;
             }
 
             int startX = Math.max(0, x1);
@@ -122,34 +130,38 @@ public class FilledLineRasterizer extends LineRasterizer {
                         continue;
                     }
 
-                    raster.setPixel(x, y, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB());
+                    t = (x - x1) / (float) (x2 - x1);
+
+                    raster.setPixel(x, y, computeZ(t, z1, z2),
+                            selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB());
                 }
             } else {
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
-                    float w = (x - x1) / (float) (x2 - x1);
 
                     // skip drawing when y is outside raster
                     if (y < 0 || y >= raster.getHeight()) {
                         continue;
                     }
 
-                    raster.setPixel(x, y,
-                            selectedColor == null ? computeColor(w, startColor, endColor) : selectedColor.getRGB());
+                    t = (x - x1) / (float) (x2 - x1);
+
+                    raster.setPixel(x, y, computeZ(t, z1, z2),
+                            selectedColor == null ? computeColor(t, startColor, endColor) : selectedColor.getRGB());
                 }
             }
 
         } else {
 
             if (y2 < y1) {
-                int t;
-                t = x1;
+                int p;
+                p = x1;
                 x1 = x2;
-                x2 = t;
-                t = y1;
+                x2 = p;
+                p = y1;
                 y1 = y2;
-                y2 = t;
+                y2 = p;
             }
 
             int startY = Math.max(0, y1);
@@ -174,7 +186,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                         continue;
                     }
 
-                    raster.setPixel(x, y, selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB());
+                    t = (y - y1) / (float) (y2 - y1);
+
+                    raster.setPixel(x, y, computeZ(t, z1, z2),
+                            selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB());
                 }
             } else {
 
@@ -183,15 +198,15 @@ public class FilledLineRasterizer extends LineRasterizer {
                         x = Math.round((y - q) / k);
                     }
 
-                    float w = (y - y1) / (float) (y2 - y1);
-
                     // skip drawing when x is outside raster
                     if (x < 0 || x >= raster.getWidth()) {
                         continue;
                     }
 
-                    raster.setPixel(x, y,
-                            selectedColor == null ? computeColor(w, startColor, endColor) : selectedColor.getRGB());
+                    t = (y - y1) / (float) (y2 - y1);
+
+                    raster.setPixel(x, y, computeZ(t, z1, z2),
+                            selectedColor == null ? computeColor(t, startColor, endColor) : selectedColor.getRGB());
                 }
             }
         }
@@ -229,24 +244,25 @@ public class FilledLineRasterizer extends LineRasterizer {
     /**
      * Computes interpolated color between two colors.
      *
-     * @param w          Interpolation factor in range ⟨0,1⟩
+     * @param t          Interpolation factor in range ⟨0,1⟩
      * @param startColor Starting color
      * @param endColor   Ending color
      * @return Interpolated RGB color
      */
-    private int computeColor(float w, Col startColor, Col endColor) {
-        if (w < 0f)
-            w = 0f;
-        else if (w > 1f)
-            w = 1f;
+    private int computeColor(float t, Col startColor, Col endColor) {
+        if (t < 0f)
+            t = 0f;
+        else if (t > 1f)
+            t = 1f;
 
-        double iw = 1.0 - w;
+        double it = 1.0 - t;
 
         // For each channel (A, R, G, B):
-        int a = (int) Math.round(startColor.getA() * 255.0);
-        int r = (int) Math.round((startColor.getR() * iw + endColor.getR() * w) * 255.0);
-        int g = (int) Math.round((startColor.getG() * iw + endColor.getG() * w) * 255.0);
-        int b = (int) Math.round((startColor.getB() * iw + endColor.getB() * w) * 255.0);
+        // C=C1​(1−t)+C2​t - formula for linear interpolation of colors
+        int a = (int) Math.round((startColor.getA() * it + endColor.getA() * t) * 255.0);
+        int r = (int) Math.round((startColor.getR() * it + endColor.getR() * t) * 255.0);
+        int g = (int) Math.round((startColor.getG() * it + endColor.getG() * t) * 255.0);
+        int b = (int) Math.round((startColor.getB() * it + endColor.getB() * t) * 255.0);
 
         // revert back
         return (((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF));
@@ -264,5 +280,9 @@ public class FilledLineRasterizer extends LineRasterizer {
      */
     private boolean isSolidUsed() {
         return colorMode == ColorMode.SOLID && solidColor != null;
+    }
+
+    private double computeZ(float t, double z1, double z2) {
+        return z1 + t * (z2 - z1);
     }
 }
