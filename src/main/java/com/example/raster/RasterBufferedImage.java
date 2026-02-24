@@ -11,6 +11,8 @@ import java.awt.image.BufferedImage;
 public class RasterBufferedImage implements Raster {
 
     private BufferedImage image;
+
+    private double[][] zBuffer;
     private int color;
 
     /**
@@ -30,6 +32,16 @@ public class RasterBufferedImage implements Raster {
      */
     public RasterBufferedImage(int width, int height) {
         image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+        zBuffer = new double[width][height];
+    }
+
+    private void resetZBuffer() {
+        for (int x = 0; x < getWidth(); x++) {
+            for (int y = 0; y < getHeight(); y++) {
+                zBuffer[x][y] = Double.POSITIVE_INFINITY;
+            }
+        }
     }
 
     /**
@@ -69,6 +81,26 @@ public class RasterBufferedImage implements Raster {
      *
      * @param x     X-coordinate of the pixel
      * @param y     Y-coordinate of the pixel
+     * @param z     Z-coordinate of the pixel (used for depth testing)
+     * @param color Color value in RGB format
+     */
+    @Override
+    public void setPixel(int x, int y, double z, int color) {
+        // z = w1 * z1 + w2 * z2 + w3 * z3;
+        if (isInsideRaster(x, y)) {
+            if (z < zBuffer[x][y]) {
+                zBuffer[x][y] = z;
+                image.setRGB(x, y, color);
+            }
+        }
+    }
+
+    /**
+     * Sets the color of a pixel at the given coordinates.
+     * Pixels outside the raster are ignored.
+     *
+     * @param x     X-coordinate of the pixel
+     * @param y     Y-coordinate of the pixel
      * @param color Color value in RGB format
      */
     @Override
@@ -82,7 +114,7 @@ public class RasterBufferedImage implements Raster {
      *
      * @param x X-coordinate of the pixel
      * @param y Y-coordinate of the pixel
-     * @return Pixel color, or {@code -1} if coordinates are outside the raster
+     * @return Pixel color value in RGB format
      */
     @Override
     public int getPixel(int x, int y) {
@@ -114,6 +146,7 @@ public class RasterBufferedImage implements Raster {
      */
     @Override
     public void clear() {
+        resetZBuffer();
         Graphics g = image.getGraphics();
         g.clearRect(0, 0, image.getWidth(), image.getHeight());
     }
