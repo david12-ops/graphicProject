@@ -86,7 +86,6 @@ public class RasterBufferedImage implements Raster {
      */
     @Override
     public void setPixel(int x, int y, double z, int color) {
-        // z = w1 * z1 + w2 * z2 + w3 * z3;
         if (isInsideRaster(x, y)) {
             if (z < zBuffer[x][y]) {
                 zBuffer[x][y] = z;
