@@ -36,7 +36,7 @@ public class RasterBufferedImage implements Raster {
         zBuffer = new double[width][height];
     }
 
-    private void resetZBuffer() {
+    private void clearZBuffer() {
         for (int x = 0; x < getWidth(); x++) {
             for (int y = 0; y < getHeight(); y++) {
                 zBuffer[x][y] = Double.POSITIVE_INFINITY;
@@ -145,7 +145,7 @@ public class RasterBufferedImage implements Raster {
      */
     @Override
     public void clear() {
-        resetZBuffer();
+        clearZBuffer();
         Graphics g = image.getGraphics();
         g.clearRect(0, 0, image.getWidth(), image.getHeight());
     }
