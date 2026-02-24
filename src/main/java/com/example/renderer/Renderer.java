@@ -11,7 +11,6 @@ import java.util.Optional;
 
 import com.example.enums.ColorMode;
 import com.example.enums.SolidState;
-import com.example.model.Point;
 
 public class Renderer {
 
@@ -56,12 +55,8 @@ public class Renderer {
                 pointB = pointB.mul(view).mul(proj);
             }
 
-            // Reject points behind camera
-            if (pointA.getW() <= 0 || pointB.getW() <= 0)
-                continue;
-
             // Crop in clip space
-            if (!insideClipVolume(pointA) || !insideClipVolume(pointB))
+            if (!insideClipVolume(pointA) && !insideClipVolume(pointB))
                 continue;
 
             Optional<Vec3D> dehomogA = pointA.dehomog();
@@ -75,16 +70,20 @@ public class Renderer {
             Vec3D vecA = transformToWindow(dehomogA.get());
             Vec3D vecB = transformToWindow(dehomogB.get());
 
-            lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int) Math.round(vecA.getY())),
-                    new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
+            // lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int)
+            // Math.round(vecA.getY())),
+            // new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
 
+            lineRasterizer.rasterize(vecA, vecB);
         }
     }
 
     private boolean insideClipVolume(Point3D p) {
-        return p.getX() >= -p.getW() && p.getX() <= p.getW() &&
-                p.getY() >= -p.getW() && p.getY() <= p.getW() && p.getZ() >= 0
-                && p.getZ() <= p.getW();
+        double w = p.getW();
+
+        return p.getX() >= -w && p.getX() <= w &&
+                p.getY() >= -w && p.getY() <= w && p.getZ() >= 0
+                && p.getZ() <= w;
     }
 
     private Vec3D transformToWindow(Vec3D v) {
