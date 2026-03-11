@@ -2,6 +2,7 @@ package com.example.renderer;
 
 import com.example.rasterize.LineRasterizer;
 import com.example.model.solid.Solid;
+import com.example.model.Point;
 import com.example.transforms.Col;
 import com.example.transforms.Mat4;
 import com.example.transforms.Point3D;
@@ -70,11 +71,8 @@ public class Renderer {
             Vec3D vecA = transformToWindow(dehomogA.get());
             Vec3D vecB = transformToWindow(dehomogB.get());
 
-            // lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int)
-            // Math.round(vecA.getY())),
-            // new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
-
-            lineRasterizer.rasterize(vecA, vecB);
+            lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int) Math.round(vecA.getY())),
+                    new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
         }
     }
 
