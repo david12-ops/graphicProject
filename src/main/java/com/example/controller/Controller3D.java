@@ -84,6 +84,7 @@ public class Controller3D implements Controller {
     // TODO - scan-line (computing all solid polygons), cannot with seedfill and
     // seedfillborder refill pattern with solid color, seedfillborder in this state
     // cannot work with gradient edges
+    // TODO - check scaling on curves
 
     /**
      * Creates a new 3D controller for the given panel.
