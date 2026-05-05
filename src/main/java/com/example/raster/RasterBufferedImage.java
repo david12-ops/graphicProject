@@ -2,25 +2,26 @@ package com.example.raster;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Optional;
+
+import com.example.transforms.Col;
 
 /**
  * Raster implementation backed by a {@link BufferedImage}.
  * 
  * Provides pixel-level access and basic drawing operations.
  */
-public class RasterBufferedImage implements Raster {
+public class RasterBufferedImage implements Raster<Col> {
 
     private BufferedImage image;
-
-    private double[][] zBuffer;
-    private int color;
+    private Col clearColor;
 
     /**
      * Returns the underlying buffered image.
      *
      * @return Backing {@link BufferedImage}
      */
-    public BufferedImage getImg() {
+    public BufferedImage getImage() {
         return image;
     }
 
@@ -32,16 +33,6 @@ public class RasterBufferedImage implements Raster {
      */
     public RasterBufferedImage(int width, int height) {
         image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-
-        zBuffer = new double[width][height];
-    }
-
-    private void clearZBuffer() {
-        for (int x = 0; x < getWidth(); x++) {
-            for (int y = 0; y < getHeight(); y++) {
-                zBuffer[x][y] = Double.POSITIVE_INFINITY;
-            }
-        }
     }
 
     /**
@@ -61,7 +52,7 @@ public class RasterBufferedImage implements Raster {
      */
     public void draw(RasterBufferedImage raster) {
         Graphics graphics = getGraphics();
-        graphics.setColor(new Color(color));
+        graphics.setColor(new Color(clearColor.getRGB()));
         graphics.fillRect(0, 0, getWidth(), getHeight());
         graphics.drawImage(raster.image, 0, 0, null);
     }
@@ -76,22 +67,22 @@ public class RasterBufferedImage implements Raster {
     }
 
     /**
-     * Sets the color of a pixel at the given coordinates.
-     * Pixels outside the raster are ignored.
+     * Checks whether the given pixel coordinates lie inside the raster bounds.
      *
-     * @param x     X-coordinate of the pixel
-     * @param y     Y-coordinate of the pixel
-     * @param z     Z-coordinate of the pixel (used for depth testing)
-     * @param color Color value in RGB format
+     * <p>
+     * A coordinate is considered inside if:
+     * <ul>
+     * <li>{@code x} is in the range {@code [0, image.getWidth())}</li>
+     * <li>{@code y} is in the range {@code [0, image.getHeight())}</li>
+     * </ul>
+     *
+     * @param x the x-coordinate of the pixel
+     * @param y the y-coordinate of the pixel
+     * @return {@code true} if the coordinates are inside the raster,
+     *         {@code false} otherwise
      */
-    @Override
-    public void setPixel(int x, int y, double z, int color) {
-        if (isInsideRaster(x, y)) {
-            if (z < zBuffer[x][y]) {
-                zBuffer[x][y] = z;
-                image.setRGB(x, y, color);
-            }
-        }
+    private boolean isInsideRaster(int x, int y) {
+        return x >= 0 && y >= 0 && x < image.getWidth() && y < image.getHeight();
     }
 
     /**
@@ -103,9 +94,9 @@ public class RasterBufferedImage implements Raster {
      * @param color Color value in RGB format
      */
     @Override
-    public void setPixel(int x, int y, int color) {
+    public void setValue(int x, int y, Col color) {
         if (isInsideRaster(x, y))
-            image.setRGB(x, y, color);
+            image.setRGB(x, y, color.getRGB());
     }
 
     /**
@@ -116,8 +107,8 @@ public class RasterBufferedImage implements Raster {
      * @return Pixel color value in RGB format
      */
     @Override
-    public int getPixel(int x, int y) {
-        return image.getRGB(x, y);
+    public Optional<Col> getValue(int x, int y) {
+        return Optional.of(new Col(image.getRGB(x, y))); // TODO: ošetřit get mimo raster
     }
 
     /**
@@ -145,38 +136,11 @@ public class RasterBufferedImage implements Raster {
      */
     @Override
     public void clear() {
-        clearZBuffer();
         Graphics g = image.getGraphics();
         g.clearRect(0, 0, image.getWidth(), image.getHeight());
     }
 
-    /**
-     * Sets the clear color used when clearing the raster.
-     *
-     * @param color Color value in RGB format
-     */
-    @Override
     public void setClearColor(int color) {
-        this.color = color;
-    }
-
-    /**
-     * Checks whether the given pixel coordinates lie inside the raster bounds.
-     *
-     * <p>
-     * A coordinate is considered inside if:
-     * <ul>
-     * <li>{@code x} is in the range {@code [0, image.getWidth())}</li>
-     * <li>{@code y} is in the range {@code [0, image.getHeight())}</li>
-     * </ul>
-     *
-     * @param x the x-coordinate of the pixel
-     * @param y the y-coordinate of the pixel
-     * @return {@code true} if the coordinates are inside the raster,
-     *         {@code false} otherwise
-     */
-    @Override
-    public boolean isInsideRaster(int x, int y) {
-        return x >= 0 && y >= 0 && x < image.getWidth() && y < image.getHeight();
+        this.clearColor = new Col(color);
     }
 }

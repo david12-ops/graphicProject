@@ -24,7 +24,7 @@ import com.example.transforms.Col;
  */
 public class ScanLine extends PatternPainter implements SolidFiller, PolygonFiller {
 
-    private Raster raster;
+    private Raster<Col> raster;
 
     private List<Line> tempLines = new ArrayList<>();
     private List<Double> intersections = new ArrayList<>();
@@ -36,7 +36,7 @@ public class ScanLine extends PatternPainter implements SolidFiller, PolygonFill
      * @param raster    Target raster
      * @param fillColor Color used to fill the polygon
      */
-    public ScanLine(Raster raster, Col fillColor) {
+    public ScanLine(Raster<Col> raster, Col fillColor) {
         super(null);
         this.raster = raster;
         this.fillColor = fillColor;
@@ -48,7 +48,7 @@ public class ScanLine extends PatternPainter implements SolidFiller, PolygonFill
      * @param raster        Target raster
      * @param patternRaster Raster used as fill pattern
      */
-    public ScanLine(Raster raster, Raster patternRaster) {
+    public ScanLine(Raster<Col> raster, Raster<Col> patternRaster) {
         super(patternRaster);
         this.raster = raster;
         this.fillColor = null;
@@ -73,28 +73,6 @@ public class ScanLine extends PatternPainter implements SolidFiller, PolygonFill
             }
             intersections.set(j + 1, key);
         }
-    }
-
-    private Polygon getPolygonByMouseCoordinates(Solid solid, int mouseX, int mouseY) {
-        double minDistSq = Double.MAX_VALUE;
-        Polygon nearestPolygon = null;
-
-        for (Polygon polygon : solid.getSolidPolygons()) {
-            for (int i = 0; i < polygon.getPoints().size(); i++) {
-                Point p = polygon.getPoint(i);
-
-                double dx = p.getX() - mouseX;
-                double dy = p.getY() - mouseY;
-                double distSq = dx * dx + dy * dy;
-
-                if (distSq < minDistSq) {
-                    minDistSq = distSq;
-                    nearestPolygon = polygon;
-                }
-            }
-        }
-
-        return nearestPolygon;
     }
 
     /**
@@ -146,8 +124,8 @@ public class ScanLine extends PatternPainter implements SolidFiller, PolygonFill
                 int xRight = (int) Math.floor(x2);
 
                 for (int x = xLeft; x <= xRight; x++) {
-                    int color = (patternRaster != null && fillColor == null) ? paint(x, y) : fillColor.getRGB();
-                    raster.setPixel(x, y, color);
+                    Col color = (patternRaster != null && fillColor == null) ? paint(x, y) : fillColor;
+                    raster.setValue(x, y, color);
                 }
             }
         }
@@ -167,7 +145,7 @@ public class ScanLine extends PatternPainter implements SolidFiller, PolygonFill
             return;
         }
 
-        polygon = getPolygonByMouseCoordinates(solid, mouseX, mouseY);
+        polygon = new Polygon();
 
         fill(polygon);
     }

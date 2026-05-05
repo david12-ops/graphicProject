@@ -3,7 +3,6 @@ package com.example.view;
 import com.example.enums.ColorMode;
 import com.example.enums.FillColorMode;
 import com.example.enums.FillTool;
-import com.example.raster.Raster;
 import com.example.raster.RasterBufferedImage;
 
 import javax.swing.*;
@@ -18,7 +17,7 @@ public class Panel extends JPanel {
     private FillColorMode fillColorMode = FillColorMode.PATTERN;
     private ColorMode colorMode = ColorMode.SOLID;
 
-    public Raster getRaster() {
+    public RasterBufferedImage getRaster() {
         return raster;
     }
 

@@ -1,6 +1,7 @@
 package com.example.fill;
 
 import com.example.raster.Raster;
+import com.example.transforms.Col;
 
 /**
  * Abstract base class for pattern-based painting.
@@ -10,14 +11,14 @@ import com.example.raster.Raster;
  */
 public abstract class PatternPainter {
 
-    protected final Raster patternRaster;
+    protected final Raster<Col> patternRaster;
 
     /**
      * Creates a pattern painter with the given pattern raster.
      *
      * @param patternRaster Raster defining the fill pattern
      */
-    protected PatternPainter(Raster patternRaster) {
+    protected PatternPainter(Raster<Col> patternRaster) {
         this.patternRaster = patternRaster;
     }
 
@@ -31,10 +32,10 @@ public abstract class PatternPainter {
      * @param y Y-coordinate
      * @return Color from the pattern raster at wrapped coordinates
      */
-    protected int paint(int x, int y) {
+    protected Col paint(int x, int y) {
         int i = Math.floorMod(x, patternRaster.getWidth());
         int j = Math.floorMod(y, patternRaster.getHeight());
 
-        return patternRaster.getPixel(i, j);
+        return patternRaster.getValue(x, y).orElse(new Col(0, 0, 0));
     }
 }

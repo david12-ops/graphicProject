@@ -1,20 +1,21 @@
 package com.example.model.solid;
 
 import com.example.enums.SolidState;
-import com.example.model.Polygon;
+import com.example.model.Part;
+import com.example.model.Vertex;
 import com.example.transforms.Col;
 import com.example.transforms.Mat4;
 import com.example.transforms.Mat4Identity;
-import com.example.transforms.Point3D;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class Solid {
-    protected List<Point3D> vb = new ArrayList<>();
-    protected List<Integer> ib = new ArrayList<>();
+    protected List<Vertex> vertexBuffer = new ArrayList<>();
+    protected List<Integer> indexBuffer = new ArrayList<>();
+    protected List<Part> partBuffer = new ArrayList<>();
     protected Mat4 model = new Mat4Identity();
-    protected List<Polygon> solidPolygons = new ArrayList<>();
 
     private SolidState state = SolidState.NORMAL;
 
@@ -24,12 +25,16 @@ public abstract class Solid {
 
     private boolean useModelMatrix = true;
 
-    public List<Point3D> getVb() {
-        return vb;
+    public List<Vertex> getVertexBuffer() {
+        return vertexBuffer;
     }
 
-    public List<Integer> getIb() {
-        return ib;
+    public List<Integer> getIndexBuffer() {
+        return indexBuffer;
+    }
+
+    public List<Part> getPartBuffer() {
+        return partBuffer;
     }
 
     public Col getSolidColor() {
@@ -47,14 +52,6 @@ public abstract class Solid {
     public void setGradientColor(Col start, Col end) {
         this.gradientStart = start;
         this.gradientEnd = end;
-    }
-
-    public List<Polygon> getSolidPolygons() {
-        return solidPolygons;
-    }
-
-    public void setSolidPolygons(List<Polygon> solidPolygons) {
-        this.solidPolygons = solidPolygons;
     }
 
     public SolidState getState() {
@@ -79,5 +76,9 @@ public abstract class Solid {
 
     public void setModel(Mat4 model) {
         this.model = model;
+    }
+
+    public void addIndices(Integer... indices) {
+        indexBuffer.addAll(Arrays.asList(indices));
     }
 }

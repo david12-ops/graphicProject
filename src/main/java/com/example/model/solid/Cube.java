@@ -1,5 +1,6 @@
 package com.example.model.solid;
 
+import com.example.model.Vertex;
 import com.example.transforms.Point3D;
 
 public class Cube extends Solid {
@@ -8,46 +9,46 @@ public class Cube extends Solid {
 
         // Fill in vb
         // Bottom
-        vb.add(new Point3D(-halfSize, -halfSize, -halfSize));
-        vb.add(new Point3D(halfSize, -halfSize, -halfSize));
-        vb.add(new Point3D(halfSize, halfSize, -halfSize));
-        vb.add(new Point3D(-halfSize, halfSize, -halfSize));
+        vertexBuffer.add(new Vertex(new Point3D(-halfSize, -halfSize, -halfSize)));
+        vertexBuffer.add(new Vertex(new Point3D(halfSize, -halfSize, -halfSize)));
+        vertexBuffer.add(new Vertex(new Point3D(halfSize, halfSize, -halfSize)));
+        vertexBuffer.add(new Vertex(new Point3D(-halfSize, halfSize, -halfSize)));
 
         // Top
-        vb.add(new Point3D(-halfSize, -halfSize, halfSize));
-        vb.add(new Point3D(halfSize, -halfSize, halfSize));
-        vb.add(new Point3D(halfSize, halfSize, halfSize));
-        vb.add(new Point3D(-halfSize, halfSize, halfSize));
+        vertexBuffer.add(new Vertex(new Point3D(-halfSize, -halfSize, halfSize)));
+        vertexBuffer.add(new Vertex(new Point3D(halfSize, -halfSize, halfSize)));
+        vertexBuffer.add(new Vertex(new Point3D(halfSize, halfSize, halfSize)));
+        vertexBuffer.add(new Vertex(new Point3D(-halfSize, halfSize, halfSize)));
 
         // Fill in ib
         // Bottom
-        ib.add(0);
-        ib.add(1);
-        ib.add(1);
-        ib.add(2);
-        ib.add(2);
-        ib.add(3);
-        ib.add(0);
-        ib.add(3);
+        indexBuffer.add(0);
+        indexBuffer.add(1);
+        indexBuffer.add(1);
+        indexBuffer.add(2);
+        indexBuffer.add(2);
+        indexBuffer.add(3);
+        indexBuffer.add(0);
+        indexBuffer.add(3);
 
         // Top
-        ib.add(4);
-        ib.add(5);
-        ib.add(5);
-        ib.add(6);
-        ib.add(6);
-        ib.add(7);
-        ib.add(7);
-        ib.add(4);
+        indexBuffer.add(4);
+        indexBuffer.add(5);
+        indexBuffer.add(5);
+        indexBuffer.add(6);
+        indexBuffer.add(6);
+        indexBuffer.add(7);
+        indexBuffer.add(7);
+        indexBuffer.add(4);
 
         // Vertical
-        ib.add(0);
-        ib.add(4);
-        ib.add(1);
-        ib.add(5);
-        ib.add(2);
-        ib.add(6);
-        ib.add(3);
-        ib.add(7);
+        indexBuffer.add(0);
+        indexBuffer.add(4);
+        indexBuffer.add(1);
+        indexBuffer.add(5);
+        indexBuffer.add(2);
+        indexBuffer.add(6);
+        indexBuffer.add(3);
+        indexBuffer.add(7);
     }
 }

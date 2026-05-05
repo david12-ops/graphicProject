@@ -7,13 +7,13 @@ import com.example.enums.ColorMode;
 import com.example.enums.RasterizerMode;
 import com.example.model.Line;
 import com.example.model.Point;
-import com.example.raster.Raster;
+import com.example.raster.ZBuffer;
 import com.example.transforms.Col;
 import com.example.transforms.Vec3D;
 
 public class LineRasterizer {
 
-    protected Raster raster;
+    protected ZBuffer zBuffer;
 
     protected Col solidColor;
     protected Col startColor;
@@ -23,8 +23,8 @@ public class LineRasterizer {
     protected ColorMode colorMode;
     protected RasterizerMode rasterizerMode;
 
-    public LineRasterizer(Raster raster) {
-        this.raster = raster;
+    public LineRasterizer(ZBuffer zBuffer) {
+        this.zBuffer = zBuffer;
         this.solidColor = null;
         this.startColor = null;
         this.endColor = null;

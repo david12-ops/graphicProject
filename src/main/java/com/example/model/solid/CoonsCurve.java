@@ -1,5 +1,6 @@
 package com.example.model.solid;
 
+import com.example.model.Vertex;
 import com.example.transforms.Cubic;
 import com.example.transforms.Point3D;
 
@@ -35,17 +36,17 @@ public class CoonsCurve extends Solid {
             double t = (double) i / segments; // normalized curve parameter (0 = start, 1 = end)
             Point3D point3d = cubicCoons.compute(t);
 
-            this.vb.add(point3d);
+            this.vertexBuffer.add(new Vertex(point3d));
         }
 
-        for (int i = 0; i < vb.size() - 1; i++) {
-            ib.add(i);
-            ib.add(i + 1);
+        for (int i = 0; i < vertexBuffer.size() - 1; i++) {
+            indexBuffer.add(i);
+            indexBuffer.add(i + 1);
         }
     }
 
     private void clear() {
-        vb.clear();
-        ib.clear();
+        vertexBuffer.clear();
+        indexBuffer.clear();
     }
 }

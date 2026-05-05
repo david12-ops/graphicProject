@@ -1,5 +1,6 @@
 package com.example.fill;
 
+import java.util.Optional;
 import java.util.Stack;
 
 import com.example.model.Point;
@@ -14,7 +15,7 @@ import com.example.transforms.Col;
  * Uses an iterative approach to avoid recursion overflow.
  */
 public class SeedFillBorder extends PatternPainter implements SeedFiller {
-    private Raster raster;
+    private Raster<Col> raster;
     private int x, y;
     private Col borderColor, fillColor;
 
@@ -27,7 +28,7 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
      * @param x           Starting x-coordinate
      * @param y           Starting y-coordinate
      */
-    public SeedFillBorder(Raster raster, Col borderColor, Col fillColor, int x, int y) {
+    public SeedFillBorder(Raster<Col> raster, Col borderColor, Col fillColor, int x, int y) {
         super(null);
         this.raster = raster;
         this.fillColor = fillColor;
@@ -45,7 +46,7 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
      * @param x             Starting x-coordinate
      * @param y             Starting y-coordinate
      */
-    public SeedFillBorder(Raster raster, Raster patternRaster, Col borderColor, int x, int y) {
+    public SeedFillBorder(Raster<Col> raster, Raster<Col> patternRaster, Col borderColor, int x, int y) {
         super(patternRaster);
         this.raster = raster;
         this.borderColor = borderColor;
@@ -69,33 +70,29 @@ public class SeedFillBorder extends PatternPainter implements SeedFiller {
      * @param y Starting y-coordinate
      */
     private void seedFill(int x, int y) {
-        int startColor = raster.getPixel(x, y);
+        Optional<Col> startColor = raster.getValue(x, y);
 
         Stack<Point> stack = new Stack<>();
         stack.push(new Point(x, y));
 
-        if (normalize(startColor) == normalize(borderColor.getARGB()))
+        if (startColor.isPresent() && startColor.get() == borderColor)
             return;
 
         while (!stack.empty()) {
             Point p = stack.pop();
 
-            // Bounds check
-            if (!raster.isInsideRaster(p.getX(), p.getY()))
-                continue;
+            Optional<Col> pixel = raster.getValue(p.getX(), p.getY());
 
-            int pixel = raster.getPixel(p.getX(), p.getY());
-
-            if (normalize(pixel) == normalize(borderColor.getARGB()))
+            if (pixel.orElse(borderColor) == borderColor)
                 continue;
 
             // Only fill pixels matching the starting color
-            if (pixel != startColor)
+            if (pixel.orElse(startColor.orElse(null)) != startColor.orElse(null))
                 continue;
 
-            int color = (patternRaster != null && fillColor == null) ? paint(p.getX(), p.getY()) : fillColor.getARGB();
+            Col color = (patternRaster != null && fillColor == null) ? paint(p.getX(), p.getY()) : fillColor;
 
-            raster.setPixel(p.getX(), p.getY(), color);
+            raster.setValue(p.getX(), p.getY(), color);
 
             stack.push(new Point(p.getX() + 1, p.getY()));
             stack.push(new Point(p.getX() - 1, p.getY()));

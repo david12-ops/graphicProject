@@ -3,8 +3,7 @@ package com.example.rasterize;
 import com.example.enums.ColorMode;
 import com.example.enums.RasterizerMode;
 import com.example.model.Line;
-import com.example.model.Point;
-import com.example.raster.Raster;
+import com.example.raster.ZBuffer;
 import com.example.transforms.Col;
 import com.example.transforms.Vec3D;
 
@@ -34,10 +33,10 @@ public class FilledLineRasterizer extends LineRasterizer {
     /**
      * Creates a rasterizer algorithm instance.
      * 
-     * @param raster Raster where the line drawing algorithm will be performed
+     * @param zBuffer ZBuffer for depth testing
      */
-    public FilledLineRasterizer(Raster raster) {
-        super(raster);
+    public FilledLineRasterizer(ZBuffer zBuffer) {
+        super(zBuffer);
     }
 
     /**
@@ -118,37 +117,27 @@ public class FilledLineRasterizer extends LineRasterizer {
             }
 
             int startX = Math.max(0, x1);
-            int endX = Math.min(raster.getWidth() - 1, x2);
+            int endX = Math.min(zBuffer.getImageBufferWidth() - 1, x2);
 
             if (isSolidUsed()) {
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
 
-                    // skip drawing when y is outside raster
-                    if (y < 0 || y >= raster.getHeight()) {
-                        continue;
-                    }
-
                     t = (x - x1) / (float) (x2 - x1);
 
-                    raster.setPixel(x, y, computeZ(t, z1, z2),
-                            selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB());
+                    zBuffer.setPixelWithZTest(x, y, computeZ(t, z1, z2),
+                            selectedColor == null ? solidColor : selectedColor);
                 }
             } else {
 
                 for (int x = startX; x < endX; x++) {
                     int y = Math.round(k * x + q);
 
-                    // skip drawing when y is outside raster
-                    if (y < 0 || y >= raster.getHeight()) {
-                        continue;
-                    }
-
                     t = (x - x1) / (float) (x2 - x1);
 
-                    raster.setPixel(x, y, computeZ(t, z1, z2),
-                            selectedColor == null ? computeColor(t, startColor, endColor) : selectedColor.getRGB());
+                    zBuffer.setPixelWithZTest(x, y, computeZ(t, z1, z2),
+                            selectedColor == null ? computeColor(t, startColor, endColor) : selectedColor);
                 }
             }
 
@@ -165,7 +154,7 @@ public class FilledLineRasterizer extends LineRasterizer {
             }
 
             int startY = Math.max(0, y1);
-            int endY = Math.min(raster.getHeight() - 1, y2);
+            int endY = Math.min(zBuffer.getImageBufferHeight() - 1, y2);
             boolean isInfiniteK = false;
             int x = 0;
 
@@ -181,15 +170,10 @@ public class FilledLineRasterizer extends LineRasterizer {
                         x = Math.round((y - q) / k);
                     }
 
-                    // skip drawing when x is outside raster
-                    if (x < 0 || x >= raster.getWidth()) {
-                        continue;
-                    }
-
                     t = (y - y1) / (float) (y2 - y1);
 
-                    raster.setPixel(x, y, computeZ(t, z1, z2),
-                            selectedColor == null ? solidColor.getRGB() : selectedColor.getRGB());
+                    zBuffer.setPixelWithZTest(x, y, computeZ(t, z1, z2),
+                            selectedColor == null ? solidColor : selectedColor);
                 }
             } else {
 
@@ -198,47 +182,13 @@ public class FilledLineRasterizer extends LineRasterizer {
                         x = Math.round((y - q) / k);
                     }
 
-                    // skip drawing when x is outside raster
-                    if (x < 0 || x >= raster.getWidth()) {
-                        continue;
-                    }
-
                     t = (y - y1) / (float) (y2 - y1);
 
-                    raster.setPixel(x, y, computeZ(t, z1, z2),
-                            selectedColor == null ? computeColor(t, startColor, endColor) : selectedColor.getRGB());
+                    zBuffer.setPixelWithZTest(x, y, computeZ(t, z1, z2),
+                            selectedColor == null ? computeColor(t, startColor, endColor) : selectedColor);
                 }
             }
         }
-    }
-
-    /**
-     * Snaps the second point to horizontal, vertical,
-     * or diagonal direction relative to the first point.
-     *
-     * @param a Start point
-     * @param b Original end point
-     * @return Snapped end point
-     */
-    private Point snapToHVOrDiagonal(Point a, Point b) {
-        int dx = b.getX() - a.getX();
-        int dy = b.getY() - a.getY();
-
-        int adx = Math.abs(dx);
-        int ady = Math.abs(dy);
-
-        if (adx > 2 * ady) {
-            return new Point(b.getX(), a.getY());
-        }
-
-        if (ady > 2 * adx) {
-            return new Point(a.getX(), b.getY());
-        }
-
-        int d = Math.min(adx, ady);
-        return new Point(
-                a.getX() + Integer.signum(dx) * d,
-                a.getY() + Integer.signum(dy) * d);
     }
 
     /**
@@ -247,9 +197,9 @@ public class FilledLineRasterizer extends LineRasterizer {
      * @param t          Interpolation factor in range ⟨0,1⟩
      * @param startColor Starting color
      * @param endColor   Ending color
-     * @return Interpolated RGB color
+     * @return Interpolated color as a Col object
      */
-    private int computeColor(float t, Col startColor, Col endColor) {
+    private Col computeColor(float t, Col startColor, Col endColor) {
         if (t < 0f)
             t = 0f;
         else if (t > 1f)
@@ -265,7 +215,7 @@ public class FilledLineRasterizer extends LineRasterizer {
         int b = (int) Math.round((startColor.getB() * it + endColor.getB() * t) * 255.0);
 
         // revert back
-        return (((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF));
+        return new Col(((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF));
     }
 
     /**

@@ -1,27 +1,23 @@
 package com.example.model.solid;
 
-import com.example.transforms.Point3D;
+import com.example.enums.TopologyType;
+import com.example.model.Part;
+import com.example.model.Vertex;
+import com.example.transforms.Col;
 
 public class Arrow extends Solid {
     public Arrow() {
-        // Fill in vb
-        vb.add(new Point3D(0, 0, 0)); // v0
-        vb.add(new Point3D(0.8, 0, 0)); // v1
-        vb.add(new Point3D(0.8, 0, -0.2)); // v2
-        vb.add(new Point3D(1, 0, 0)); // v3
-        vb.add(new Point3D(0.8, 0, 0.2)); // v4
+        vertexBuffer.add(new Vertex(200, 300, 0.5)); // v0
+        vertexBuffer.add(new Vertex(400, 300, 0.5)); // v1
+        vertexBuffer.add(new Vertex(400, 340, 0.5, new Col(0xff0000))); // v2
+        vertexBuffer.add(new Vertex(360, 300, 0.5)); // v3
+        vertexBuffer.add(new Vertex(400, 260, 0.5)); // v4
 
-        // Fill in ib
-        ib.add(0);
-        ib.add(1);
+        addIndices(0, 1); // lines
+        addIndices(4, 3, 2); // triangles
 
-        ib.add(2);
-        ib.add(3);
+        partBuffer.add(new Part(TopologyType.LINES, 0, 1));
+        partBuffer.add(new Part(TopologyType.TRIANGLES, 2, 1));
 
-        ib.add(4);
-        ib.add(2);
-
-        ib.add(3);
-        ib.add(4);
     }
 }

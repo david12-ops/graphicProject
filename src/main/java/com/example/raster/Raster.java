@@ -1,18 +1,16 @@
 package com.example.raster;
 
-public interface Raster {
+import java.util.Optional;
 
-    void clear();
+public interface Raster<E> {
 
-    void setClearColor(int color);
+    Optional<E> getValue(int x, int y);
+
+    void setValue(int x, int y, E value);
 
     int getWidth();
 
     int getHeight();
 
-    int getPixel(int x, int y);
-
-    void setPixel(int x, int y, int color);
-
-    boolean isInsideRaster(int x, int y);
+    void clear();
 }

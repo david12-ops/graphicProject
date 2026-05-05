@@ -1,5 +1,6 @@
 package com.example.model.solid;
 
+import com.example.model.Vertex;
 import com.example.transforms.Point3D;
 
 public class Cylinder extends Solid {
@@ -34,11 +35,11 @@ public class Cylinder extends Solid {
             double x = radius * Math.cos(angle);
             double y = radius * Math.sin(angle);
 
-            bottomVb[i] = vb.size();
-            vb.add(new Point3D(x, y, -halfHeight));
+            bottomVb[i] = vertexBuffer.size();
+            vertexBuffer.add(new Vertex(new Point3D(x, y, -halfHeight)));
 
-            topVb[i] = vb.size();
-            vb.add(new Point3D(x, y, halfHeight));
+            topVb[i] = vertexBuffer.size();
+            vertexBuffer.add(new Vertex(new Point3D(x, y, halfHeight)));
         }
 
         for (int i = 0; i < segments; i++) {
@@ -46,16 +47,16 @@ public class Cylinder extends Solid {
             int next = (i + 1) % segments;
 
             // Lower circle
-            ib.add(bottomVb[i]);
-            ib.add(bottomVb[next]);
+            indexBuffer.add(bottomVb[i]);
+            indexBuffer.add(bottomVb[next]);
 
             // Upper circle
-            ib.add(topVb[i]);
-            ib.add(topVb[next]);
+            indexBuffer.add(topVb[i]);
+            indexBuffer.add(topVb[next]);
 
             // Vertical edges
-            ib.add(bottomVb[i]);
-            ib.add(topVb[i]);
+            indexBuffer.add(bottomVb[i]);
+            indexBuffer.add(topVb[i]);
         }
     }
 }

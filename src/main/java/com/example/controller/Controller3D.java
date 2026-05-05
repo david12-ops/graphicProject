@@ -18,7 +18,9 @@ import com.example.enums.FillColorMode;
 import com.example.enums.FillTool;
 import com.example.enums.RasterizerMode;
 import com.example.enums.SolidAction;
+import com.example.enums.SolidModel;
 import com.example.enums.SolidState;
+import com.example.enums.TopologyType;
 import com.example.fill.ScanLine;
 import com.example.fill.SeedFill;
 import com.example.fill.SeedFillBorder;
@@ -37,9 +39,13 @@ import com.example.model.solid.FergusonCurve;
 import com.example.model.solid.Solid;
 import com.example.raster.Raster;
 import com.example.raster.RasterBufferedImage;
+import com.example.raster.ZBuffer;
 import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
+import com.example.rasterize.TriangleRasterizer;
 import com.example.renderer.Renderer;
+import com.example.renderer.SolidTypeRenderer;
+import com.example.renderer.WireTypeRenderer;
 import com.example.transforms.Camera;
 import com.example.transforms.Col;
 import com.example.transforms.Mat4;
@@ -60,8 +66,12 @@ public class Controller3D implements Controller {
     private static final double MOVE_SPEED = 0.2;
     private static final double ROTATE_SPEED = 0.01;
 
-    private final Panel panel;
+    private Panel panel;
+    private ZBuffer zBuffer;
     private LineRasterizer lineRasterizer;
+    private TriangleRasterizer triangleRasterizer;
+    private SolidModel solidModel = SolidModel.WIREFRAME;
+
     private Scene scene;
 
     private Renderer renderer;
@@ -84,6 +94,7 @@ public class Controller3D implements Controller {
     // TODO - scan-line (computing all solid polygons), cannot with seedfill and
     // seedfillborder refill pattern with solid color, seedfillborder in this state
     // cannot work with gradient edges
+    // TODO - for rasterazing ask depthBuffer instead of RassterBufferedImage
 
     /**
      * Creates a new 3D controller for the given panel.
@@ -93,7 +104,7 @@ public class Controller3D implements Controller {
     public Controller3D(Panel panel) {
         this.panel = panel;
 
-        initObjects(panel.getRaster());
+        initObjects();
         initListeners(panel);
 
         render();
@@ -104,11 +115,12 @@ public class Controller3D implements Controller {
      *
      * @param raster Raster used for drawing operations
      */
-    public void initObjects(Raster raster) {
+    public void initObjects() {
         colorMode = panel.getColorMode();
+        zBuffer = new ZBuffer(panel.getRaster());
 
-        lineRasterizer = new FilledLineRasterizer(raster);
-        // lineRasterizer = new LineRasterizerGraphics(raster);
+        lineRasterizer = new FilledLineRasterizer(zBuffer);
+        triangleRasterizer = new TriangleRasterizer(zBuffer);
 
         lineRasterizer.setRasterizeMode(RasterizerMode.NORMAL);
         setRasterizerDrawingColor();
@@ -119,12 +131,13 @@ public class Controller3D implements Controller {
         initProjection();
         initScene();
 
-        renderer = new Renderer(
-                lineRasterizer,
+        WireTypeRenderer wireRenderer = new WireTypeRenderer(lineRasterizer, panel.getRaster().getWidth(),
+                panel.getRaster().getHeight(), camera.getViewMatrix(), projectionMatrix);
+        SolidTypeRenderer solidRenderer = new SolidTypeRenderer(lineRasterizer, triangleRasterizer,
                 panel.getRaster().getWidth(),
-                panel.getRaster().getHeight(),
-                camera.getViewMatrix(),
-                projectionMatrix);
+                panel.getRaster().getHeight(), camera.getViewMatrix(), projectionMatrix);
+
+        renderer = new Renderer(wireRenderer, solidRenderer, solidModel);
     }
 
     private void initCamera() {
@@ -235,8 +248,8 @@ public class Controller3D implements Controller {
 
         // Bezier curve
         // Points for curves with choosen solid (cube)
-        Point3D p0 = cube.getVb().get(0).mul(new Mat4Transl(3, 6, 0));
-        Point3D p3 = cube.getVb().get(6).mul(new Mat4Transl(3, 6, 0));
+        Point3D p0 = cube.getVertexBuffer().get(0).getPosition().mul(new Mat4Transl(3, 6, 0));
+        Point3D p3 = cube.getVertexBuffer().get(6).getPosition().mul(new Mat4Transl(3, 6, 0));
 
         Point3D p1 = new Point3D(6, 10, 4);
         Point3D p2 = new Point3D(0, -2, 3);
@@ -326,81 +339,86 @@ public class Controller3D implements Controller {
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isMiddleMouseButton(e)) {
                     List<Col> setColors = lineRasterizer.getColors();
-                    Raster ptRaster = createPatternRaster(100, 100);
+                    Raster<Col> ptRaster = createPatternRaster(100, 100);
 
                     /*
                      * Scan-line algorithm is more ralible with gradient then seedFill and
                      * seedFillBorder
                      */
                     // with pattern
-                    if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() == FillColorMode.PATTERN) {
-                        System.out.println("Used scan-line with pattern filling");
-                        SolidFiller scanLine = new ScanLine(panel.getRaster(), ptRaster);
-                        scanLine.fill(getActiveSolid(), e.getX(), e.getY());
+                    // if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() ==
+                    // FillColorMode.PATTERN) {
+                    // System.out.println("Used scan-line with pattern filling");
+                    // SolidFiller scanLine = new ScanLine(panel.getRaster(), ptRaster);
+                    // scanLine.fill(getActiveSolid(), e.getX(), e.getY());
 
-                        update();
-                        return;
-                    }
+                    // update();
+                    // return;
+                    // }
 
                     // with color
-                    if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() == FillColorMode.COLOR) {
-                        System.out.println("Used scan-line with color filling");
-                        SolidFiller scanLine = new ScanLine(panel.getRaster(), new Col(165, 42, 42, 255));
-                        scanLine.fill(getActiveSolid(), e.getX(), e.getY());
+                    // if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() ==
+                    // FillColorMode.COLOR) {
+                    // System.out.println("Used scan-line with color filling");
+                    // SolidFiller scanLine = new ScanLine(panel.getRaster(), new Col(165, 42, 42,
+                    // 255));
+                    // scanLine.fill(getActiveSolid(), e.getX(), e.getY());
 
-                        update();
-                        return;
-                    }
+                    // update();
+                    // return;
+                    // }
 
                     // with pattern
-                    if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() == FillColorMode.PATTERN) {
-                        System.out.println("Used seed fill with pattern filling");
-                        SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
-                                panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
-                        seedFill.fill();
+                    // if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() ==
+                    // FillColorMode.PATTERN) {
+                    // System.out.println("Used seed fill with pattern filling");
+                    // SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
+                    // panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
+                    // seedFill.fill();
 
-                        update();
-                        return;
-                    }
+                    // update();
+                    // return;
+                    // }
 
                     // with color
-                    if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() == FillColorMode.COLOR) {
-                        System.out.println("Used seed fill with color filling");
-                        SeedFiller seedFill = new SeedFill(panel.getRaster(),
-                                panel.getRaster().getPixel(e.getX(), e.getY()), new Col(165, 42, 42, 255),
-                                e.getX(),
-                                e.getY());
-                        seedFill.fill();
+                    // if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() ==
+                    // FillColorMode.COLOR) {
+                    // System.out.println("Used seed fill with color filling");
+                    // SeedFiller seedFill = new SeedFill(panel.getRaster(),
+                    // panel.getRaster().getPixel(e.getX(), e.getY()), new Col(165, 42, 42, 255),
+                    // e.getX(),
+                    // e.getY());
+                    // seedFill.fill();
 
-                        update();
-                        return;
-                    }
+                    // update();
+                    // return;
+                    // }
 
                     // with pattern
-                    if (panel.getFillTool() == FillTool.SEEDFILLBORDER
-                            && panel.getFillColorMode() == FillColorMode.PATTERN) {
-                        System.out.println("Used seed fill border with pattern filling");
-                        SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(), ptRaster,
-                                setColors.get(0),
-                                e.getX(), e.getY());
-                        seedFillBorder.fill();
+                    // if (panel.getFillTool() == FillTool.SEEDFILLBORDER
+                    // && panel.getFillColorMode() == FillColorMode.PATTERN) {
+                    // System.out.println("Used seed fill border with pattern filling");
+                    // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(), ptRaster,
+                    // setColors.get(0),
+                    // e.getX(), e.getY());
+                    // seedFillBorder.fill();
 
-                        update();
-                        return;
-                    }
+                    // update();
+                    // return;
+                    // }
 
                     // with color
-                    if (panel.getFillTool() == FillTool.SEEDFILLBORDER
-                            && panel.getFillColorMode() == FillColorMode.COLOR) {
-                        System.out.println("Used seed fill border with color filling");
-                        SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(),
-                                setColors.get(0), new Col(165, 42, 42, 255), e.getX(),
-                                e.getY());
-                        seedFillBorder.fill();
+                    // if (panel.getFillTool() == FillTool.SEEDFILLBORDER
+                    // && panel.getFillColorMode() == FillColorMode.COLOR) {
+                    // System.out.println("Used seed fill border with color filling");
+                    // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(),
+                    // setColors.get(0), new Col(165, 42, 42, 255), e.getX(),
+                    // e.getY());
+                    // seedFillBorder.fill();
 
-                        update();
-                        return;
-                    }
+                    // update();
+                    // return;
+                    // }
                 }
             }
 
@@ -447,6 +465,13 @@ public class Controller3D implements Controller {
                 }
 
                 switch (e.getKeyCode()) {
+                    case KeyEvent.VK_SPACE:
+                        if (solidModel == SolidModel.WIREFRAME) {
+                            solidModel = SolidModel.SOLID;
+                        } else {
+                            solidModel = SolidModel.WIREFRAME;
+                        }
+                        break;
                     // Cam up
                     case KeyEvent.VK_UP:
                         camera = camera.forward(MOVE_SPEED);
@@ -558,7 +583,7 @@ public class Controller3D implements Controller {
             @Override
             public void componentResized(ComponentEvent e) {
                 panel.resize();
-                initObjects(panel.getRaster());
+                initObjects();
                 render();
             }
         });
@@ -639,7 +664,7 @@ public class Controller3D implements Controller {
             else
                 scene.getSolids().get(i).setState(SolidState.NORMAL);
 
-            renderer.renderSolid(scene.getSolids().get(i));
+            renderer.render(scene.getSolids().get(i));
         }
 
         update();
@@ -663,12 +688,12 @@ public class Controller3D implements Controller {
         panel.repaint();
     }
 
-    private Raster createPatternRaster(int width, int height) {
+    private Raster<Col> createPatternRaster(int width, int height) {
 
         if (width < 0 || height < 0)
             return null;
 
-        Raster patternRaster = new RasterBufferedImage(width, height);
+        Raster<Col> patternRaster = new RasterBufferedImage(width, height);
 
         int lightGray = 0xDDDDDD;
         int darkGray = 0x777777;
@@ -676,9 +701,9 @@ public class Controller3D implements Controller {
         for (int py = 0; py < height; py++) {
             for (int px = 0; px < width; px++) {
                 if ((px + py) % 2 == 0) {
-                    patternRaster.setPixel(px, py, lightGray);
+                    patternRaster.setValue(px, py, new Col(lightGray));
                 } else {
-                    patternRaster.setPixel(px, py, darkGray);
+                    patternRaster.setValue(px, py, new Col(darkGray));
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.example.fill;
 
+import java.util.Optional;
 import java.util.Stack;
 
 import com.example.model.Point;
@@ -13,10 +14,10 @@ import com.example.transforms.Col;
  * Uses an explicit stack to avoid recursion and stack overflow.
  */
 public class SeedFill extends PatternPainter implements SeedFiller {
-    private Raster raster;
+    private Raster<Col> raster;
     private int x, y;
     private Col fillColor;
-    private int backgroundColor;
+    private Col backgroundColor;
 
     /**
      * Creates a seed fill using a solid fill color.
@@ -27,7 +28,7 @@ public class SeedFill extends PatternPainter implements SeedFiller {
      * @param x               Starting x-coordinate
      * @param y               Starting y-coordinate
      */
-    public SeedFill(Raster raster, int backgroundColor, Col fillColor, int x, int y) {
+    public SeedFill(Raster<Col> raster, Col backgroundColor, Col fillColor, int x, int y) {
         super(null);
         this.raster = raster;
         this.backgroundColor = backgroundColor;
@@ -45,7 +46,7 @@ public class SeedFill extends PatternPainter implements SeedFiller {
      * @param x               Starting x-coordinate
      * @param y               Starting y-coordinate
      */
-    public SeedFill(Raster raster, Raster patternRaster, int backgroundColor, int x, int y) {
+    public SeedFill(Raster<Col> raster, Raster<Col> patternRaster, Col backgroundColor, int x, int y) {
         super(patternRaster);
         this.raster = raster;
         this.backgroundColor = backgroundColor;
@@ -74,25 +75,21 @@ public class SeedFill extends PatternPainter implements SeedFiller {
         while (!stack.empty()) {
             Point p = stack.pop();
 
-            // Bounds check
-            if (!raster.isInsideRaster(p.getX(), p.getY()))
+            Optional<Col> pixel = raster.getValue(p.getX(), p.getY());
+
+            if (pixel.orElse(backgroundColor) != backgroundColor)
                 continue;
 
-            int pixel = raster.getPixel(p.getX(), p.getY());
-
-            if (normalize(pixel) != normalize(backgroundColor))
-                continue;
-
-            int color;
+            Col color;
             if (patternRaster != null) {
                 color = paint(p.getX(), p.getY());
             } else if (fillColor != null) {
-                color = fillColor.getARGB();
+                color = fillColor;
             } else {
                 continue; // or throw IllegalStateException
             }
 
-            raster.setPixel(p.getX(), p.getY(), color);
+            raster.setValue(p.getX(), p.getY(), color);
 
             stack.push(new Point(p.getX() + 1, p.getY()));
             stack.push(new Point(p.getX() - 1, p.getY()));
@@ -117,7 +114,7 @@ public class SeedFill extends PatternPainter implements SeedFiller {
 
         if (fillColor != null &&
                 patternRaster == null
-                && normalize(backgroundColor) == normalize(fillColor.getARGB())) {
+                && backgroundColor == fillColor) {
             System.out.println("Fill color equals background color");
             return;
         }
