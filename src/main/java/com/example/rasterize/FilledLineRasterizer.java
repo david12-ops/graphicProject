@@ -5,7 +5,6 @@ import com.example.enums.RasterizerMode;
 import com.example.model.Line;
 import com.example.raster.ZBuffer;
 import com.example.transforms.Col;
-import com.example.transforms.Vec3D;
 
 /*
  * Disadvantages:
@@ -54,11 +53,11 @@ public class FilledLineRasterizer extends LineRasterizer {
      * @param b end vertex of the line in 3D space
      */
     @Override
-    public void rasterize(Vec3D a, Vec3D b) {
+    public void rasterize(double x1, double y1, double invW1, double zOverW1, double x2, double y2, double invW2,
+            double zOverW2) {
         if (rasterizerMode == RasterizerMode.NORMAL) {
-            trivialAlgorithm((int) Math.round(a.getX()), (int) Math.round(a.getY()), a.getZ(),
-                    (int) Math.round(b.getX()),
-                    (int) Math.round(b.getY()), b.getZ());
+            trivialAlgorithm((int) Math.round(x1), (int) Math.round(y1), invW1, zOverW1, (int) Math.round(x2),
+                    (int) Math.round(y2), invW2, zOverW2);
         } else if (rasterizerMode == RasterizerMode.SHIFT) {
             System.out.println("Shift mode is not supported for 3D points. Rasterizing without snapping.");
         } else
@@ -90,7 +89,9 @@ public class FilledLineRasterizer extends LineRasterizer {
      * @param y2 End y-coordinate
      * @param z  Depth value (z-coordinate)
      */
-    private void trivialAlgorithm(int x1, int y1, double z1, int x2, int y2, double z2) {
+    private void trivialAlgorithm(int x1, int y1, double invW1, double zOverW1, int x2, int y2,
+            double invW2,
+            double zOverW2) {
         if (!(isGradientUsed() || isSolidUsed())) {
             System.out.println(
                     "Color mode is invalid or missing colors to draw.");
@@ -107,36 +108,52 @@ public class FilledLineRasterizer extends LineRasterizer {
         if (Math.abs((y2 - y1)) < Math.abs(x2 - x1)) {
 
             if (x2 < x1) {
-                int p;
-                p = x1;
+                int tmp1;
+                tmp1 = x1;
                 x1 = x2;
-                x2 = p;
-                p = y1;
+                x2 = tmp1;
+                tmp1 = y1;
                 y1 = y2;
-                y2 = p;
+                y2 = tmp1;
+
+                double tmp2;
+                tmp2 = invW1;
+                invW1 = invW2;
+                invW2 = tmp2;
+                tmp2 = zOverW1;
+                zOverW1 = zOverW2;
+                zOverW2 = tmp2;
             }
 
             int startX = Math.max(0, x1);
-            int endX = Math.min(zBuffer.getImageBufferWidth() - 1, x2);
+            int endX = Math.min(zBuffer.getWidth() - 1, x2);
 
             if (isSolidUsed()) {
 
-                for (int x = startX; x < endX; x++) {
+                for (int x = startX; x <= endX; x++) {
                     int y = Math.round(k * x + q);
+
+                    if (y < 0 || y >= zBuffer.getHeight()) {
+                        continue;
+                    }
 
                     t = (x - x1) / (float) (x2 - x1);
 
-                    zBuffer.setPixelWithZTest(x, y, computeZ(t, z1, z2),
+                    zBuffer.setPixelWithZTest(x, y, computeZ(t, invW1, invW2, zOverW1, zOverW2),
                             selectedColor == null ? solidColor : selectedColor);
                 }
             } else {
 
-                for (int x = startX; x < endX; x++) {
+                for (int x = startX; x <= endX; x++) {
                     int y = Math.round(k * x + q);
+
+                    if (y < 0 || y >= zBuffer.getHeight()) {
+                        continue;
+                    }
 
                     t = (x - x1) / (float) (x2 - x1);
 
-                    zBuffer.setPixelWithZTest(x, y, computeZ(t, z1, z2),
+                    zBuffer.setPixelWithZTest(x, y, computeZ(t, invW1, invW2, zOverW1, zOverW2),
                             selectedColor == null ? computeColor(t, startColor, endColor) : selectedColor);
                 }
             }
@@ -144,17 +161,25 @@ public class FilledLineRasterizer extends LineRasterizer {
         } else {
 
             if (y2 < y1) {
-                int p;
-                p = x1;
+                int tmp1;
+                tmp1 = x1;
                 x1 = x2;
-                x2 = p;
-                p = y1;
+                x2 = tmp1;
+                tmp1 = y1;
                 y1 = y2;
-                y2 = p;
+                y2 = tmp1;
+
+                double tmp2;
+                tmp2 = invW1;
+                invW1 = invW2;
+                invW2 = tmp2;
+                tmp2 = zOverW1;
+                zOverW1 = zOverW2;
+                zOverW2 = tmp2;
             }
 
             int startY = Math.max(0, y1);
-            int endY = Math.min(zBuffer.getImageBufferHeight() - 1, y2);
+            int endY = Math.min(zBuffer.getHeight() - 1, y2);
             boolean isInfiniteK = false;
             int x = 0;
 
@@ -165,26 +190,34 @@ public class FilledLineRasterizer extends LineRasterizer {
 
             if (isSolidUsed()) {
 
-                for (int y = startY; y < endY; y++) {
+                for (int y = startY; y <= endY; y++) {
                     if (!isInfiniteK) {
                         x = Math.round((y - q) / k);
                     }
 
+                    if (x < 0 || x >= zBuffer.getWidth()) {
+                        continue;
+                    }
+
                     t = (y - y1) / (float) (y2 - y1);
 
-                    zBuffer.setPixelWithZTest(x, y, computeZ(t, z1, z2),
+                    zBuffer.setPixelWithZTest(x, y, computeZ(t, invW1, invW2, zOverW1, zOverW2),
                             selectedColor == null ? solidColor : selectedColor);
                 }
             } else {
 
-                for (int y = startY; y < endY; y++) {
+                for (int y = startY; y <= endY; y++) {
                     if (!isInfiniteK) {
                         x = Math.round((y - q) / k);
                     }
 
+                    if (x < 0 || x >= zBuffer.getWidth()) {
+                        continue;
+                    }
+
                     t = (y - y1) / (float) (y2 - y1);
 
-                    zBuffer.setPixelWithZTest(x, y, computeZ(t, z1, z2),
+                    zBuffer.setPixelWithZTest(x, y, computeZ(t, invW1, invW2, zOverW1, zOverW2),
                             selectedColor == null ? computeColor(t, startColor, endColor) : selectedColor);
                 }
             }
@@ -232,7 +265,10 @@ public class FilledLineRasterizer extends LineRasterizer {
         return colorMode == ColorMode.SOLID && solidColor != null;
     }
 
-    private double computeZ(float t, double z1, double z2) {
-        return z1 + t * (z2 - z1);
+    private double computeZ(float t, double invW1, double invW2, double zOverW1, double zOverW2) {
+        double invW = invW1 + t * (invW2 - invW1);
+        double zOverW = zOverW1 + t * (zOverW2 - zOverW1);
+
+        return zOverW / invW;
     }
 }
