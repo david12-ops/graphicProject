@@ -57,6 +57,12 @@ public class WireTypeRenderer {
             if (!insideClipVolume(pointA) && !insideClipVolume(pointB))
                 continue;
 
+            double invW1 = 1.0 / pointA.getW();
+            double invW2 = 1.0 / pointB.getW();
+
+            double zOverW1 = pointA.getZ() * invW1;
+            double zOverW2 = pointB.getZ() * invW2;
+
             Optional<Vec3D> dehomogA = pointA.dehomog();
             Optional<Vec3D> dehomogB = pointB.dehomog();
 
@@ -68,11 +74,9 @@ public class WireTypeRenderer {
             Vec3D vecA = transformToWindow(dehomogA.get());
             Vec3D vecB = transformToWindow(dehomogB.get());
 
-            // lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int)
-            // Math.round(vecA.getY())),
-            // new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
-
-            lineRasterizer.rasterize(vecA, vecB);
+            // lineRasterizer.rasterize(vecA, vecB);
+            lineRasterizer.rasterize(vecA.getX(), vecA.getY(), invW1, zOverW1, vecB.getX(), vecB.getY(), invW2,
+                    zOverW2);
         }
     }
 

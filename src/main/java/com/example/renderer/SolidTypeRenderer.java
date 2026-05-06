@@ -44,13 +44,28 @@ public class SolidTypeRenderer {
                         Point3D pointA = solid.getVertexBuffer().get(indexA).getPosition();
                         Point3D pointB = solid.getVertexBuffer().get(indexB).getPosition();
 
-                        // pronásobit MVP maticí
-                        pointA = pointA.mul(solid.getModel()).mul(view).mul(proj);
-                        pointB = pointB.mul(solid.getModel()).mul(view).mul(proj);
+                        if (solid.useModelMatrix()) {
+                            // Modeling transformation (model) = model space -> world space
+                            // View transformation (view) = world space -> view space
+                            // Projection transformation (projection) = view space -> clip space
+                            pointA = pointA.mul(solid.getModel()).mul(view).mul(proj);
+                            pointB = pointB.mul(solid.getModel()).mul(view).mul(proj);
+                        } else {
+                            // View transformation (view) = world space -> view space
+                            // Projection transformation (projection) = view space -> clip space
+                            pointA = pointA.mul(view).mul(proj);
+                            pointB = pointB.mul(view).mul(proj);
+                        }
 
                         // Crop in clip space
                         if (!insideClipVolume(pointA) && !insideClipVolume(pointB))
                             continue;
+
+                        double invW1 = 1.0 / pointA.getW();
+                        double invW2 = 1.0 / pointB.getW();
+
+                        double zOverW1 = pointA.getZ() * invW1;
+                        double zOverW2 = pointB.getZ() * invW2;
 
                         Optional<Vec3D> dehomogA = pointA.dehomog();
                         Optional<Vec3D> dehomogB = pointB.dehomog();
@@ -63,11 +78,8 @@ public class SolidTypeRenderer {
                         Vec3D vecA = transformToWindow(dehomogA.get());
                         Vec3D vecB = transformToWindow(dehomogB.get());
 
-                        // lineRasterizer.rasterize(new Point((int) Math.round(vecA.getX()), (int)
-                        // Math.round(vecA.getY())),
-                        // new Point((int) Math.round(vecB.getX()), (int) Math.round(vecB.getY())));
-
-                        lineRasterizer.rasterize(vecA, vecB);
+                        lineRasterizer.rasterize(vecA.getX(), vecA.getY(), invW1, zOverW1, vecB.getX(), vecB.getY(),
+                                invW2, zOverW2);
                     }
                     break;
                 case TopologyType.TRIANGLES:
