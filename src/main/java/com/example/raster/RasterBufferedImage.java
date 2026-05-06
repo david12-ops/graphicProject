@@ -104,11 +104,15 @@ public class RasterBufferedImage implements Raster<Col> {
      *
      * @param x X-coordinate of the pixel
      * @param y Y-coordinate of the pixel
-     * @return Pixel color value in RGB format
+     * @return Pixel color value in RGB format or {@code Optional.empty()} if
+     *         coordinates are outside the raster
      */
     @Override
     public Optional<Col> getValue(int x, int y) {
-        return Optional.of(new Col(image.getRGB(x, y))); // TODO: ošetřit get mimo raster
+        if (!isInsideRaster(x, y))
+            return Optional.empty();
+
+        return Optional.of(new Col(image.getRGB(x, y)));
     }
 
     /**
