@@ -16,6 +16,7 @@ public class Panel extends JPanel {
     private FillTool fillTool = FillTool.SCANLINE;
     private FillColorMode fillColorMode = FillColorMode.PATTERN;
     private ColorMode colorMode = ColorMode.SOLID;
+    private final int clearColor = Color.BLACK.getRGB();
 
     public RasterBufferedImage getRaster() {
         return raster;
@@ -27,7 +28,7 @@ public class Panel extends JPanel {
     Panel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         raster = new RasterBufferedImage(WIDTH, HEIGHT);
-        raster.setClearColor(Color.BLACK.getRGB());
+        raster.setClearColor(clearColor);
         setLoop();
     }
 
@@ -71,7 +72,7 @@ public class Panel extends JPanel {
             return;
 
         RasterBufferedImage newRaster = new RasterBufferedImage(this.getWidth(), this.getHeight());
-
+        newRaster.setClearColor(this.clearColor);
         newRaster.draw(raster);
         raster = newRaster;
     }
