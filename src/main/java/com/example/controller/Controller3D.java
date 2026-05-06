@@ -3,7 +3,6 @@ package com.example.controller;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.List;
 
 import javax.swing.SwingUtilities;
 
@@ -14,18 +13,10 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 
 import com.example.enums.ColorMode;
-import com.example.enums.FillColorMode;
-import com.example.enums.FillTool;
 import com.example.enums.RasterizerMode;
 import com.example.enums.SolidAction;
 import com.example.enums.SolidModel;
 import com.example.enums.SolidState;
-import com.example.enums.TopologyType;
-import com.example.fill.ScanLine;
-import com.example.fill.SeedFill;
-import com.example.fill.SeedFillBorder;
-import com.example.fill.SeedFiller;
-import com.example.fill.SolidFiller;
 import com.example.model.Scene;
 import com.example.model.solid.Arrow;
 import com.example.model.solid.AxisX;
@@ -37,8 +28,6 @@ import com.example.model.solid.Cube;
 import com.example.model.solid.Cylinder;
 import com.example.model.solid.FergusonCurve;
 import com.example.model.solid.Solid;
-import com.example.raster.Raster;
-import com.example.raster.RasterBufferedImage;
 import com.example.raster.ZBuffer;
 import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
@@ -338,8 +327,8 @@ public class Controller3D implements Controller {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isMiddleMouseButton(e)) {
-                    List<Col> setColors = lineRasterizer.getColors();
-                    Raster<Col> ptRaster = createPatternRaster(100, 100);
+                    // List<Col> setColors = lineRasterizer.getColors();
+                    // Raster<Col> ptRaster = createPatternRaster(100, 100);
 
                     /*
                      * Scan-line algorithm is more ralible with gradient then seedFill and
@@ -649,6 +638,7 @@ public class Controller3D implements Controller {
 
     private void render() {
         panel.clear();
+        zBuffer.clear();
 
         if (colorMode != panel.getColorMode()) {
             colorMode = panel.getColorMode();
@@ -688,26 +678,26 @@ public class Controller3D implements Controller {
         panel.repaint();
     }
 
-    private Raster<Col> createPatternRaster(int width, int height) {
+    // private Raster<Col> createPatternRaster(int width, int height) {
 
-        if (width < 0 || height < 0)
-            return null;
+    // if (width < 0 || height < 0)
+    // return null;
 
-        Raster<Col> patternRaster = new RasterBufferedImage(width, height);
+    // Raster<Col> patternRaster = new RasterBufferedImage(width, height);
 
-        int lightGray = 0xDDDDDD;
-        int darkGray = 0x777777;
+    // int lightGray = 0xDDDDDD;
+    // int darkGray = 0x777777;
 
-        for (int py = 0; py < height; py++) {
-            for (int px = 0; px < width; px++) {
-                if ((px + py) % 2 == 0) {
-                    patternRaster.setValue(px, py, new Col(lightGray));
-                } else {
-                    patternRaster.setValue(px, py, new Col(darkGray));
-                }
-            }
-        }
+    // for (int py = 0; py < height; py++) {
+    // for (int px = 0; px < width; px++) {
+    // if ((px + py) % 2 == 0) {
+    // patternRaster.setValue(px, py, new Col(lightGray));
+    // } else {
+    // patternRaster.setValue(px, py, new Col(darkGray));
+    // }
+    // }
+    // }
 
-        return patternRaster;
-    }
+    // return patternRaster;
+    // }
 }
