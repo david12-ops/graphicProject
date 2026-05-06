@@ -111,4 +111,9 @@ public class LineRasterizer {
     public void rasterize(Vec3D a, Vec3D b) {
 
     }
+
+    public void rasterize(double x1, double y1, double invW1, double zOverW1, double x2, double y2, double invW2,
+            double zOverW2) {
+
+    }
 }
