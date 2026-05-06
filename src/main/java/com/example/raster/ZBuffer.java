@@ -18,16 +18,15 @@ public class ZBuffer {
         }
     }
 
-    public int getImageBufferHeight() {
-        return imageBuffer.getHeight();
+    public int getHeight() {
+        return depthBuffer.getHeight();
     }
 
-    public int getImageBufferWidth() {
-        return imageBuffer.getWidth();
+    public int getWidth() {
+        return depthBuffer.getWidth();
     }
 
     public void clear() {
         depthBuffer.clear();
-        imageBuffer.clear();
     }
 }
