@@ -1,5 +1,7 @@
 package com.example.model.solid;
 
+import com.example.enums.TopologyType;
+import com.example.model.Part;
 import com.example.model.Vertex;
 import com.example.transforms.Point3D;
 
@@ -46,17 +48,9 @@ public class Cylinder extends Solid {
 
             int next = (i + 1) % segments;
 
-            // Lower circle
-            indexBuffer.add(bottomVb[i]);
-            indexBuffer.add(bottomVb[next]);
-
-            // Upper circle
-            indexBuffer.add(topVb[i]);
-            indexBuffer.add(topVb[next]);
-
-            // Vertical edges
-            indexBuffer.add(bottomVb[i]);
-            indexBuffer.add(topVb[i]);
+            addIndices(bottomVb[i], bottomVb[next], topVb[i], topVb[next], bottomVb[i], topVb[i]);
         }
+
+        partBuffer.add(new Part(TopologyType.LINES, 0, 6 * segments));
     }
 }

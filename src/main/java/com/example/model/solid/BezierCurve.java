@@ -1,5 +1,7 @@
 package com.example.model.solid;
 
+import com.example.enums.TopologyType;
+import com.example.model.Part;
 import com.example.model.Vertex;
 import com.example.transforms.Cubic;
 import com.example.transforms.Point3D;
@@ -40,9 +42,10 @@ public class BezierCurve extends Solid {
         }
 
         for (int i = 0; i < vertexBuffer.size() - 1; i++) {
-            indexBuffer.add(i);
-            indexBuffer.add(i + 1);
+            addIndices(i, i + 1);
         }
+
+        partBuffer.add(new Part(TopologyType.LINES, 0, 2 * segments));
     }
 
     private void clear() {

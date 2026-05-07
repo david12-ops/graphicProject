@@ -18,6 +18,5 @@ public class Arrow extends Solid {
 
         partBuffer.add(new Part(TopologyType.LINES, 0, 1));
         partBuffer.add(new Part(TopologyType.TRIANGLES, 2, 1));
-
     }
 }

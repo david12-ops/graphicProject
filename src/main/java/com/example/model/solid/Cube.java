@@ -1,5 +1,7 @@
 package com.example.model.solid;
 
+import com.example.enums.TopologyType;
+import com.example.model.Part;
 import com.example.model.Vertex;
 import com.example.transforms.Point3D;
 
@@ -21,34 +23,8 @@ public class Cube extends Solid {
         vertexBuffer.add(new Vertex(new Point3D(-halfSize, halfSize, halfSize)));
 
         // Fill in ib
-        // Bottom
-        indexBuffer.add(0);
-        indexBuffer.add(1);
-        indexBuffer.add(1);
-        indexBuffer.add(2);
-        indexBuffer.add(2);
-        indexBuffer.add(3);
-        indexBuffer.add(0);
-        indexBuffer.add(3);
+        addIndices(0, 1, 1, 2, 2, 3, 0, 3, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7);
 
-        // Top
-        indexBuffer.add(4);
-        indexBuffer.add(5);
-        indexBuffer.add(5);
-        indexBuffer.add(6);
-        indexBuffer.add(6);
-        indexBuffer.add(7);
-        indexBuffer.add(7);
-        indexBuffer.add(4);
-
-        // Vertical
-        indexBuffer.add(0);
-        indexBuffer.add(4);
-        indexBuffer.add(1);
-        indexBuffer.add(5);
-        indexBuffer.add(2);
-        indexBuffer.add(6);
-        indexBuffer.add(3);
-        indexBuffer.add(7);
+        partBuffer.add(new Part(TopologyType.LINES, 0, 24));
     }
 }
