@@ -7,11 +7,11 @@ import com.example.transforms.Col;
 
 public class Arrow extends Solid {
     public Arrow() {
-        vertexBuffer.add(new Vertex(200, 300, 0.5)); // v0
-        vertexBuffer.add(new Vertex(400, 300, 0.5)); // v1
-        vertexBuffer.add(new Vertex(400, 340, 0.5, new Col(0xff0000))); // v2
-        vertexBuffer.add(new Vertex(360, 300, 0.5)); // v3
-        vertexBuffer.add(new Vertex(400, 260, 0.5)); // v4
+        vertexBuffer.add(new Vertex(0, 0, 0)); // v0
+        vertexBuffer.add(new Vertex(0.8, 0, 0)); // v1
+        vertexBuffer.add(new Vertex(0.8, 0, -0.2, new Col(0xff0000))); // v2
+        vertexBuffer.add(new Vertex(1, 0, 0)); // v3
+        vertexBuffer.add(new Vertex(0.8, 0, 0.2)); // v4
 
         addIndices(0, 1); // lines
         addIndices(4, 3, 2); // triangles
