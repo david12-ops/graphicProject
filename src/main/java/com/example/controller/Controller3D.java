@@ -33,8 +33,6 @@ import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
 import com.example.rasterize.TriangleRasterizer;
 import com.example.renderer.Renderer;
-import com.example.renderer.SolidTypeRenderer;
-import com.example.renderer.WireTypeRenderer;
 import com.example.transforms.Camera;
 import com.example.transforms.Col;
 import com.example.transforms.Mat4;
@@ -120,13 +118,9 @@ public class Controller3D implements Controller {
         initProjection();
         initScene();
 
-        WireTypeRenderer wireRenderer = new WireTypeRenderer(lineRasterizer, panel.getRaster().getWidth(),
-                panel.getRaster().getHeight(), camera.getViewMatrix(), projectionMatrix);
-        SolidTypeRenderer solidRenderer = new SolidTypeRenderer(lineRasterizer, triangleRasterizer,
+        renderer = new Renderer(lineRasterizer, triangleRasterizer,
                 panel.getRaster().getWidth(),
                 panel.getRaster().getHeight(), camera.getViewMatrix(), projectionMatrix);
-
-        renderer = new Renderer(wireRenderer, solidRenderer, solidModel);
     }
 
     private void initCamera() {
@@ -202,6 +196,7 @@ public class Controller3D implements Controller {
                 new Col(255, 105, 180), // hot pink
                 new Col(0, 255, 200) // bright turquoise
         );
+        System.out.println("Added arrow to the scene");
 
         scene.addSolid(arrow);
 
