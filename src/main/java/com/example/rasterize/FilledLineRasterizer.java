@@ -5,6 +5,7 @@ import com.example.enums.RasterizerMode;
 import com.example.model.Line;
 import com.example.raster.ZBuffer;
 import com.example.transforms.Col;
+import com.example.transforms.Vec3D;
 
 /*
  * Disadvantages:
@@ -72,6 +73,27 @@ public class FilledLineRasterizer extends LineRasterizer {
     @Override
     public void rasterize(Line line) {
         rasterize(line.getPointA(), line.getPointB());
+    }
+
+    /**
+     * Rasterizes a single vertex.
+     *
+     * @param v Vertex to rasterize
+     */
+    @Override
+    public void rasterize(Vec3D vec3d) {
+        if (!isSolidUsed()) {
+            System.out.println(
+                    "Color mode is invalid or missing colors to draw. Gradient mode is not supported for single vertex rasterization.");
+            System.out.println("Check if colors are set with color mode that use them.");
+            return;
+        }
+
+        zBuffer.setPixelWithZTest(
+                (int) vec3d.getX(),
+                (int) vec3d.getY(),
+                vec3d.getZ(),
+                selectedColor == null ? solidColor : selectedColor);
     }
 
     /**

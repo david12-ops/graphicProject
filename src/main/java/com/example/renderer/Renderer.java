@@ -95,12 +95,8 @@ public class Renderer {
                     }
                     break;
                 case TopologyType.TRIANGLES:
-                    System.out.println(
-                            "Rasterizing triangles for solid with " + solid.getVertexBuffer().size() + " vertices and "
-                                    + solid.getIndexBuffer().size() + " indices. Class type: "
-                                    + solid.getClass().getSimpleName());
                     index = part.getStartIndex();
-                    for (int i = 0; i < part.getCount(); i++) {
+                    for (int i = 0; i < part.getCount(); i += 3) {
                         int indexA = solid.getIndexBuffer().get(index++);
                         int indexB = solid.getIndexBuffer().get(index++);
                         int indexC = solid.getIndexBuffer().get(index++);
@@ -109,13 +105,25 @@ public class Renderer {
                         Vertex vecB = solid.getVertexBuffer().get(indexB);
                         Vertex vecC = solid.getVertexBuffer().get(indexC);
 
-                        // pronásobit MVP maticí
-                        Point3D pointA = vecA.getPosition().mul(solid.getModel()).mul(view).mul(proj);
-                        Point3D pointB = vecB.getPosition().mul(solid.getModel()).mul(view).mul(proj);
-                        Point3D pointC = vecC.getPosition().mul(solid.getModel()).mul(view).mul(proj);
+                        if (solid.useModelMatrix()) {
+                            // Modeling transformation (model) = model space -> world space
+                            // View transformation (view) = world space -> view space
+                            // Projection transformation (projection) = view space -> clip space
+                            vecA = new Vertex(vecA.getPosition().mul(solid.getModel()).mul(view).mul(proj));
+                            vecB = new Vertex(vecB.getPosition().mul(solid.getModel()).mul(view).mul(proj));
+                            vecC = new Vertex(vecC.getPosition().mul(solid.getModel()).mul(view).mul(proj));
+
+                        } else {
+                            // View transformation (view) = world space -> view space
+                            // Projection transformation (projection) = view space -> clip space
+                            vecA = new Vertex(vecA.getPosition().mul(view).mul(proj));
+                            vecB = new Vertex(vecB.getPosition().mul(view).mul(proj));
+                            vecC = new Vertex(vecC.getPosition().mul(view).mul(proj));
+                        }
 
                         // Crop in clip space
-                        if (!insideClipVolume(pointA) && !insideClipVolume(pointB))
+                        if (!insideClipVolume(vecA.getPosition()) && !insideClipVolume(vecB.getPosition())
+                                && !insideClipVolume(vecC.getPosition()))
                             continue;
 
                         // 2. ořezání podle z
@@ -131,9 +139,9 @@ public class Renderer {
                             // vzniknou dva nové trojúhelníky
                         }
 
-                        Optional<Vec3D> dehomogA = pointA.dehomog();
-                        Optional<Vec3D> dehomogB = pointB.dehomog();
-                        Optional<Vec3D> dehomogC = pointC.dehomog();
+                        Optional<Vec3D> dehomogA = vecA.getPosition().dehomog();
+                        Optional<Vec3D> dehomogB = vecB.getPosition().dehomog();
+                        Optional<Vec3D> dehomogC = vecC.getPosition().dehomog();
 
                         // Dehomogenization
                         if (dehomogA.isEmpty() || dehomogB.isEmpty() || dehomogC.isEmpty())
@@ -151,7 +159,26 @@ public class Renderer {
                     }
                     break;
                 case TopologyType.POINTS:
-                    System.out.println("Points topology is not supported for solid type renderer.");
+                    for (int i = 0; i < part.getCount(); i++) {
+                        index = solid.getIndexBuffer().get(part.getStartIndex() + i);
+                        Point3D point3d = solid.getVertexBuffer().get(index).getPosition();
+
+                        point3d = point3d.mul(solid.getModel())
+                                .mul(view)
+                                .mul(proj);
+
+                        if (!insideClipVolume(point3d))
+                            continue;
+
+                        Optional<Vec3D> dehomogA = point3d.dehomog();
+
+                        if (dehomogA.isEmpty())
+                            continue;
+
+                        Vec3D vec3D = transformToWindow(dehomogA.get());
+
+                        lineRasterizer.rasterize(vec3D);
+                    }
                     break;
             }
         }

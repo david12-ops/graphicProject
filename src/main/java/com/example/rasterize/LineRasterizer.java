@@ -116,4 +116,8 @@ public class LineRasterizer {
             double zOverW2) {
 
     }
+
+    public void rasterize(Vec3D vec3d) {
+
+    }
 }

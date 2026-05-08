@@ -39,13 +39,20 @@ public class FergusonCurve extends Solid {
             Point3D point3d = cubicCoons.compute(t);
 
             this.vertexBuffer.add(new Vertex(point3d));
+            this.indexBuffer.add(i); // Add index for each vertex
         }
 
-        for (int i = 0; i < vertexBuffer.size() - 1; i++) {
-            addIndices(i, i + 1);
-        }
+        // for (int i = 0; i < vertexBuffer.size() - 1; i++) {
+        // addIndices(i, i + 1);
+        // }
 
-        partBuffer.add(new Part(TopologyType.LINES, 0, 2 * segments));
+        // partBuffer.add(new Part(TopologyType.LINES, 0, 2 * segments));
+
+        partBuffer.add(
+                new Part(
+                        TopologyType.POINTS,
+                        0,
+                        segments + 1));
     }
 
     private void clear() {

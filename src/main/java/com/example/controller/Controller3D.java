@@ -18,7 +18,6 @@ import com.example.enums.SolidAction;
 import com.example.enums.SolidModel;
 import com.example.enums.SolidState;
 import com.example.model.Scene;
-import com.example.model.solid.Arrow;
 import com.example.model.solid.AxisX;
 import com.example.model.solid.AxisY;
 import com.example.model.solid.AxisZ;
@@ -184,22 +183,6 @@ public class Controller3D implements Controller {
         scene.addSolid(axisY);
         scene.addSolid(axisZ);
 
-        // Arrow
-        Arrow arrow = new Arrow();
-
-        // Colors
-        // solid - hot pink
-        arrow.setSolidColor(new Col(255, 105, 180));
-        arrow.setModel(new Mat4Transl(1.5, 0, 0));
-
-        arrow.setGradientColor(
-                new Col(255, 105, 180), // hot pink
-                new Col(0, 255, 200) // bright turquoise
-        );
-        System.out.println("Added arrow to the scene");
-
-        scene.addSolid(arrow);
-
         // Cube
         Cube cube = new Cube(2.0);
         cube.setModel(new Mat4Transl(3, 6, 0));
@@ -295,6 +278,13 @@ public class Controller3D implements Controller {
         );
 
         scene.addSolid(coonsCurve);
+
+        // Round round = new Round(
+        // new Point3D(10, 6, 5),
+        // 2,
+        // 100);
+
+        // scene.addSolid(round);
     }
 
     @Override

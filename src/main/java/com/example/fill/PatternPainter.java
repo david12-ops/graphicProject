@@ -36,6 +36,6 @@ public abstract class PatternPainter {
         int i = Math.floorMod(x, patternRaster.getWidth());
         int j = Math.floorMod(y, patternRaster.getHeight());
 
-        return patternRaster.getValue(x, y).orElse(new Col(0, 0, 0));
+        return patternRaster.getValue(i, j).orElse(new Col(0, 0, 0));
     }
 }
