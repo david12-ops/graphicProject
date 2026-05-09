@@ -4,12 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.enums.ColorMode;
-import com.example.enums.RasterizerMode;
-import com.example.model.Line;
-import com.example.model.Point;
+import com.example.model.Vertex;
 import com.example.raster.ZBuffer;
+import com.example.shader.Shader;
 import com.example.transforms.Col;
-import com.example.transforms.Vec3D;
 
 public class LineRasterizer {
 
@@ -18,10 +16,8 @@ public class LineRasterizer {
     protected Col solidColor;
     protected Col startColor;
     protected Col endColor;
-    protected Col selectedColor;
 
     protected ColorMode colorMode;
-    protected RasterizerMode rasterizerMode;
 
     public LineRasterizer(ZBuffer zBuffer) {
         this.zBuffer = zBuffer;
@@ -34,10 +30,6 @@ public class LineRasterizer {
         this.colorMode = colorMode;
     }
 
-    public void setRasterizeMode(RasterizerMode rasterizerMode) {
-        this.rasterizerMode = rasterizerMode;
-    }
-
     // solid color setters
     public void setSolidColor(Col solidColor) {
         this.solidColor = solidColor;
@@ -45,15 +37,6 @@ public class LineRasterizer {
 
     public void setSolidColor(int solidColor) {
         this.solidColor = new Col(solidColor);
-    }
-
-    // selected color setters
-    public void setSelectedColor(Col selectedColor) {
-        this.selectedColor = selectedColor;
-    }
-
-    public void setSelectedColor(int selectedColor) {
-        this.selectedColor = new Col(selectedColor);
     }
 
     // colors for gradient setters
@@ -69,10 +52,6 @@ public class LineRasterizer {
 
     public ColorMode getColorMode() {
         return this.colorMode;
-    }
-
-    public RasterizerMode getRasterizerMode() {
-        return this.rasterizerMode;
     }
 
     /**
@@ -100,24 +79,12 @@ public class LineRasterizer {
         return colorList;
     }
 
-    public void rasterize(Line line) {
-        rasterize(line.getPointA(), line.getPointB());
-    }
-
-    public void rasterize(Point a, Point b) {
+    public void rasterize(Vertex a, double invW1, double zOverW1, Vertex b, double invW2, double zOverW2,
+            Shader shader) {
 
     }
 
-    public void rasterize(Vec3D a, Vec3D b) {
-
-    }
-
-    public void rasterize(double x1, double y1, double invW1, double zOverW1, double x2, double y2, double invW2,
-            double zOverW2) {
-
-    }
-
-    public void rasterize(Vec3D vec3d) {
+    public void rasterize(Vertex vertex, Shader shader) {
 
     }
 }

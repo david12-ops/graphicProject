@@ -1,11 +1,9 @@
 package com.example.rasterize;
 
-import com.example.enums.ColorMode;
-import com.example.enums.RasterizerMode;
-import com.example.model.Line;
+import com.example.model.Vertex;
 import com.example.raster.ZBuffer;
-import com.example.transforms.Col;
-import com.example.transforms.Vec3D;
+import com.example.shader.Shader;
+import com.example.utils.Lerp;
 
 /*
  * Disadvantages:
@@ -47,32 +45,13 @@ public class FilledLineRasterizer extends LineRasterizer {
      * The Z coordinate can be used for depth testing (Z-buffer), but is not handled
      * here.
      *
-     * If NORMAL mode is selected, the trivial line rasterization algorithm is used.
-     * SHIFT mode is not supported for 3D vertices.
-     *
      * @param a start vertex of the line in 3D space
      * @param b end vertex of the line in 3D space
      */
     @Override
-    public void rasterize(double x1, double y1, double invW1, double zOverW1, double x2, double y2, double invW2,
-            double zOverW2) {
-        if (rasterizerMode == RasterizerMode.NORMAL) {
-            trivialAlgorithm((int) Math.round(x1), (int) Math.round(y1), invW1, zOverW1, (int) Math.round(x2),
-                    (int) Math.round(y2), invW2, zOverW2);
-        } else if (rasterizerMode == RasterizerMode.SHIFT) {
-            System.out.println("Shift mode is not supported for 3D points. Rasterizing without snapping.");
-        } else
-            return;
-    }
-
-    /**
-     * Rasterizes a line model object.
-     *
-     * @param line Line to rasterize
-     */
-    @Override
-    public void rasterize(Line line) {
-        rasterize(line.getPointA(), line.getPointB());
+    public void rasterize(Vertex a, double invW1, double zOverW1, Vertex b, double invW2, double zOverW2,
+            Shader shader) {
+        trivialAlgorithm(a, invW1, zOverW1, b, invW2, zOverW2, shader);
     }
 
     /**
@@ -81,19 +60,12 @@ public class FilledLineRasterizer extends LineRasterizer {
      * @param v Vertex to rasterize
      */
     @Override
-    public void rasterize(Vec3D vec3d) {
-        if (!isSolidUsed()) {
-            System.out.println(
-                    "Color mode is invalid or missing colors to draw. Gradient mode is not supported for single vertex rasterization.");
-            System.out.println("Check if colors are set with color mode that use them.");
-            return;
-        }
-
+    public void rasterize(Vertex vertex, Shader shader) {
         zBuffer.setPixelWithZTest(
-                (int) vec3d.getX(),
-                (int) vec3d.getY(),
-                vec3d.getZ(),
-                selectedColor == null ? solidColor : selectedColor);
+                (int) vertex.getX(),
+                (int) vertex.getY(),
+                vertex.getZ(),
+                shader.getColor(vertex));
     }
 
     /**
@@ -111,32 +83,25 @@ public class FilledLineRasterizer extends LineRasterizer {
      * @param y2 End y-coordinate
      * @param z  Depth value (z-coordinate)
      */
-    private void trivialAlgorithm(int x1, int y1, double invW1, double zOverW1, int x2, int y2,
-            double invW2,
-            double zOverW2) {
-        if (!(isGradientUsed() || isSolidUsed())) {
-            System.out.println(
-                    "Color mode is invalid or missing colors to draw.");
-            System.out.println("Check if colors are set with color mode that use them.");
-            return;
-        }
+    private void trivialAlgorithm(Vertex a, double invW1, double zOverW1, Vertex b,
+            double invW2, double zOverW2, Shader shader) {
 
-        // y = kx + q
-        float k = (y2 - y1) / (float) (x2 - x1);
-        float q = y1 - k * x1;
+        Lerp<Vertex> lerp = new Lerp<>();
 
-        float t = 0;
+        int ax = (int) Math.round(a.getX());
+        int ay = (int) Math.round(a.getY());
 
-        if (Math.abs((y2 - y1)) < Math.abs(x2 - x1)) {
+        int bx = (int) Math.round(b.getX());
+        int by = (int) Math.round(b.getY());
 
-            if (x2 < x1) {
-                int tmp1;
-                tmp1 = x1;
-                x1 = x2;
-                x2 = tmp1;
-                tmp1 = y1;
-                y1 = y2;
-                y2 = tmp1;
+        float t;
+
+        if (Math.abs(by - ay) < Math.abs(bx - ax)) {
+
+            if (bx < ax) {
+                Vertex tmpV = a;
+                a = b;
+                b = tmpV;
 
                 double tmp2;
                 tmp2 = invW1;
@@ -145,51 +110,43 @@ public class FilledLineRasterizer extends LineRasterizer {
                 tmp2 = zOverW1;
                 zOverW1 = zOverW2;
                 zOverW2 = tmp2;
+
+                int tmp;
+                tmp = ax;
+                ax = bx;
+                bx = tmp;
+
+                tmp = ay;
+                ay = by;
+                by = tmp;
             }
 
-            int startX = Math.max(0, x1);
-            int endX = Math.min(zBuffer.getWidth() - 1, x2);
+            float k = (by - ay) / (float) (bx - ax);
+            float q = ay - k * ax;
 
-            if (isSolidUsed()) {
+            int startX = Math.max(0, ax);
+            int endX = Math.min(zBuffer.getWidth() - 1, bx);
 
-                for (int x = startX; x <= endX; x++) {
-                    int y = Math.round(k * x + q);
+            for (int x = startX; x <= endX; x++) {
+                int y = Math.round(k * x + q);
 
-                    if (y < 0 || y >= zBuffer.getHeight()) {
-                        continue;
-                    }
-
-                    t = (x - x1) / (float) (x2 - x1);
-
-                    zBuffer.setPixelWithZTest(x, y, computeZ(t, invW1, invW2, zOverW1, zOverW2),
-                            selectedColor == null ? solidColor : selectedColor);
+                if (y < 0 || y >= zBuffer.getHeight()) {
+                    continue;
                 }
-            } else {
 
-                for (int x = startX; x <= endX; x++) {
-                    int y = Math.round(k * x + q);
+                t = (x - ax) / (float) (bx - ax);
+                Vertex pixel = lerp.lerp(a, b, t);
 
-                    if (y < 0 || y >= zBuffer.getHeight()) {
-                        continue;
-                    }
-
-                    t = (x - x1) / (float) (x2 - x1);
-
-                    zBuffer.setPixelWithZTest(x, y, computeZ(t, invW1, invW2, zOverW1, zOverW2),
-                            selectedColor == null ? computeColor(t, startColor, endColor) : selectedColor);
-                }
+                zBuffer.setPixelWithZTest(x, y, computeZ(t, invW1, invW2, zOverW1, zOverW2),
+                        shader.getColor(pixel));
             }
 
         } else {
 
-            if (y2 < y1) {
-                int tmp1;
-                tmp1 = x1;
-                x1 = x2;
-                x2 = tmp1;
-                tmp1 = y1;
-                y1 = y2;
-                y2 = tmp1;
+            if (by < ay) {
+                Vertex tmpV = a;
+                a = b;
+                b = tmpV;
 
                 double tmp2;
                 tmp2 = invW1;
@@ -198,93 +155,47 @@ public class FilledLineRasterizer extends LineRasterizer {
                 tmp2 = zOverW1;
                 zOverW1 = zOverW2;
                 zOverW2 = tmp2;
+
+                int tmp;
+                tmp = ax;
+                ax = bx;
+                bx = tmp;
+
+                tmp = ay;
+                ay = by;
+                by = tmp;
             }
 
-            int startY = Math.max(0, y1);
-            int endY = Math.min(zBuffer.getHeight() - 1, y2);
+            float k = (by - ay) / (float) (bx - ax);
+            float q = ay - k * ax;
+
+            int startY = Math.max(0, ay);
+            int endY = Math.min(zBuffer.getHeight() - 1, by);
+
             boolean isInfiniteK = false;
             int x = 0;
 
             if (Float.isInfinite(k)) {
-                x = x1;
+                x = ax;
                 isInfiniteK = true;
             }
 
-            if (isSolidUsed()) {
-
-                for (int y = startY; y <= endY; y++) {
-                    if (!isInfiniteK) {
-                        x = Math.round((y - q) / k);
-                    }
-
-                    if (x < 0 || x >= zBuffer.getWidth()) {
-                        continue;
-                    }
-
-                    t = (y - y1) / (float) (y2 - y1);
-
-                    zBuffer.setPixelWithZTest(x, y, computeZ(t, invW1, invW2, zOverW1, zOverW2),
-                            selectedColor == null ? solidColor : selectedColor);
+            for (int y = startY; y <= endY; y++) {
+                if (!isInfiniteK) {
+                    x = Math.round((y - q) / k);
                 }
-            } else {
 
-                for (int y = startY; y <= endY; y++) {
-                    if (!isInfiniteK) {
-                        x = Math.round((y - q) / k);
-                    }
-
-                    if (x < 0 || x >= zBuffer.getWidth()) {
-                        continue;
-                    }
-
-                    t = (y - y1) / (float) (y2 - y1);
-
-                    zBuffer.setPixelWithZTest(x, y, computeZ(t, invW1, invW2, zOverW1, zOverW2),
-                            selectedColor == null ? computeColor(t, startColor, endColor) : selectedColor);
+                if (x < 0 || x >= zBuffer.getWidth()) {
+                    continue;
                 }
+
+                t = (y - ay) / (float) (by - ay);
+                Vertex pixel = lerp.lerp(a, b, t);
+
+                zBuffer.setPixelWithZTest(x, y, computeZ(t, invW1, invW2, zOverW1, zOverW2),
+                        shader.getColor(pixel));
             }
         }
-    }
-
-    /**
-     * Computes interpolated color between two colors.
-     *
-     * @param t          Interpolation factor in range ⟨0,1⟩
-     * @param startColor Starting color
-     * @param endColor   Ending color
-     * @return Interpolated color as a Col object
-     */
-    private Col computeColor(float t, Col startColor, Col endColor) {
-        if (t < 0f)
-            t = 0f;
-        else if (t > 1f)
-            t = 1f;
-
-        double it = 1.0 - t;
-
-        // For each channel (A, R, G, B):
-        // C=C1​(1−t)+C2​t - formula for linear interpolation of colors
-        int a = (int) Math.round((startColor.getA() * it + endColor.getA() * t) * 255.0);
-        int r = (int) Math.round((startColor.getR() * it + endColor.getR() * t) * 255.0);
-        int g = (int) Math.round((startColor.getG() * it + endColor.getG() * t) * 255.0);
-        int b = (int) Math.round((startColor.getB() * it + endColor.getB() * t) * 255.0);
-
-        // revert back
-        return new Col(((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF));
-    }
-
-    /**
-     * Checks whether gradient color mode is correctly configured.
-     */
-    private boolean isGradientUsed() {
-        return colorMode == ColorMode.GRADIENT && (endColor != null && startColor != null);
-    }
-
-    /**
-     * Checks whether solid color mode is correctly configured.
-     */
-    private boolean isSolidUsed() {
-        return colorMode == ColorMode.SOLID && solidColor != null;
     }
 
     private double computeZ(float t, double invW1, double invW2, double zOverW1, double zOverW2) {

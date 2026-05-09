@@ -1,5 +1,6 @@
 package com.example.model.solid;
 
+import com.example.enums.SolidModel;
 import com.example.enums.SolidState;
 import com.example.model.Part;
 import com.example.model.Vertex;
@@ -15,13 +16,15 @@ public abstract class Solid {
     protected List<Vertex> vertexBuffer = new ArrayList<>();
     protected List<Integer> indexBuffer = new ArrayList<>();
     protected List<Part> partBuffer = new ArrayList<>();
-    protected Mat4 model = new Mat4Identity();
+    protected SolidModel solidModel = SolidModel.WIREFRAME;
 
+    private Mat4 model = new Mat4Identity();
     private SolidState state = SolidState.NORMAL;
 
-    private Col solidColor = new Col(0xffffff);
-    private Col gradientStart;
-    private Col gradientEnd;
+    private Col solidColor = new Col(0xFFFFFFFF);
+    private Col[] gradientColorForLines;
+    private Col[] colorsForTriangles;
+    // private Col texture;
 
     private boolean useModelMatrix = true;
 
@@ -46,12 +49,26 @@ public abstract class Solid {
     }
 
     public Col[] getColorsForGradient() {
-        return new Col[] { gradientStart, gradientEnd };
+        return gradientColorForLines;
     }
 
     public void setGradientColor(Col start, Col end) {
-        this.gradientStart = start;
-        this.gradientEnd = end;
+        this.gradientColorForLines = new Col[] {
+                start,
+                end
+        };
+    }
+
+    public Col[] getColorsForTriangles() {
+        return colorsForTriangles;
+    }
+
+    public void setGradientColor(Col first, Col second, Col third) {
+        this.colorsForTriangles = new Col[] {
+                first,
+                second,
+                third
+        };
     }
 
     public SolidState getState() {
@@ -76,6 +93,10 @@ public abstract class Solid {
 
     public void setModel(Mat4 model) {
         this.model = model;
+    }
+
+    public void setSolidTopology(SolidModel solidModel) {
+        this.solidModel = solidModel;
     }
 
     public void addIndices(Integer... indices) {

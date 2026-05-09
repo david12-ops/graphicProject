@@ -2,11 +2,22 @@ package com.example.model;
 
 import com.example.transforms.Col;
 import com.example.transforms.Point3D;
+import com.example.transforms.Vec2D;
+import com.example.transforms.Vec3D;
 
 public class Vertex implements Vectorazible<Vertex> {
     private final Point3D position;
     private final Col color;
+    private Vec3D normal;
+    private Vec2D uv;
     // další atributy: normála, uv, one
+
+    public Vertex(Point3D position, Col color, Vec3D normal, Vec2D uv) {
+        this.position = position;
+        this.color = color;
+        this.uv = uv;
+        this.normal = normal;
+    }
 
     public Vertex(Point3D position, Col color) {
         this.position = position;
@@ -45,6 +56,22 @@ public class Vertex implements Vectorazible<Vertex> {
 
     public Col getColor() {
         return color;
+    }
+
+    public Vec2D getUV() {
+        return uv;
+    }
+
+    public void setUV(Vec2D uv) {
+        this.uv = uv;
+    }
+
+    public Vec3D getNormal() {
+        return normal;
+    }
+
+    public void setUV(Vec3D normal) {
+        this.normal = normal;
     }
 
     @Override

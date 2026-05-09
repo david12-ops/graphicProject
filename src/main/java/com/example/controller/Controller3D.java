@@ -3,6 +3,7 @@ package com.example.controller;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.List;
 
 import javax.swing.SwingUtilities;
 
@@ -13,11 +14,11 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 
 import com.example.enums.ColorMode;
-import com.example.enums.RasterizerMode;
 import com.example.enums.SolidAction;
 import com.example.enums.SolidModel;
 import com.example.enums.SolidState;
 import com.example.model.Scene;
+import com.example.model.Vertex;
 import com.example.model.solid.AxisX;
 import com.example.model.solid.AxisY;
 import com.example.model.solid.AxisZ;
@@ -82,6 +83,11 @@ public class Controller3D implements Controller {
     // cannot work with gradient edges
     // TODO - for rasterazing ask depthBuffer instead of RassterBufferedImage
 
+    // TODO - rendere přepsat aby používaly jen Vertex
+    // TODO - vyřešit shader na gradient
+    // TODO - textura
+    // TODO - osvicení
+
     /**
      * Creates a new 3D controller for the given panel.
      * 
@@ -108,7 +114,6 @@ public class Controller3D implements Controller {
         lineRasterizer = new FilledLineRasterizer(zBuffer);
         triangleRasterizer = new TriangleRasterizer(zBuffer);
 
-        lineRasterizer.setRasterizeMode(RasterizerMode.NORMAL);
         setRasterizerDrawingColor();
 
         this.scene = new Scene();
@@ -302,7 +307,12 @@ public class Controller3D implements Controller {
                 }
 
                 double scale = (e.getUnitsToScroll() > 0) ? 1.1 : 0.9;
-                activeSolid.setModel(new Mat4Scale(scale).mul(activeSolid.getModel()));
+                Vec3D centerVec3d = getCenterVec(activeSolid.getVertexBuffer());
+
+                Mat4 scaleAroundCenter = new Mat4Transl(centerVec3d.opposite()).mul(new Mat4Scale(scale))
+                        .mul(new Mat4Transl(centerVec3d));
+
+                activeSolid.setModel(scaleAroundCenter.mul(activeSolid.getModel()));
 
                 render();
             }
@@ -439,7 +449,7 @@ public class Controller3D implements Controller {
                 }
 
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_SPACE:
+                    case KeyEvent.VK_M:
                         if (solidModel == SolidModel.WIREFRAME) {
                             solidModel = SolidModel.SOLID;
                         } else {
@@ -530,10 +540,10 @@ public class Controller3D implements Controller {
                         break;
 
                     // AXIS Z
-                    case KeyEvent.VK_N:
+                    case KeyEvent.VK_H:
                         updateSolid(activeSolid, SolidAction.ROTATION, null, new Mat4RotZ(-0.1));
                         break;
-                    case KeyEvent.VK_M:
+                    case KeyEvent.VK_J:
                         updateSolid(activeSolid, SolidAction.ROTATION, null, new Mat4RotZ(0.1));
                         break;
                     default:
@@ -634,12 +644,16 @@ public class Controller3D implements Controller {
         renderer.setProj(projectionMatrix);
 
         for (int i = 0; i < scene.getSolids().size(); i++) {
-            if (i == activeSolidIndex)
-                scene.getSolids().get(i).setState(SolidState.SELECTED);
-            else
-                scene.getSolids().get(i).setState(SolidState.NORMAL);
+            Solid solid = scene.getSolids().get(i);
+            solid.setSolidTopology(solidModel);
 
-            renderer.render(scene.getSolids().get(i));
+            if (i == activeSolidIndex) {
+                solid.setState(SolidState.SELECTED);
+            } else {
+                solid.setState(SolidState.NORMAL);
+            }
+
+            renderer.render(solid);
         }
 
         update();
@@ -685,4 +699,18 @@ public class Controller3D implements Controller {
 
     // return patternRaster;
     // }
+
+    private Vec3D getCenterVec(List<Vertex> vertexes) {
+        double x = 0;
+        double y = 0;
+        double z = 0;
+
+        for (Vertex v : vertexes) {
+            x += v.getX();
+            y += v.getY();
+            z += v.getZ();
+        }
+
+        return new Vec3D(x / vertexes.size(), y / vertexes.size(), z / vertexes.size());
+    }
 }

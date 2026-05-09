@@ -6,6 +6,7 @@ import com.example.shader.Shader;
 import com.example.utils.Lerp;
 
 public class TriangleRasterizer {
+    // neni ready
     private final ZBuffer zBuffer;
 
     public TriangleRasterizer(ZBuffer zBuffer) {
@@ -32,8 +33,6 @@ public class TriangleRasterizer {
             a = b;
             b = temp;
         }
-
-        System.out.println("Rasterizing triangle with vertices: " + a + ", " + b + ", " + c);
 
         Lerp<Vertex> lerp = new Lerp<>();
 
