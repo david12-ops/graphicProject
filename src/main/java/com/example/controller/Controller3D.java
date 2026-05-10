@@ -5,34 +5,30 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 
-import com.example.enums.ColorMode;
+import com.example.enums.ColorDrawMode;
+import com.example.enums.ColorFillMode;
 import com.example.enums.SolidAction;
 import com.example.enums.SolidModel;
 import com.example.enums.SolidState;
 import com.example.model.Scene;
+import com.example.model.Texture;
 import com.example.model.Vertex;
-import com.example.model.solid.AxisX;
-import com.example.model.solid.AxisY;
-import com.example.model.solid.AxisZ;
-import com.example.model.solid.BezierCurve;
-import com.example.model.solid.CoonsCurve;
 import com.example.model.solid.Cube;
-import com.example.model.solid.Cylinder;
-import com.example.model.solid.FergusonCurve;
 import com.example.model.solid.Solid;
 import com.example.raster.ZBuffer;
 import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
 import com.example.rasterize.TriangleRasterizer;
 import com.example.renderer.Renderer;
+import com.example.shader.ShaderConstant;
+import com.example.shader.ShaderInterpolated;
+import com.example.shader.ShaderTexture;
 import com.example.transforms.Camera;
 import com.example.transforms.Col;
 import com.example.transforms.Mat4;
@@ -43,7 +39,6 @@ import com.example.transforms.Mat4RotY;
 import com.example.transforms.Mat4RotZ;
 import com.example.transforms.Mat4Scale;
 import com.example.transforms.Mat4Transl;
-import com.example.transforms.Point3D;
 import com.example.transforms.Vec3D;
 import com.example.view.Panel;
 
@@ -76,12 +71,11 @@ public class Controller3D implements Controller {
 
     private int activeSolidIndex = 0;
 
-    private ColorMode colorMode;
+    private ColorDrawMode colorDrawMode;
+    private ColorFillMode colorFillMode;
 
-    // TODO - scan-line (computing all solid polygons), cannot with seedfill and
-    // seedfillborder refill pattern with solid color, seedfillborder in this state
-    // cannot work with gradient edges
-    // TODO - for rasterazing ask depthBuffer instead of RassterBufferedImage
+    private final ShaderConstant shaderConstant = new ShaderConstant();
+    private final ShaderInterpolated shaderInterpolated = new ShaderInterpolated();
 
     // TODO - rendere přepsat aby používaly jen Vertex
     // TODO - vyřešit shader na gradient
@@ -108,19 +102,19 @@ public class Controller3D implements Controller {
      * @param raster Raster used for drawing operations
      */
     public void initObjects() {
-        colorMode = panel.getColorMode();
+        colorDrawMode = panel.getColorDrawMode();
+        colorFillMode = panel.getColorFillMode();
+
         zBuffer = new ZBuffer(panel.getRaster());
 
         lineRasterizer = new FilledLineRasterizer(zBuffer);
         triangleRasterizer = new TriangleRasterizer(zBuffer);
 
-        setRasterizerDrawingColor();
-
         this.scene = new Scene();
 
         initCamera();
         initProjection();
-        initScene();
+        initScene(solidModel);
 
         renderer = new Renderer(lineRasterizer, triangleRasterizer,
                 panel.getRaster().getWidth(),
@@ -154,142 +148,30 @@ public class Controller3D implements Controller {
         }
     }
 
-    private void initScene() {
+    private void initScene(SolidModel solidModel) {
         scene.clear();
-        // axes
-        AxisX axisX = new AxisX();
-        AxisY axisY = new AxisY();
-        AxisZ axisZ = new AxisZ();
-
-        axisX.setUseModelMatrix(false);
-        axisY.setUseModelMatrix(false);
-        axisZ.setUseModelMatrix(false);
-
-        // Colors for axes
-        axisX.setSolidColor(new Col(255, 0, 0)); // red
-        axisX.setGradientColor(
-                new Col(120, 0, 0), // dark red
-                new Col(255, 220, 0) // bright yellow
-        );
-
-        axisY.setSolidColor(new Col(0, 255, 0)); // green
-        axisY.setGradientColor(
-                new Col(0, 100, 0), // dark green
-                new Col(0, 255, 200) // bright turquoise
-        );
-
-        axisZ.setSolidColor(new Col(0, 0, 255)); // blue
-        axisZ.setGradientColor(
-                new Col(70, 120, 255), // light blue
-                new Col(180, 100, 255) // blue-violet
-        );
-
-        scene.addSolid(axisX);
-        scene.addSolid(axisY);
-        scene.addSolid(axisZ);
 
         // Cube
-        Cube cube = new Cube(2.0);
+        Cube cube = new Cube(
+                2.0,
+                new Col[] {
+                        new Col(255, 0, 0),
+                        new Col(0, 255, 0),
+                        new Col(0, 0, 255)
+                },
+                solidModel);
+
         cube.setModel(new Mat4Transl(3, 6, 0));
 
-        // Colors
-        // solid - steel blue-gray
-        cube.setSolidColor(new Col(70, 90, 120));
-
-        cube.setGradientColor(
-                new Col(40, 50, 70), // dark steel
-                new Col(160, 180, 210) // light metallic blue
-        );
+        try {
+            Texture cubeTexture = new Texture("/beasternchen-bee-9766784.jpg");
+            cube.setTexture(cubeTexture);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("File was not load properly");
+        }
 
         scene.addSolid(cube);
-
-        // Cylinder
-        Cylinder cylinder = new Cylinder(1.0, 2.0, 32);
-        cylinder.setModel(new Mat4Transl(-1.5, 6, 0));
-
-        // Colors
-        // solid - wine red
-        cylinder.setSolidColor(new Col(120, 20, 60));
-
-        cylinder.setGradientColor(
-                new Col(60, 0, 30), // dark wine
-                new Col(200, 80, 140) // light wine-pink
-        );
-
-        scene.addSolid(cylinder);
-
-        // Bezier curve
-        // Points for curves with choosen solid (cube)
-        Point3D p0 = cube.getVertexBuffer().get(0).getPosition().mul(new Mat4Transl(3, 6, 0));
-        Point3D p3 = cube.getVertexBuffer().get(6).getPosition().mul(new Mat4Transl(3, 6, 0));
-
-        Point3D p1 = new Point3D(6, 10, 4);
-        Point3D p2 = new Point3D(0, -2, 3);
-
-        BezierCurve bezier = new BezierCurve(new Point3D[] { p0, p1, p2, p3 },
-                100);
-        bezier.compute();
-
-        // Colors
-        // solid - coral
-        bezier.setSolidColor(new Col(255, 94, 77));
-
-        bezier.setGradientColor(
-                new Col(120, 20, 20), // dark reddish brown
-                new Col(255, 240, 180) // very light apricot
-        );
-
-        scene.addSolid(bezier);
-
-        // Ferguson curve
-        // Points for curves with choosen solid (cube)
-        Point3D start = p0;
-        Point3D end = p3;
-
-        Point3D t0 = new Point3D(3, 0, 0);
-        Point3D t1 = new Point3D(0, 3, 2);
-
-        FergusonCurve ferguson = new FergusonCurve(new Point3D[] { start, end, t0, t1 },
-                100);
-        ferguson.compute();
-
-        // Colors
-        // solid - purple
-        ferguson.setSolidColor(new Col(131, 58, 180));
-
-        ferguson.setGradientColor(
-                new Col(40, 0, 80), // very dark purple
-                new Col(255, 120, 255) // light pink-purple
-        );
-
-        scene.addSolid(ferguson);
-
-        // Coons curve
-        // Points for curves with choosen solid (cube)
-        // The Coons cubic is an approximation, so it does not pass through the
-        // endpoints like the previous two.
-        // p0, p0, p3, p3 - this will cause the curve to come closer to the ends.
-        CoonsCurve coonsCurve = new CoonsCurve(new Point3D[] { p0, p0, p3, p3 },
-                100);
-        coonsCurve.compute();
-
-        // Colors
-        // solid - light sea green
-        coonsCurve.setSolidColor(new Col(32, 178, 170));
-
-        coonsCurve.setGradientColor(
-                new Col(0, 60, 60), // dark teal
-                new Col(180, 255, 255) // very light cyan
-        );
-
-        scene.addSolid(coonsCurve);
-
-        // Round round = new Round(
-        // new Point3D(10, 6, 5),
-        // 2,
-        // 100);
-
-        // scene.addSolid(round);
     }
 
     @Override
@@ -319,93 +201,6 @@ public class Controller3D implements Controller {
         });
 
         panel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isMiddleMouseButton(e)) {
-                    // List<Col> setColors = lineRasterizer.getColors();
-                    // Raster<Col> ptRaster = createPatternRaster(100, 100);
-
-                    /*
-                     * Scan-line algorithm is more ralible with gradient then seedFill and
-                     * seedFillBorder
-                     */
-                    // with pattern
-                    // if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() ==
-                    // FillColorMode.PATTERN) {
-                    // System.out.println("Used scan-line with pattern filling");
-                    // SolidFiller scanLine = new ScanLine(panel.getRaster(), ptRaster);
-                    // scanLine.fill(getActiveSolid(), e.getX(), e.getY());
-
-                    // update();
-                    // return;
-                    // }
-
-                    // with color
-                    // if (panel.getFillTool() == FillTool.SCANLINE && panel.getFillColorMode() ==
-                    // FillColorMode.COLOR) {
-                    // System.out.println("Used scan-line with color filling");
-                    // SolidFiller scanLine = new ScanLine(panel.getRaster(), new Col(165, 42, 42,
-                    // 255));
-                    // scanLine.fill(getActiveSolid(), e.getX(), e.getY());
-
-                    // update();
-                    // return;
-                    // }
-
-                    // with pattern
-                    // if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() ==
-                    // FillColorMode.PATTERN) {
-                    // System.out.println("Used seed fill with pattern filling");
-                    // SeedFiller seedFill = new SeedFill(panel.getRaster(), ptRaster,
-                    // panel.getRaster().getPixel(e.getX(), e.getY()), e.getX(), e.getY());
-                    // seedFill.fill();
-
-                    // update();
-                    // return;
-                    // }
-
-                    // with color
-                    // if (panel.getFillTool() == FillTool.SEEDFILL && panel.getFillColorMode() ==
-                    // FillColorMode.COLOR) {
-                    // System.out.println("Used seed fill with color filling");
-                    // SeedFiller seedFill = new SeedFill(panel.getRaster(),
-                    // panel.getRaster().getPixel(e.getX(), e.getY()), new Col(165, 42, 42, 255),
-                    // e.getX(),
-                    // e.getY());
-                    // seedFill.fill();
-
-                    // update();
-                    // return;
-                    // }
-
-                    // with pattern
-                    // if (panel.getFillTool() == FillTool.SEEDFILLBORDER
-                    // && panel.getFillColorMode() == FillColorMode.PATTERN) {
-                    // System.out.println("Used seed fill border with pattern filling");
-                    // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(), ptRaster,
-                    // setColors.get(0),
-                    // e.getX(), e.getY());
-                    // seedFillBorder.fill();
-
-                    // update();
-                    // return;
-                    // }
-
-                    // with color
-                    // if (panel.getFillTool() == FillTool.SEEDFILLBORDER
-                    // && panel.getFillColorMode() == FillColorMode.COLOR) {
-                    // System.out.println("Used seed fill border with color filling");
-                    // SeedFiller seedFillBorder = new SeedFillBorder(panel.getRaster(),
-                    // setColors.get(0), new Col(165, 42, 42, 255), e.getX(),
-                    // e.getY());
-                    // seedFillBorder.fill();
-
-                    // update();
-                    // return;
-                    // }
-                }
-            }
-
             @Override
             public void mousePressed(MouseEvent e) {
                 panel.requestFocusInWindow();
@@ -455,6 +250,9 @@ public class Controller3D implements Controller {
                         } else {
                             solidModel = SolidModel.WIREFRAME;
                         }
+
+                        initScene(solidModel);
+                        render();
                         break;
                     // Cam up
                     case KeyEvent.VK_UP:
@@ -635,10 +433,8 @@ public class Controller3D implements Controller {
         panel.clear();
         zBuffer.clear();
 
-        if (colorMode != panel.getColorMode()) {
-            colorMode = panel.getColorMode();
-            setRasterizerDrawingColor();
-        }
+        colorDrawMode = panel.getColorDrawMode();
+        colorFillMode = panel.getColorFillMode();
 
         renderer.setView(camera.getViewMatrix());
         renderer.setProj(projectionMatrix);
@@ -649,9 +445,12 @@ public class Controller3D implements Controller {
 
             if (i == activeSolidIndex) {
                 solid.setState(SolidState.SELECTED);
-            } else {
+
+            } else
                 solid.setState(SolidState.NORMAL);
-            }
+
+            setRasterizerFillColor(renderer, solid);
+            setRasterizerDrawColor(renderer, solid.getState());
 
             renderer.render(solid);
         }
@@ -659,14 +458,45 @@ public class Controller3D implements Controller {
         update();
     }
 
-    private void setRasterizerDrawingColor() {
-        if (colorMode == ColorMode.GRADIENT)
-            lineRasterizer.setColorMode(ColorMode.GRADIENT);
-        else if (colorMode == ColorMode.SOLID)
-            lineRasterizer.setColorMode(ColorMode.SOLID);
-        else {
-            System.err.println("Invalid ColorMode, falling back to SOLID");
-            lineRasterizer.setColorMode(ColorMode.SOLID);
+    private void setRasterizerDrawColor(Renderer renderer, SolidState solidState) {
+        if (solidModel != SolidModel.WIREFRAME)
+            return;
+
+        if (solidState == SolidState.SELECTED) {
+            if (colorDrawMode == ColorDrawMode.GRADIENT)
+                renderer.setShaderForDraw(shaderInterpolated);
+            else if (colorDrawMode == ColorDrawMode.SOLID)
+                renderer.setShaderForDraw(shaderConstant);
+            else {
+                System.err.println("Invalid ColorMode, falling back to SOLID");
+                renderer.setShaderForDraw(shaderConstant);
+            }
+        } else {
+            renderer.setShaderForDraw(shaderConstant);
+        }
+    }
+
+    private void setRasterizerFillColor(Renderer renderer, Solid solid) {
+        if (solidModel != SolidModel.SOLID)
+            return;
+
+        if (solid.getState() == SolidState.SELECTED) {
+            if (colorFillMode == ColorFillMode.GRADIENT)
+                renderer.setShaderForFill(shaderInterpolated);
+            else if (colorFillMode == ColorFillMode.CONSTANT)
+                renderer.setShaderForFill(shaderConstant);
+            else if (colorFillMode == ColorFillMode.TEXTURE)
+                if (solid.getTexture() == null) {
+                    renderer.setShaderForFill(shaderConstant);
+                } else {
+                    renderer.setShaderForFill(new ShaderTexture(solid.getTexture()));
+                }
+            else {
+                System.err.println("Invalid ColorMode, falling back to SOLID");
+                renderer.setShaderForFill(shaderConstant);
+            }
+        } else {
+            renderer.setShaderForFill(shaderConstant);
         }
     }
 
@@ -676,29 +506,6 @@ public class Controller3D implements Controller {
     private void update() {
         panel.repaint();
     }
-
-    // private Raster<Col> createPatternRaster(int width, int height) {
-
-    // if (width < 0 || height < 0)
-    // return null;
-
-    // Raster<Col> patternRaster = new RasterBufferedImage(width, height);
-
-    // int lightGray = 0xDDDDDD;
-    // int darkGray = 0x777777;
-
-    // for (int py = 0; py < height; py++) {
-    // for (int px = 0; px < width; px++) {
-    // if ((px + py) % 2 == 0) {
-    // patternRaster.setValue(px, py, new Col(lightGray));
-    // } else {
-    // patternRaster.setValue(px, py, new Col(darkGray));
-    // }
-    // }
-    // }
-
-    // return patternRaster;
-    // }
 
     private Vec3D getCenterVec(List<Vertex> vertexes) {
         double x = 0;

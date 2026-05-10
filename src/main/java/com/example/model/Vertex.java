@@ -12,7 +12,7 @@ public class Vertex implements Vectorazible<Vertex> {
     private Vec2D uv;
     // další atributy: normála, uv, one
 
-    public Vertex(Point3D position, Col color, Vec3D normal, Vec2D uv) {
+    public Vertex(Point3D position, Col color, Vec2D uv, Vec3D normal) {
         this.position = position;
         this.color = color;
         this.uv = uv;
@@ -62,25 +62,39 @@ public class Vertex implements Vectorazible<Vertex> {
         return uv;
     }
 
-    public void setUV(Vec2D uv) {
-        this.uv = uv;
-    }
-
     public Vec3D getNormal() {
         return normal;
     }
 
-    public void setUV(Vec3D normal) {
-        this.normal = normal;
-    }
-
     @Override
     public Vertex mul(double d) {
-        return new Vertex(position.mul(d), color.mul(color));
+
+        Point3D newPosition = position != null ? position.mul(d) : null;
+        Col newColor = color != null ? color.mul(d) : null;
+        Vec2D newUV = uv != null ? uv.mul(d) : null;
+        Vec3D newNormal = normal != null ? normal.mul(d) : null;
+
+        return new Vertex(newPosition, newColor, newUV, newNormal);
     }
 
     @Override
     public Vertex add(Vertex v) {
-        return new Vertex(position.add(v.getPosition()), color.add(v.getColor()));
+
+        Point3D newPosition = position != null ? position.add(v.getPosition()) : null;
+        Col newColor = color != null ? color.add(v.getColor()) : null;
+        Vec2D newUV = uv != null ? uv.add(v.getUV()) : null;
+        Vec3D newNormal = normal != null ? normal.add(v.getNormal()) : null;
+
+        return new Vertex(newPosition, newColor, newUV, newNormal);
+    }
+
+    @Override
+    public String toString() {
+        return "Vertex{" +
+                "position=" + position +
+                ", color=" + color +
+                ", uv=" + uv +
+                ", normal=" + normal +
+                '}';
     }
 }

@@ -1,8 +1,7 @@
 package com.example.view;
 
-import com.example.enums.ColorMode;
-import com.example.enums.FillColorMode;
-import com.example.enums.FillTool;
+import com.example.enums.ColorDrawMode;
+import com.example.enums.ColorFillMode;
 import com.example.raster.RasterBufferedImage;
 
 import javax.swing.*;
@@ -13,9 +12,8 @@ import java.util.TimerTask;
 public class Panel extends JPanel {
 
     private RasterBufferedImage raster;
-    private FillTool fillTool = FillTool.SCANLINE;
-    private FillColorMode fillColorMode = FillColorMode.PATTERN;
-    private ColorMode colorMode = ColorMode.SOLID;
+    private ColorFillMode colorFillMode = ColorFillMode.CONSTANT;
+    private ColorDrawMode colorDrawingMode = ColorDrawMode.SOLID;
     private final int clearColor = Color.BLACK.getRGB();
 
     public RasterBufferedImage getRaster() {
@@ -39,28 +37,20 @@ public class Panel extends JPanel {
         // pro zájemce - co dělá observer - https://stackoverflow.com/a/1684476
     }
 
-    public void setFillTool(FillTool fillTool) {
-        this.fillTool = fillTool;
+    public ColorFillMode getColorFillMode() {
+        return this.colorFillMode;
     }
 
-    public void setFillColorMode(FillColorMode fillColorMode) {
-        this.fillColorMode = fillColorMode;
+    public void setColorFillMode(ColorFillMode colorFillMode) {
+        this.colorFillMode = colorFillMode;
     }
 
-    public FillTool getFillTool() {
-        return this.fillTool;
+    public ColorDrawMode getColorDrawMode() {
+        return colorDrawingMode;
     }
 
-    public FillColorMode getFillColorMode() {
-        return this.fillColorMode;
-    }
-
-    public ColorMode getColorMode() {
-        return colorMode;
-    }
-
-    public void setColorMode(ColorMode colorMode) {
-        this.colorMode = colorMode;
+    public void setColorDrawMode(ColorDrawMode colorDrawingMode) {
+        this.colorDrawingMode = colorDrawingMode;
     }
 
     public void resize() {

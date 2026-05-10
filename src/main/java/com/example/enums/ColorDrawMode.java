@@ -1,6 +1,6 @@
 package com.example.enums;
 
-public enum ColorMode {
+public enum ColorDrawMode {
     SOLID,
     GRADIENT
 }

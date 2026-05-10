@@ -21,7 +21,9 @@ import com.example.transforms.Vec3D;
 public class Renderer {
     private LineRasterizer lineRasterizer;
     private TriangleRasterizer triangleRasterizer;
-    private Shader shader;
+    private Shader shaderForWireFrame = new ShaderConstant();
+    private Shader shaderForSolid = new ShaderConstant();
+
     private int width, height;
     private Mat4 view, proj;
 
@@ -29,7 +31,6 @@ public class Renderer {
             int height, Mat4 view, Mat4 proj) {
         this.lineRasterizer = lineRasterizer;
         this.triangleRasterizer = triangleRasterizer;
-        this.shader = new ShaderConstant();
         this.width = width;
         this.height = height;
         this.view = view;
@@ -96,7 +97,7 @@ public class Renderer {
                                 new Vertex(new Point3D(vecB3D.getX(), vecB3D.getY(), vecB3D.getZ()), vecB.getColor()),
                                 invW2,
                                 zOverW2,
-                                shader);
+                                shaderForWireFrame);
                     }
                     break;
                 case TopologyType.TRIANGLES:
@@ -120,18 +121,24 @@ public class Renderer {
                             // View transformation (view) = world space -> view space
                             // Projection transformation (projection) = view space -> clip space
                             vecA = new Vertex(vecA.getPosition()
-                                    .mul(solid.getModel()).mul(view).mul(proj), vecA.getColor());
+                                    .mul(solid.getModel()).mul(view).mul(proj), vecA.getColor(), vecA.getUV(),
+                                    vecA.getNormal());
                             vecB = new Vertex(vecB.getPosition()
-                                    .mul(solid.getModel()).mul(view).mul(proj), vecB.getColor());
+                                    .mul(solid.getModel()).mul(view).mul(proj), vecB.getColor(), vecB.getUV(),
+                                    vecB.getNormal());
                             vecC = new Vertex(vecC.getPosition()
-                                    .mul(solid.getModel()).mul(view).mul(proj), vecC.getColor());
+                                    .mul(solid.getModel()).mul(view).mul(proj), vecC.getColor(), vecC.getUV(),
+                                    vecC.getNormal());
 
                         } else {
                             // View transformation (view) = world space -> view space
                             // Projection transformation (projection) = view space -> clip space
-                            vecA = new Vertex(vecA.getPosition().mul(view).mul(proj), vecA.getColor());
-                            vecB = new Vertex(vecB.getPosition().mul(view).mul(proj), vecB.getColor());
-                            vecC = new Vertex(vecC.getPosition().mul(view).mul(proj), vecC.getColor());
+                            vecA = new Vertex(vecA.getPosition().mul(view).mul(proj), vecA.getColor(), vecA.getUV(),
+                                    vecA.getNormal());
+                            vecB = new Vertex(vecB.getPosition().mul(view).mul(proj), vecB.getColor(), vecB.getUV(),
+                                    vecB.getNormal());
+                            vecC = new Vertex(vecC.getPosition().mul(view).mul(proj), vecC.getColor(), vecC.getUV(),
+                                    vecC.getNormal());
                         }
 
                         // Crop in clip space
@@ -166,10 +173,13 @@ public class Renderer {
                         Vec3D vecC3D = transformToWindow(dehomogC.get());
 
                         triangleRasterizer.rasterize(
-                                new Vertex(new Point3D(vecA3D.getX(), vecA3D.getY(), vecA3D.getZ()), vecA.getColor()),
-                                new Vertex(new Point3D(vecB3D.getX(), vecB3D.getY(), vecB3D.getZ()), vecB.getColor()),
-                                new Vertex(new Point3D(vecC3D.getX(), vecC3D.getY(), vecC3D.getZ()), vecC.getColor()),
-                                shader);
+                                new Vertex(new Point3D(vecA3D.getX(), vecA3D.getY(), vecA3D.getZ()), vecA.getColor(),
+                                        vecA.getUV(), vecA.getNormal()),
+                                new Vertex(new Point3D(vecB3D.getX(), vecB3D.getY(), vecB3D.getZ()), vecB.getColor(),
+                                        vecB.getUV(), vecB.getNormal()),
+                                new Vertex(new Point3D(vecC3D.getX(), vecC3D.getY(), vecC3D.getZ()), vecC.getColor(),
+                                        vecC.getUV(), vecC.getNormal()),
+                                shaderForSolid);
                     }
                     break;
                 case TopologyType.POINTS:
@@ -204,7 +214,8 @@ public class Renderer {
 
                         Vec3D vec3D = transformToWindow(dehomogA.get());
 
-                        lineRasterizer.rasterize(new Vertex(vec3D.getX(), vec3D.getY(), vec3D.getZ()), shader);
+                        lineRasterizer.rasterize(new Vertex(vec3D.getX(), vec3D.getY(), vec3D.getZ()),
+                                shaderForWireFrame);
                     }
                     break;
             }
@@ -234,7 +245,7 @@ public class Renderer {
             vertex = new Vertex(vertex.getPosition()
                     .mul(new Mat4Transl(center.opposite()))
                     .mul(new Mat4Scale(1.2))
-                    .mul(new Mat4Transl(center)), vertex.getColor());
+                    .mul(new Mat4Transl(center)), vertex.getColor(), vertex.getUV(), vertex.getNormal());
         }
 
         return vertex;
@@ -263,7 +274,11 @@ public class Renderer {
         this.proj = proj;
     }
 
-    public void setShader(Shader shader) {
-        this.shader = shader;
+    public void setShaderForDraw(Shader shaderForWireFrame) {
+        this.shaderForWireFrame = shaderForWireFrame;
+    }
+
+    public void setShaderForFill(Shader shaderForSolid) {
+        this.shaderForSolid = shaderForSolid;
     }
 }

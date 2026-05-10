@@ -3,8 +3,9 @@ package com.example.model.solid;
 import com.example.enums.SolidModel;
 import com.example.enums.SolidState;
 import com.example.model.Part;
+import com.example.model.Texture;
 import com.example.model.Vertex;
-import com.example.transforms.Col;
+import com.example.shader.ShaderTexture;
 import com.example.transforms.Mat4;
 import com.example.transforms.Mat4Identity;
 
@@ -16,16 +17,12 @@ public abstract class Solid {
     protected List<Vertex> vertexBuffer = new ArrayList<>();
     protected List<Integer> indexBuffer = new ArrayList<>();
     protected List<Part> partBuffer = new ArrayList<>();
-    protected SolidModel solidModel = SolidModel.WIREFRAME;
 
-    private Mat4 model = new Mat4Identity();
+    protected SolidModel solidModel = SolidModel.WIREFRAME;
     private SolidState state = SolidState.NORMAL;
 
-    private Col solidColor = new Col(0xFFFFFFFF);
-    private Col[] gradientColorForLines;
-    private Col[] colorsForTriangles;
-    // private Col texture;
-
+    private Mat4 model = new Mat4Identity();
+    private Texture texture;
     private boolean useModelMatrix = true;
 
     public List<Vertex> getVertexBuffer() {
@@ -40,35 +37,8 @@ public abstract class Solid {
         return partBuffer;
     }
 
-    public Col getSolidColor() {
-        return solidColor;
-    }
-
-    public void setSolidColor(Col solidColor) {
-        this.solidColor = solidColor;
-    }
-
-    public Col[] getColorsForGradient() {
-        return gradientColorForLines;
-    }
-
-    public void setGradientColor(Col start, Col end) {
-        this.gradientColorForLines = new Col[] {
-                start,
-                end
-        };
-    }
-
-    public Col[] getColorsForTriangles() {
-        return colorsForTriangles;
-    }
-
-    public void setGradientColor(Col first, Col second, Col third) {
-        this.colorsForTriangles = new Col[] {
-                first,
-                second,
-                third
-        };
+    public Texture getTexture() {
+        return texture;
     }
 
     public SolidState getState() {
@@ -101,5 +71,9 @@ public abstract class Solid {
 
     public void addIndices(Integer... indices) {
         indexBuffer.addAll(Arrays.asList(indices));
+    }
+
+    public void setTexture(Texture texture) {
+        this.texture = texture;
     }
 }

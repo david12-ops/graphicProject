@@ -4,14 +4,14 @@ import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JRadioButtonMenuItem;
 
-import com.example.enums.ColorMode;
+import com.example.enums.ColorDrawMode;
 
 public class DrawColorMenu {
 
     private final Panel panel;
     private final JMenu drawingColorMenu = new JMenu("Drawing color menu");
 
-    private ColorMode colorMode = ColorMode.SOLID;
+    private ColorDrawMode colorDrawingMode = ColorDrawMode.SOLID;
 
     public DrawColorMenu(Panel panel) {
         this.panel = panel;
@@ -25,7 +25,7 @@ public class DrawColorMenu {
 
         JRadioButtonMenuItem solidColor = new JRadioButtonMenuItem("solid color", true);
         solidColor.addActionListener(e -> {
-            colorMode = ColorMode.SOLID;
+            colorDrawingMode = ColorDrawMode.SOLID;
             onMenuChanged();
         });
 
@@ -34,7 +34,7 @@ public class DrawColorMenu {
 
         JRadioButtonMenuItem seedFill = new JRadioButtonMenuItem("gradient color");
         seedFill.addActionListener(e -> {
-            colorMode = ColorMode.GRADIENT;
+            colorDrawingMode = ColorDrawMode.GRADIENT;
             onMenuChanged();
         });
 
@@ -43,16 +43,12 @@ public class DrawColorMenu {
     }
 
     private void onMenuChanged() {
-        panel.setColorMode(colorMode);
+        panel.setColorDrawMode(colorDrawingMode);
 
         panel.repaint();
     }
 
     public JMenu getJmenu() {
         return drawingColorMenu;
-    }
-
-    public ColorMode getColorMode() {
-        return getColorMode();
     }
 }
