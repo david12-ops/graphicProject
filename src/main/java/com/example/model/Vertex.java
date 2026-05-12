@@ -6,11 +6,11 @@ import com.example.transforms.Vec2D;
 import com.example.transforms.Vec3D;
 
 public class Vertex implements Vectorazible<Vertex> {
-    private final Point3D position;
+    private final Point3D position; // clip/screen
+    private Point3D worldPosition;
     private final Col color;
     private Vec3D normal;
     private Vec2D uv;
-    // další atributy: normála, uv, one
 
     public Vertex(Point3D position, Col color, Vec2D uv, Vec3D normal) {
         this.position = position;
@@ -42,6 +42,14 @@ public class Vertex implements Vectorazible<Vertex> {
         return position;
     }
 
+    public void setWorldPosition(Point3D worldPosition) {
+        this.worldPosition = worldPosition;
+    }
+
+    public Point3D getWorldPosition() {
+        return worldPosition;
+    }
+
     public double getX() {
         return position.getX();
     }
@@ -68,24 +76,35 @@ public class Vertex implements Vectorazible<Vertex> {
 
     @Override
     public Vertex mul(double d) {
-
         Point3D newPosition = position != null ? position.mul(d) : null;
         Col newColor = color != null ? color.mul(d) : null;
         Vec2D newUV = uv != null ? uv.mul(d) : null;
         Vec3D newNormal = normal != null ? normal.mul(d) : null;
 
-        return new Vertex(newPosition, newColor, newUV, newNormal);
+        Vertex out = new Vertex(newPosition, newColor, newUV, newNormal);
+
+        if (worldPosition != null) {
+            out.setWorldPosition(worldPosition.mul(d));
+        }
+
+        return out;
     }
 
     @Override
     public Vertex add(Vertex v) {
-
         Point3D newPosition = position != null ? position.add(v.getPosition()) : null;
         Col newColor = color != null ? color.add(v.getColor()) : null;
         Vec2D newUV = uv != null ? uv.add(v.getUV()) : null;
         Vec3D newNormal = normal != null ? normal.add(v.getNormal()) : null;
 
-        return new Vertex(newPosition, newColor, newUV, newNormal);
+        Vertex out = new Vertex(newPosition, newColor, newUV, newNormal);
+
+        if (worldPosition != null && v.getWorldPosition() != null) {
+            out.setWorldPosition(
+                    worldPosition.add(v.getWorldPosition()));
+        }
+
+        return out;
     }
 
     @Override

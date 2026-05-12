@@ -8,6 +8,7 @@ import com.example.model.solid.Solid;
 public class Scene {
 
     private final List<Solid> solids = new ArrayList<>();
+    private Light sceneLight;
 
     public Scene() {
     }
@@ -22,6 +23,14 @@ public class Scene {
 
     public List<Solid> getSolids() {
         return solids;
+    }
+
+    public Light getSceneLight() {
+        return sceneLight;
+    }
+
+    public void setSceneLight(Light sceneLight) {
+        this.sceneLight = sceneLight;
     }
 
     public void clear() {

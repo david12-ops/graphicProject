@@ -5,9 +5,10 @@ import com.example.enums.SolidState;
 import com.example.model.Part;
 import com.example.model.Texture;
 import com.example.model.Vertex;
-import com.example.shader.ShaderTexture;
+import com.example.shader.Shader;
 import com.example.transforms.Mat4;
 import com.example.transforms.Mat4Identity;
+import com.example.transforms.Vec3D;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,9 +22,12 @@ public abstract class Solid {
     protected SolidModel solidModel = SolidModel.WIREFRAME;
     private SolidState state = SolidState.NORMAL;
 
+    private Vec3D centerPoint3d;
     private Mat4 model = new Mat4Identity();
     private Texture texture;
     private boolean useModelMatrix = true;
+    private Shader shader;
+    private boolean usePongShader = false;
 
     public List<Vertex> getVertexBuffer() {
         return vertexBuffer;
@@ -37,8 +41,12 @@ public abstract class Solid {
         return partBuffer;
     }
 
-    public Texture getTexture() {
-        return texture;
+    public void setUsePongShader(boolean usePongShader) {
+        this.usePongShader = usePongShader;
+    }
+
+    public boolean getUsePongShader() {
+        return usePongShader;
     }
 
     public SolidState getState() {
@@ -69,11 +77,41 @@ public abstract class Solid {
         this.solidModel = solidModel;
     }
 
-    public void addIndices(Integer... indices) {
-        indexBuffer.addAll(Arrays.asList(indices));
+    public Texture getTexture() {
+        return texture;
     }
 
     public void setTexture(Texture texture) {
         this.texture = texture;
+    }
+
+    public void setShader(Shader shader) {
+        this.shader = shader;
+    }
+
+    public Shader getShader() {
+        return shader;
+    }
+
+    public void computeCenter() {
+        double x = 0;
+        double y = 0;
+        double z = 0;
+
+        for (Vertex v : vertexBuffer) {
+            x += v.getX();
+            y += v.getY();
+            z += v.getZ();
+        }
+
+        centerPoint3d = new Vec3D(x / vertexBuffer.size(), y / vertexBuffer.size(), z / vertexBuffer.size());
+    }
+
+    public Vec3D getCenterVec3d() {
+        return centerPoint3d;
+    }
+
+    public void addIndices(Integer... indices) {
+        indexBuffer.addAll(Arrays.asList(indices));
     }
 }

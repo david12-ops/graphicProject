@@ -55,20 +55,6 @@ public class FilledLineRasterizer extends LineRasterizer {
     }
 
     /**
-     * Rasterizes a single vertex.
-     *
-     * @param v Vertex to rasterize
-     */
-    @Override
-    public void rasterize(Vertex vertex, Shader shader) {
-        zBuffer.setPixelWithZTest(
-                (int) vertex.getX(),
-                (int) vertex.getY(),
-                vertex.getZ(),
-                shader.getColor(vertex));
-    }
-
-    /**
      * Draws a line using a simple analytical (trivial) algorithm.
      *
      * Chooses the dominant axis (X or Y) to avoid gaps

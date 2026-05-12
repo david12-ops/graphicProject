@@ -16,14 +16,21 @@ import com.example.enums.ColorFillMode;
 import com.example.enums.SolidAction;
 import com.example.enums.SolidModel;
 import com.example.enums.SolidState;
+import com.example.model.Light;
 import com.example.model.Scene;
 import com.example.model.Texture;
 import com.example.model.Vertex;
+import com.example.model.solid.AxisX;
+import com.example.model.solid.AxisY;
+import com.example.model.solid.AxisZ;
 import com.example.model.solid.Cube;
+import com.example.model.solid.Cylinder;
+import com.example.model.solid.Round;
 import com.example.model.solid.Solid;
 import com.example.raster.ZBuffer;
 import com.example.rasterize.FilledLineRasterizer;
 import com.example.rasterize.LineRasterizer;
+import com.example.rasterize.PointRasterizer;
 import com.example.rasterize.TriangleRasterizer;
 import com.example.renderer.Renderer;
 import com.example.shader.ShaderConstant;
@@ -39,6 +46,7 @@ import com.example.transforms.Mat4RotY;
 import com.example.transforms.Mat4RotZ;
 import com.example.transforms.Mat4Scale;
 import com.example.transforms.Mat4Transl;
+import com.example.transforms.Point3D;
 import com.example.transforms.Vec3D;
 import com.example.view.Panel;
 
@@ -52,6 +60,7 @@ public class Controller3D implements Controller {
     private ZBuffer zBuffer;
     private LineRasterizer lineRasterizer;
     private TriangleRasterizer triangleRasterizer;
+    private PointRasterizer pointRasterizer;
     private SolidModel solidModel = SolidModel.WIREFRAME;
 
     private Scene scene;
@@ -77,9 +86,6 @@ public class Controller3D implements Controller {
     private final ShaderConstant shaderConstant = new ShaderConstant();
     private final ShaderInterpolated shaderInterpolated = new ShaderInterpolated();
 
-    // TODO - rendere přepsat aby používaly jen Vertex
-    // TODO - vyřešit shader na gradient
-    // TODO - textura
     // TODO - osvicení
 
     /**
@@ -109,6 +115,7 @@ public class Controller3D implements Controller {
 
         lineRasterizer = new FilledLineRasterizer(zBuffer);
         triangleRasterizer = new TriangleRasterizer(zBuffer);
+        pointRasterizer = new PointRasterizer(zBuffer);
 
         this.scene = new Scene();
 
@@ -116,7 +123,7 @@ public class Controller3D implements Controller {
         initProjection();
         initScene(solidModel);
 
-        renderer = new Renderer(lineRasterizer, triangleRasterizer,
+        renderer = new Renderer(lineRasterizer, triangleRasterizer, pointRasterizer, scene.getSceneLight(),
                 panel.getRaster().getWidth(),
                 panel.getRaster().getHeight(), camera.getViewMatrix(), projectionMatrix);
     }
@@ -149,7 +156,41 @@ public class Controller3D implements Controller {
     }
 
     private void initScene(SolidModel solidModel) {
+        scene.setSceneLight(new Light(
+                new Point3D(10, 10, 10),
+                new Col(255, 255, 255)));
         scene.clear();
+
+        // axes
+        AxisX axisX = new AxisX(new Col[] {
+                new Col(255, 0, 0), // strong red
+                new Col(255, 80, 80), // light red
+                new Col(180, 0, 0) // dark red
+        }, solidModel);
+
+        AxisY axisY = new AxisY(new Col[] {
+                new Col(0, 255, 0), // strong green
+                new Col(120, 255, 120), // light green
+                new Col(0, 140, 0) // dark green
+        }, solidModel);
+
+        AxisZ axisZ = new AxisZ(new Col[] {
+                new Col(0, 120, 255), // strong blue
+                new Col(120, 190, 255), // light blue
+                new Col(0, 60, 180) // dark blue
+        }, solidModel);
+
+        axisX.computeCenter();
+        axisY.computeCenter();
+        axisZ.computeCenter();
+
+        axisX.setUseModelMatrix(false);
+        axisY.setUseModelMatrix(false);
+        axisZ.setUseModelMatrix(false);
+
+        scene.addSolid(axisX);
+        scene.addSolid(axisY);
+        scene.addSolid(axisZ);
 
         // Cube
         Cube cube = new Cube(
@@ -162,6 +203,7 @@ public class Controller3D implements Controller {
                 solidModel);
 
         cube.setModel(new Mat4Transl(3, 6, 0));
+        cube.computeCenter();
 
         try {
             Texture cubeTexture = new Texture("/beasternchen-bee-9766784.jpg");
@@ -172,6 +214,53 @@ public class Controller3D implements Controller {
         }
 
         scene.addSolid(cube);
+
+        // Cylinder
+        Cylinder cylinder = new Cylinder(1.0, 2.0, 32, new Col[] {
+                new Col(255, 165, 0), // orange
+                new Col(128, 0, 128), // purple
+                new Col(0, 255, 255) // cyan
+        }, solidModel);
+
+        cylinder.setModel(new Mat4Transl(-1.5, 6, 0));
+        cylinder.computeCenter();
+
+        try {
+            Texture cubeTexture = new Texture("/jplenio-ocean-3605547.jpg");
+            cylinder.setTexture(cubeTexture);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("File was not load properly");
+        }
+
+        scene.addSolid(cylinder);
+
+        // Round
+        Round round = new Round(
+                new Point3D(0, 0, 0),
+                2,
+                16,
+                32,
+                new Col[] {
+                        new Col(139, 69, 19), // brown
+                        new Col(25, 25, 112), // midnight blue
+                        new Col(47, 79, 79) // dark slate gray
+                },
+                solidModel);
+
+        round.setModel(new Mat4Transl(10, 6, 5));
+        round.setUsePongShader(true);
+        round.computeCenter();
+
+        try {
+            Texture cubeTexture = new Texture("/pruslee-plane-7432680.jpg");
+            round.setTexture(cubeTexture);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("File was not load properly");
+        }
+
+        scene.addSolid(round);
     }
 
     @Override
@@ -450,7 +539,7 @@ public class Controller3D implements Controller {
                 solid.setState(SolidState.NORMAL);
 
             setRasterizerFillColor(renderer, solid);
-            setRasterizerDrawColor(renderer, solid.getState());
+            setRasterizerDrawColor(renderer, solid);
 
             renderer.render(solid);
         }
@@ -458,21 +547,25 @@ public class Controller3D implements Controller {
         update();
     }
 
-    private void setRasterizerDrawColor(Renderer renderer, SolidState solidState) {
+    private void setRasterizerDrawColor(Renderer renderer, Solid solid) {
         if (solidModel != SolidModel.WIREFRAME)
             return;
 
-        if (solidState == SolidState.SELECTED) {
-            if (colorDrawMode == ColorDrawMode.GRADIENT)
-                renderer.setShaderForDraw(shaderInterpolated);
-            else if (colorDrawMode == ColorDrawMode.SOLID)
-                renderer.setShaderForDraw(shaderConstant);
+        if (solid.getState() == SolidState.SELECTED) {
+            if (colorDrawMode == ColorDrawMode.GRADIENT) {
+                solid.setShader(shaderInterpolated);
+            } else if (colorDrawMode == ColorDrawMode.SOLID)
+                solid.setShader(shaderConstant);
             else {
                 System.err.println("Invalid ColorMode, falling back to SOLID");
-                renderer.setShaderForDraw(shaderConstant);
+                solid.setShader(shaderConstant);
             }
         } else {
-            renderer.setShaderForDraw(shaderConstant);
+            if (solid.getShader() == null) {
+                solid.setShader(shaderConstant);
+            }
+
+            solid.setShader(solid.getShader());
         }
     }
 
@@ -482,21 +575,25 @@ public class Controller3D implements Controller {
 
         if (solid.getState() == SolidState.SELECTED) {
             if (colorFillMode == ColorFillMode.GRADIENT)
-                renderer.setShaderForFill(shaderInterpolated);
-            else if (colorFillMode == ColorFillMode.CONSTANT)
-                renderer.setShaderForFill(shaderConstant);
-            else if (colorFillMode == ColorFillMode.TEXTURE)
+                solid.setShader(shaderInterpolated);
+            else if (colorFillMode == ColorFillMode.CONSTANT) {
+                solid.setShader(shaderConstant);
+            } else if (colorFillMode == ColorFillMode.TEXTURE)
                 if (solid.getTexture() == null) {
-                    renderer.setShaderForFill(shaderConstant);
+                    solid.setShader(shaderConstant);
                 } else {
-                    renderer.setShaderForFill(new ShaderTexture(solid.getTexture()));
+                    solid.setShader(new ShaderTexture(solid.getTexture()));
                 }
             else {
                 System.err.println("Invalid ColorMode, falling back to SOLID");
-                renderer.setShaderForFill(shaderConstant);
+                solid.setShader(shaderConstant);
             }
         } else {
-            renderer.setShaderForFill(shaderConstant);
+            if (solid.getShader() == null) {
+                solid.setShader(shaderConstant);
+            }
+
+            solid.setShader(solid.getShader());
         }
     }
 

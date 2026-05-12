@@ -16,8 +16,4 @@ public class LineRasterizer {
             Shader shader) {
 
     }
-
-    public void rasterize(Vertex vertex, Shader shader) {
-
-    }
 }

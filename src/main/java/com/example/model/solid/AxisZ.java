@@ -1,30 +1,90 @@
 package com.example.model.solid;
 
+import com.example.enums.SolidModel;
 import com.example.enums.TopologyType;
 import com.example.model.Part;
 import com.example.model.Vertex;
+import com.example.transforms.Col;
 import com.example.transforms.Point3D;
+import com.example.transforms.Vec2D;
+import com.example.transforms.Vec3D;
 
 public class AxisZ extends Solid {
-    public AxisZ() {
-        // Fill in vertexBuffer
-        vertexBuffer.add(new Vertex(new Point3D(0, 0, 0)));
-        vertexBuffer.add(new Vertex(new Point3D(0, 0, 1)));
+        public AxisZ(Col[] colors, SolidModel solidModel) {
 
-        vertexBuffer.add(new Vertex(new Point3D(-0.05, 0, 0.85)));
-        vertexBuffer.add(new Vertex(new Point3D(0.00, 0, 1.15)));
-        vertexBuffer.add(new Vertex(new Point3D(0.05, 0, 0.85)));
+                if (solidModel == SolidModel.SOLID) {
+                        initialFillMesh(colors);
+                } else
+                        initialWireFrameMesh(colors);
+        }
 
-        // Fill in ib
-        addIndices(0, 1);
+        private void initialWireFrameMesh(Col[] colors) {
+                // Fill in vertexBuffer
+                vertexBuffer.add(new Vertex(new Point3D(0, 0, 0), colors[0]));
+                vertexBuffer.add(new Vertex(new Point3D(0, 0, 0.85), colors[1]));
 
-        addIndices(2, 3, 4);
+                vertexBuffer.add(new Vertex(
+                                new Point3D(-0.05, 0, 0.85),
+                                colors[0]));
 
-        partBuffer.add(new Part(TopologyType.LINES, 0, 2));
-        partBuffer.add(
-                new Part(
-                        TopologyType.TRIANGLES,
-                        2,
-                        3));
-    }
+                vertexBuffer.add(new Vertex(
+                                new Point3D(0.00, 0, 1.15),
+                                colors[1]));
+
+                vertexBuffer.add(new Vertex(
+                                new Point3D(0.05, 0, 0.85),
+                                colors[2]));
+
+                // Fill in ib
+                // Line shaft
+                addIndices(0, 1);
+
+                // Arrow head
+                addIndices(2, 3);
+                addIndices(3, 4);
+                addIndices(4, 2);
+
+                partBuffer.add(new Part(
+                                TopologyType.LINES,
+                                0,
+                                8));
+        }
+
+        private void initialFillMesh(Col[] colors) {
+                Vec3D normal = new Vec3D(0, 1, 0);
+
+                // Fill in vertexBuffer
+                vertexBuffer.add(new Vertex(new Point3D(0, 0, 0), colors[0], null, normal));
+                vertexBuffer.add(new Vertex(new Point3D(0, 0, 0.85), colors[1], null, normal));
+
+                vertexBuffer.add(new Vertex(
+                                new Point3D(-0.05, 0, 0.85),
+                                colors[0],
+                                new Vec2D(0, 0),
+                                normal));
+
+                vertexBuffer.add(new Vertex(
+                                new Point3D(0.00, 0, 1.15),
+                                colors[1],
+                                new Vec2D(0.5, 1),
+                                normal));
+
+                vertexBuffer.add(new Vertex(
+                                new Point3D(0.05, 0, 0.85),
+                                colors[2],
+                                new Vec2D(1, 0),
+                                normal));
+
+                // Fill in ib
+                addIndices(0, 1);
+
+                addIndices(2, 3, 4);
+
+                partBuffer.add(new Part(TopologyType.LINES, 0, 2));
+                partBuffer.add(
+                                new Part(
+                                                TopologyType.TRIANGLES,
+                                                2,
+                                                3));
+        }
 }
