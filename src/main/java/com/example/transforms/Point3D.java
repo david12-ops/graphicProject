@@ -250,6 +250,10 @@ public class Point3D {
 		return new Point3D(x + p.x, y + p.y, z + p.z, w + p.w);
 	}
 
+	public Point3D sub(final Point3D p) {
+		return new Point3D(x - p.x, y - p.y, z - p.z, w - p.w);
+	}
+
 	/**
 	 * Returns the result of element-wise multiplication by the given scalar value
 	 * 

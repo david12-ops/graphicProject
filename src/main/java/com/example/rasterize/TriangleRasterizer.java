@@ -4,8 +4,10 @@ import com.example.model.RasterVertex;
 import com.example.model.Vertex;
 import com.example.raster.ZBuffer;
 import com.example.shader.Shader;
+import com.example.transforms.Col;
+import com.example.transforms.Point3D;
+import com.example.transforms.Vec2D;
 import com.example.transforms.Vec3D;
-import com.example.utils.Lerp;
 
 public class TriangleRasterizer {
     // neni ready
@@ -16,166 +18,130 @@ public class TriangleRasterizer {
         this.zBuffer = zBuffer;
     }
 
-    public void rasterize(RasterVertex a, RasterVertex b, RasterVertex c) {
+    public void rasterize(RasterVertex a, RasterVertex b, RasterVertex c, Shader shader) {
         // TODO: seřadit vrcholy podle y od min po max
         // ab
-        if (a.getY() > b.getY()) {
-            Vertex temp = a;
+        if (a.getPosition().getY() > b.getPosition().getY()) {
+            RasterVertex temp = a;
             a = b;
             b = temp;
-
-            double tempInvW = invW1;
-            invW1 = invW2;
-            invW2 = tempInvW;
-
-            double tempZ = zOverW1;
-            zOverW1 = zOverW2;
-            zOverW2 = tempZ;
         }
         // bc
-        if (b.getY() > c.getY()) {
-            Vertex temp = b;
+        if (b.getPosition().getY() > c.getPosition().getY()) {
+            RasterVertex temp = b;
             b = c;
             c = temp;
-
-            double tempInvW = invW2;
-            invW2 = invW3;
-            invW3 = tempInvW;
-
-            double tempZ = zOverW2;
-            zOverW2 = zOverW3;
-            zOverW3 = tempZ;
         }
         // ab
-        if (a.getY() > b.getY()) {
-            Vertex temp = a;
+        if (a.getPosition().getY() > b.getPosition().getY()) {
+            RasterVertex temp = a;
             a = b;
             b = temp;
-
-            double tempInvW = invW1;
-            invW1 = invW2;
-            invW2 = tempInvW;
-
-            double tempZ = zOverW1;
-            zOverW1 = zOverW2;
-            zOverW2 = tempZ;
         }
 
-        Lerp<Vertex> lerp = new Lerp<>();
-        int ySplit = (int) Math.floor(b.getY());
-        int minY = (int) Math.floor(Math.min(a.getY(), Math.min(b.getY(), c.getY())));
-        int maxY = (int) Math.ceil(Math.max(a.getY(), Math.max(b.getY(), c.getY())));
+        double denom = (b.getPosition().getY() - c.getPosition().getY()) *
+                (a.getPosition().getX() - c.getPosition().getX()) +
+
+                (c.getPosition().getX() - b.getPosition().getX()) *
+                        (a.getPosition().getY() - c.getPosition().getY());
+
+        if (Math.abs(denom) < 1e-8) {
+            return;
+        }
+
+        double invDenom = 1.0 / denom;
+
+        int yStart = (int) Math.ceil(a.getPosition().getY() - 0.5);
+        int yMiddle = (int) Math.ceil(b.getPosition().getY() - 0.5);
+        int yEnd = (int) Math.ceil(c.getPosition().getY() - 0.5);
 
         // 1. část
-        for (int y = minY; y <= ySplit; y++) {
+        for (int y = yStart; y < yMiddle; y++) {
 
             if (y < 0 || y >= zBuffer.getHeight()) {
                 continue;
             }
 
             // Hrana AB
-            double dyAB = b.getY() - a.getY();
+            double dyAB = b.getPosition().getY() - a.getPosition().getY();
             double tAB = 0;
             if (dyAB != 0) {
-                tAB = ((y + 0.5) - a.getY()) / (b.getY() - a.getY());
+                tAB = ((y + 0.5) - a.getPosition().getY()) / (b.getPosition().getY() - a.getPosition().getY());
             }
-            Vertex ab = lerp.lerp(a, b, tAB);
+            double abX = lerp(a.getPosition().getX(), b.getPosition().getX(), tAB);
 
             // Hrana AC
-            double dyAC = c.getY() - a.getY();
+            double dyAC = c.getPosition().getY() - a.getPosition().getY();
             double tAC = 0;
             if (dyAC != 0) {
-                tAC = ((y + 0.5) - a.getY()) / (c.getY() - a.getY());
+                tAC = ((y + 0.5) - a.getPosition().getY()) / (c.getPosition().getY() - a.getPosition().getY());
             }
-            Vertex ac = lerp.lerp(a, c, tAC);
-
-            double invW_AB = lerp(invW1, invW2, tAB);
-            double invW_AC = lerp(invW1, invW3, tAC);
-
-            double zOverW_AB = lerp(zOverW1, zOverW2, tAB);
-            double zOverW_AC = lerp(zOverW1, zOverW3, tAC);
+            double acX = lerp(a.getPosition().getX(), c.getPosition().getX(), tAC);
 
             // TODO: kontrola, jestli je ab.getX() < ac.getX()
-            if (ab.getX() > ac.getX()) {
-                Vertex temp = ab;
-                ab = ac;
-                ac = temp;
-
-                double tempInvW = invW_AB;
-                invW_AB = invW_AC;
-                invW_AC = tempInvW;
-
-                double tempZ = zOverW_AB;
-                zOverW_AB = zOverW_AC;
-                zOverW_AC = tempZ;
+            if (abX > acX) {
+                double temp = abX;
+                abX = acX;
+                acX = temp;
             }
 
-            int xLeft = (int) Math.ceil(ab.getX());
-            int xRight = (int) Math.floor(ac.getX());
+            int xLeft = (int) Math.ceil(abX - 0.5);
+            int xRight = (int) Math.ceil(acX - 0.5);
 
             int startX = Math.max(0, xLeft);
-            int endX = Math.min(zBuffer.getWidth() - 1, xRight);
+            int endX = Math.min(zBuffer.getWidth(), xRight);
 
-            if (startX > endX) {
-
-                int px = (int) Math.round((ab.getX() + ac.getX()) * 0.5);
-
-                if (px >= 0 && px < zBuffer.getWidth()) {
-
-                    zBuffer.setPixelWithZTest(
-                            px,
-                            y,
-                            computeZ(
-                                    0.5,
-                                    invW_AB,
-                                    invW_AC,
-                                    zOverW_AB,
-                                    zOverW_AC),
-                            shader.getColor(lerp.lerp(ab, ac, 0.5)));
-                }
-
+            if (startX >= endX) {
                 continue;
             }
 
-            double dx = ac.getX() - ab.getX();
+            double py = y + 0.5;
+            for (int x = startX; x < endX; x++) {
+                double px = x + 0.5;
 
-            if (Math.abs(dx) < 1e-8) {
+                double[] bary = computeBarycentric(a, b, c, px, py, denom);
 
-                int px = (int) Math.round(ab.getX());
+                double w0 = bary[0] * invDenom;
+                double w1 = bary[1] * invDenom;
+                double w2 = bary[2] * invDenom;
 
-                if (px >= 0 && px < zBuffer.getWidth()) {
+                double baryInvW = w0 * a.getInvW() +
+                        w1 * b.getInvW() +
+                        w2 * c.getInvW();
 
-                    zBuffer.setPixelWithZTest(
-                            px,
-                            y,
-                            computeZ(
-                                    0,
-                                    invW_AB,
-                                    invW_AC,
-                                    zOverW_AB,
-                                    zOverW_AC),
-                            shader.getColor(ab));
-                }
+                double baryZOverW = w0 * a.getZOverW() +
+                        w1 * b.getZOverW() +
+                        w2 * c.getZOverW();
 
-                continue;
-            }
+                Vec3D baryNormal = a.getNormalOverW().mul(w0)
+                        .add(b.getNormalOverW().mul(w1))
+                        .add(c.getNormalOverW().mul(w2))
+                        .mul(1.0 / baryInvW).normalized().orElse(new Vec3D(0, 0, 1));
 
-            for (int x = startX; x <= endX; x++) {
-                double t = ((x + 0.5) - ab.getX()) / (ac.getX() - ab.getX());
-                t = Math.max(0.0, Math.min(1.0, t));
+                Point3D baryWorldPos = a.getWorldPosOverW().mul(w0)
+                        .add(b.getWorldPosOverW().mul(w1))
+                        .add(c.getWorldPosOverW().mul(w2))
+                        .mul(1.0 / baryInvW);
 
-                Vertex pixel = lerp.lerp(ab, ac, t);
+                Vec2D baryUV = a.getUvOverW().mul(w0)
+                        .add(b.getUvOverW().mul(w1))
+                        .add(c.getUvOverW().mul(w2))
+                        .mul(1.0 / baryInvW);
 
-                Vec3D spA = ab.getShadingPosition();
-                Vec3D spB = ac.getShadingPosition();
+                Col baryColor = a.getColorOverW().mul(w0)
+                        .add(b.getColorOverW().mul(w1))
+                        .add(c.getColorOverW().mul(w2))
+                        .mul(1.0 / baryInvW);
 
-                Vec3D shadingPos = spA.mul(1 - t).add(spB.mul(t));
-                pixel.setShadingPosition(shadingPos);
+                double depth = baryZOverW / baryInvW;
 
-                zBuffer.setPixelWithZTest(x, y, computeZ(
-                        t,
-                        invW_AB, invW_AC,
-                        zOverW_AB, zOverW_AC),
+                Vertex pixel = new Vertex(new Point3D(new Vec3D(px, py, depth)), baryWorldPos, baryColor, baryUV,
+                        baryNormal);
+
+                zBuffer.setPixelWithZTest(
+                        x,
+                        y,
+                        depth,
                         shader.getColor(pixel));
             }
         }
@@ -183,125 +149,123 @@ public class TriangleRasterizer {
         // 2. část
         // B -> C
         // A -> C
-        for (int y = ySplit + 1; y <= maxY; y++) {
+        for (int y = yMiddle; y < yEnd; y++) {
 
             if (y < 0 || y >= zBuffer.getHeight()) {
                 continue;
             }
 
             // Hrana BC
-            double dyBC = c.getY() - b.getY();
+            double dyBC = c.getPosition().getY() - b.getPosition().getY();
             double tBC = 0;
             if (dyBC != 0) {
-                tBC = ((y + 0.5) - b.getY()) / (c.getY() - b.getY());
+                tBC = ((y + 0.5) - b.getPosition().getY()) / (c.getPosition().getY() - b.getPosition().getY());
             }
-            Vertex bc = lerp.lerp(b, c, tBC);
+            double bcX = lerp(b.getPosition().getX(), c.getPosition().getX(), tBC);
 
             // Hrana AC
-            double dyAC = c.getY() - a.getY();
+            double dyAC = c.getPosition().getY() - a.getPosition().getY();
             double tAC = 0;
             if (dyAC != 0) {
-                tAC = ((y + 0.5) - a.getY()) / (c.getY() - a.getY());
+                tAC = ((y + 0.5) - a.getPosition().getY()) / (c.getPosition().getY() - a.getPosition().getY());
             }
-            Vertex ac = lerp.lerp(a, c, tAC);
-
-            double invW_BC = lerp(invW2, invW3, tBC);
-            double invW_AC = lerp(invW1, invW3, tAC);
-
-            double zOverW_BC = lerp(zOverW2, zOverW3, tBC);
-            double zOverW_AC = lerp(zOverW1, zOverW3, tAC);
+            double acX = lerp(a.getPosition().getX(), c.getPosition().getX(), tAC);
 
             // TODO: kontrola, jestli je bc.getX() < ac.getX()
-            if (bc.getX() > ac.getX()) {
-                Vertex temp = bc;
-                bc = ac;
-                ac = temp;
-
-                double tempInvW = invW_BC;
-                invW_BC = invW_AC;
-                invW_AC = tempInvW;
-
-                double tempZ = zOverW_BC;
-                zOverW_BC = zOverW_AC;
-                zOverW_AC = tempZ;
+            if (bcX > acX) {
+                double temp = bcX;
+                bcX = acX;
+                acX = temp;
             }
 
-            int xLeft = (int) Math.ceil(bc.getX());
-            int xRight = (int) Math.floor(ac.getX());
+            int xLeft = (int) Math.ceil(bcX - 0.5);
+            int xRight = (int) Math.ceil(acX - 0.5);
 
             int startX = Math.max(0, xLeft);
-            int endX = Math.min(zBuffer.getWidth() - 1, xRight);
+            int endX = Math.min(zBuffer.getWidth(), xRight);
 
-            if (startX > endX) {
-
-                int px = (int) Math.round((bc.getX() + ac.getX()) * 0.5);
-
-                if (px >= 0 && px < zBuffer.getWidth()) {
-
-                    zBuffer.setPixelWithZTest(
-                            px,
-                            y,
-                            computeZ(
-                                    0.5,
-                                    invW_BC,
-                                    invW_AC,
-                                    zOverW_BC,
-                                    zOverW_AC),
-                            shader.getColor(lerp.lerp(bc, ac, 0.5)));
-                }
-
+            if (startX >= endX) {
                 continue;
             }
 
-            double dx = ac.getX() - bc.getX();
+            double py = y + 0.5;
+            for (int x = startX; x < endX; x++) {
+                double px = x + 0.5;
 
-            if (Math.abs(dx) < 1e-8) {
+                double[] bary = computeBarycentric(a, b, c, px, py, denom);
 
-                int px = (int) Math.round(bc.getX());
+                double w0 = bary[0] * invDenom;
+                double w1 = bary[1] * invDenom;
+                double w2 = bary[2] * invDenom;
 
-                if (px >= 0 && px < zBuffer.getWidth()) {
+                double baryInvW = w0 * a.getInvW() +
+                        w1 * b.getInvW() +
+                        w2 * c.getInvW();
 
-                    zBuffer.setPixelWithZTest(
-                            px,
-                            y,
-                            computeZ(
-                                    0,
-                                    invW_BC,
-                                    invW_AC,
-                                    zOverW_BC,
-                                    zOverW_AC),
-                            shader.getColor(bc));
-                }
+                double baryZOverW = w0 * a.getZOverW() +
+                        w1 * b.getZOverW() +
+                        w2 * c.getZOverW();
 
-                continue;
-            }
+                Vec3D baryNormal = a.getNormalOverW().mul(w0)
+                        .add(b.getNormalOverW().mul(w1))
+                        .add(c.getNormalOverW().mul(w2))
+                        .mul(1.0 / baryInvW).normalized().orElse(new Vec3D(0, 0, 1));
 
-            for (int x = startX; x <= endX; x++) {
-                double t = ((x + 0.5) - bc.getX()) / (ac.getX() - bc.getX());
-                t = Math.max(0.0, Math.min(1.0, t));
+                Point3D baryWorldPos = a.getWorldPosOverW().mul(w0)
+                        .add(b.getWorldPosOverW().mul(w1))
+                        .add(c.getWorldPosOverW().mul(w2))
+                        .mul(1.0 / baryInvW);
 
-                Vertex pixel = lerp.lerp(bc, ac, t);
+                Vec2D baryUV = a.getUvOverW().mul(w0)
+                        .add(b.getUvOverW().mul(w1))
+                        .add(c.getUvOverW().mul(w2))
+                        .mul(1.0 / baryInvW);
 
-                Vec3D spB = bc.getShadingPosition();
-                Vec3D spC = ac.getShadingPosition();
+                Col baryColor = a.getColorOverW().mul(w0)
+                        .add(b.getColorOverW().mul(w1))
+                        .add(c.getColorOverW().mul(w2))
+                        .mul(1.0 / baryInvW);
 
-                Vec3D shadingPos = spB.mul(1 - t).add(spC.mul(t));
-                pixel.setShadingPosition(shadingPos);
+                double depth = baryZOverW / baryInvW;
 
-                zBuffer.setPixelWithZTest(x, y, computeZ(t, invW_BC, invW_AC, zOverW_BC, zOverW_AC),
+                Vertex pixel = new Vertex(new Point3D(new Vec3D(px, py, depth)), baryWorldPos, baryColor, baryUV,
+                        baryNormal);
+
+                zBuffer.setPixelWithZTest(
+                        x,
+                        y,
+                        depth,
                         shader.getColor(pixel));
             }
         }
     }
 
-    private double computeZ(double t,
-            double invW1, double invW2,
-            double zOverW1, double zOverW2) {
+    private double[] computeBarycentric(
+            RasterVertex v0,
+            RasterVertex v1,
+            RasterVertex v2,
+            double px,
+            double py, double denom) {
 
-        double invW = invW1 + t * (invW2 - invW1);
-        double zOverW = zOverW1 + t * (zOverW2 - zOverW1);
+        double w0 = ((v1.getPosition().getY() - v2.getPosition().getY()) *
+                (px - v2.getPosition().getX()) +
 
-        return zOverW / invW;
+                (v2.getPosition().getX() - v1.getPosition().getX()) *
+                        (py - v2.getPosition().getY()));
+
+        double w1 = ((v2.getPosition().getY() - v0.getPosition().getY()) *
+                (px - v0.getPosition().getX()) +
+
+                (v0.getPosition().getX() - v2.getPosition().getX()) *
+                        (py - v0.getPosition().getY()));
+
+        double w2 = ((v0.getPosition().getY() - v1.getPosition().getY()) *
+                (px - v1.getPosition().getX()) +
+
+                (v1.getPosition().getX() - v0.getPosition().getX()) *
+                        (py - v1.getPosition().getY()));
+
+        return new double[] { w0, w1, w2 };
     }
 
     private double lerp(double value1, double value2, double t) {

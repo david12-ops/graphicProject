@@ -13,7 +13,6 @@ import com.example.model.solid.Solid;
 import com.example.rasterize.LineRasterizer;
 import com.example.rasterize.PointRasterizer;
 import com.example.rasterize.TriangleRasterizer;
-import com.example.shader.PhongShader;
 import com.example.shader.Shader;
 import com.example.transforms.Mat4;
 import com.example.transforms.Mat4Scale;
@@ -28,9 +27,6 @@ public class Renderer {
     private TriangleRasterizer triangleRasterizer;
     private PointRasterizer pointRasterizer;
 
-    private final Light sceneLight;
-    private Shader phongShader;
-
     private int width, height;
     private Mat4 view, proj;
 
@@ -40,7 +36,6 @@ public class Renderer {
         this.lineRasterizer = lineRasterizer;
         this.triangleRasterizer = triangleRasterizer;
         this.pointRasterizer = pointRasterizer;
-        this.sceneLight = sceneLight;
         this.width = width;
         this.height = height;
         this.view = view;
@@ -50,11 +45,6 @@ public class Renderer {
     public void render(Solid solid) {
         Vec3D centerVec3d = solid.getCenterVec3d();
         Mat4 finalMatrix = solid.useModelMatrix() ? solid.getModel().mul(view).mul(proj) : (view).mul(proj);
-
-        if (solid.getUsePongShader()) {
-            phongShader = new PhongShader(sceneLight);
-            solid.setShader(phongShader);
-        }
 
         if (solid.getState() == SolidState.SELECTED) {
             finalMatrix = new Mat4Transl(centerVec3d.opposite())
@@ -122,7 +112,14 @@ public class Renderer {
                     }
                     break;
                 case TopologyType.TRIANGLES:
-                    // Mat4 normalMatrix = solid.getModel().inverse().transpose(); - pro pohyb
+                    Mat4 normalMatrix = solid.getModel();
+
+                    Optional<Mat4> inverse = solid.getModel().inverse();
+
+                    if (inverse.isPresent()) {
+                        normalMatrix = inverse.get().transpose();
+                    }
+
                     for (int i = 0; i < part.getCount(); i += 3) {
                         int indexA = solid.getIndexBuffer().get(index++);
                         int indexB = solid.getIndexBuffer().get(index++);
@@ -140,23 +137,31 @@ public class Renderer {
                                 vecA.getPosition().mul(finalMatrix),
                                 vecA.getColor(),
                                 vecA.getUV(),
-                                vecA.getNormal());
+                                computeNormalWithMtrix(vecA, normalMatrix));
 
                         vecB = new Vertex(
                                 vecB.getPosition().mul(finalMatrix),
                                 vecB.getColor(),
                                 vecB.getUV(),
-                                vecB.getNormal());
+                                computeNormalWithMtrix(vecB, normalMatrix));
 
                         vecC = new Vertex(
                                 vecC.getPosition().mul(finalMatrix),
                                 vecC.getColor(),
                                 vecC.getUV(),
-                                vecC.getNormal());
+                                computeNormalWithMtrix(vecC, normalMatrix));
 
                         vecA.setWorldPosition(worldA);
                         vecB.setWorldPosition(worldB);
                         vecC.setWorldPosition(worldC);
+
+                        vecA.setClipW(vecA.getPosition().getW());
+                        vecB.setClipW(vecB.getPosition().getW());
+                        vecC.setClipW(vecC.getPosition().getW());
+
+                        vecA.setClipZ(vecA.getPosition().getZ());
+                        vecB.setClipZ(vecB.getPosition().getZ());
+                        vecC.setClipZ(vecC.getPosition().getZ());
 
                         // Crop in clip space
                         if (Clipper.clipReject(vecA, vecB, vecC))
@@ -165,158 +170,24 @@ public class Renderer {
                         // 2. ořezání podle z TODO
                         List<Vertex> output = Clipper.clipByZ(List.of(vecA, vecB, vecC));
 
-                        vecA = output.get(0);
-                        vecB = output.get(1);
-                        vecC = output.get(2);
-
-                        if (output.size() == 3) {
-                            Optional<Vec3D> dehomogA = output.get(0).getPosition().dehomog();
-                            Optional<Vec3D> dehomogB = output.get(1).getPosition().dehomog();
-                            Optional<Vec3D> dehomogC = output.get(2).getPosition().dehomog();
-
-                            // Dehomogenization
-                            if (dehomogA.isEmpty() || dehomogB.isEmpty() || dehomogC.isEmpty())
-                                continue;
-
-                            // Transform to screen window = NDC -> screen space
-                            Vec3D vecA3D = transformToWindow(dehomogA.get());
-                            Vec3D vecB3D = transformToWindow(dehomogB.get());
-                            Vec3D vecC3D = transformToWindow(dehomogC.get());
-
-                            Point3D interpolatedWorldA = vecA.getWorldPosition();
-                            Point3D interpolatedWorldB = vecB.getWorldPosition();
-                            Point3D interpolatedWorldC = vecC.getWorldPosition();
-
-                            vecA = new Vertex(
-                                    new Point3D(vecA3D.getX(), vecA3D.getY(), vecA3D.getZ()),
-                                    vecA.getColor(),
-                                    vecA.getUV(),
-                                    vecA.getNormal());
-
-                            vecA.setWorldPosition(interpolatedWorldA);
-
-                            vecB = new Vertex(
-                                    new Point3D(vecB3D.getX(), vecB3D.getY(), vecB3D.getZ()),
-                                    vecB.getColor(),
-                                    vecB.getUV(),
-                                    vecB.getNormal());
-
-                            vecB.setWorldPosition(interpolatedWorldB);
-
-                            vecC = new Vertex(
-                                    new Point3D(vecC3D.getX(), vecC3D.getY(), vecC3D.getZ()),
-                                    vecC.getColor(),
-                                    vecC.getUV(),
-                                    vecC.getNormal());
-
-                            vecC.setWorldPosition(interpolatedWorldC);
-
-                            RasterVertex rvA = RasterVertexBuilder.from(vecA);
-                            RasterVertex rvB = RasterVertexBuilder.from(vecB);
-                            RasterVertex rvC = RasterVertexBuilder.from(vecC);
-
-                            triangleRasterizer.rasterize(rvA, rvB, rvC);
-                        } else if (output.size() == 4) {
-                            Optional<Vec3D> dehomogA = output.get(0).getPosition().dehomog();
-                            Optional<Vec3D> dehomogB = output.get(1).getPosition().dehomog();
-                            Optional<Vec3D> dehomogC = output.get(2).getPosition().dehomog();
-
-                            // Dehomogenization
-                            if (dehomogA.isEmpty() || dehomogB.isEmpty() || dehomogC.isEmpty())
-                                continue;
-
-                            // Transform to screen window = NDC -> screen space
-                            Vec3D vecA3D = transformToWindow(dehomogA.get());
-                            Vec3D vecB3D = transformToWindow(dehomogB.get());
-                            Vec3D vecC3D = transformToWindow(dehomogC.get());
-
-                            Point3D interpolatedWorldA = vecA.getWorldPosition();
-                            Point3D interpolatedWorldB = vecB.getWorldPosition();
-                            Point3D interpolatedWorldC = vecC.getWorldPosition();
-
-                            vecA = new Vertex(
-                                    new Point3D(vecA3D.getX(), vecA3D.getY(), vecA3D.getZ()),
-                                    vecA.getColor(),
-                                    vecA.getUV(),
-                                    vecA.getNormal());
-
-                            vecA.setWorldPosition(interpolatedWorldA);
-
-                            vecB = new Vertex(
-                                    new Point3D(vecB3D.getX(), vecB3D.getY(), vecB3D.getZ()),
-                                    vecB.getColor(),
-                                    vecB.getUV(),
-                                    vecB.getNormal());
-
-                            vecB.setWorldPosition(interpolatedWorldB);
-
-                            vecC = new Vertex(
-                                    new Point3D(vecC3D.getX(), vecC3D.getY(), vecC3D.getZ()),
-                                    vecC.getColor(),
-                                    vecC.getUV(),
-                                    vecC.getNormal());
-
-                            vecC.setWorldPosition(interpolatedWorldC);
-
-                            RasterVertex rvA = RasterVertexBuilder.from(vecA);
-                            RasterVertex rvB = RasterVertexBuilder.from(vecB);
-                            RasterVertex rvC = RasterVertexBuilder.from(vecC);
-
-                            triangleRasterizer.rasterize(rvA, rvB, rvC);
-
-                            // Druhý
-                            Vertex secA = output.get(0);
-                            Vertex secB = output.get(2);
-                            Vertex secC = output.get(3);
-
-                            Optional<Vec3D> dehomogASec = secA.getPosition().dehomog();
-                            Optional<Vec3D> dehomogBSec = secB.getPosition().dehomog();
-                            Optional<Vec3D> dehomogCSec = secC.getPosition().dehomog();
-
-                            // Dehomogenization
-                            if (dehomogASec.isEmpty() || dehomogBSec.isEmpty() || dehomogCSec.isEmpty())
-                                continue;
-
-                            // Transform to screen window = NDC -> screen space
-                            vecA3D = transformToWindow(dehomogASec.get());
-                            vecB3D = transformToWindow(dehomogBSec.get());
-                            vecC3D = transformToWindow(dehomogCSec.get());
-
-                            Point3D interpolatedWorldASec = secA.getWorldPosition();
-                            Point3D interpolatedWorldBSec = secB.getWorldPosition();
-                            Point3D interpolatedWorldCSec = secC.getWorldPosition();
-
-                            secA = new Vertex(
-                                    new Point3D(vecA3D.getX(), vecA3D.getY(), vecA3D.getZ()),
-                                    secA.getColor(),
-                                    secA.getUV(),
-                                    secA.getNormal());
-
-                            secA.setWorldPosition(interpolatedWorldASec);
-
-                            secB = new Vertex(
-                                    new Point3D(vecB3D.getX(), vecB3D.getY(), vecB3D.getZ()),
-                                    secB.getColor(),
-                                    secB.getUV(),
-                                    secB.getNormal());
-
-                            secB.setWorldPosition(interpolatedWorldBSec);
-
-                            secC = new Vertex(
-                                    new Point3D(vecC3D.getX(), vecC3D.getY(), vecC3D.getZ()),
-                                    secC.getColor(),
-                                    secC.getUV(),
-                                    secC.getNormal());
-
-                            secC.setWorldPosition(interpolatedWorldCSec);
-
-                            rvA = RasterVertexBuilder.from(secA);
-                            rvB = RasterVertexBuilder.from(secB);
-                            rvC = RasterVertexBuilder.from(secC);
-
-                            triangleRasterizer.rasterize(rvA, rvB, rvC);
-                        } else
+                        if (output.size() < 3)
                             continue;
+                        // první trojúhelník
+                        rasterizeTriangle(
+                                output.get(0),
+                                output.get(1),
+                                output.get(2),
+                                solid.getShader());
+
+                        // quad -> druhý trojúhelník
+                        if (output.size() == 4) {
+
+                            rasterizeTriangle(
+                                    output.get(0),
+                                    output.get(2),
+                                    output.get(3),
+                                    solid.getShader());
+                        }
                     }
                     break;
                 case TopologyType.POINTS:
@@ -343,12 +214,99 @@ public class Renderer {
                     break;
             }
         }
+
     }
 
     private Vec3D transformToWindow(Vec3D v) {
         return v.mul(new Vec3D(1, -1, 1))
                 .add(new Vec3D(1, 1, 0))
                 .mul(new Vec3D((width - 1) / 2., (height - 1) / 2., 1));
+    }
+
+    private Vec3D computeNormalWithMtrix(Vertex v, Mat4 normalMatrix) {
+        Point3D normalPoint = new Point3D(
+                v.getNormal().getX(),
+                v.getNormal().getY(),
+                v.getNormal().getZ(),
+                0);
+
+        Point3D transformed = normalPoint.mul(normalMatrix);
+
+        return new Vec3D(
+                transformed.getX(),
+                transformed.getY(),
+                transformed.getZ())
+                .normalized()
+                .orElse(new Vec3D(0, 0, 1));
+    }
+
+    private void rasterizeTriangle(
+            Vertex a,
+            Vertex b,
+            Vertex c,
+            Shader shader) {
+
+        Optional<Vec3D> dehomogA = a.getPosition().dehomog();
+        Optional<Vec3D> dehomogB = b.getPosition().dehomog();
+        Optional<Vec3D> dehomogC = c.getPosition().dehomog();
+
+        if (dehomogA.isEmpty()
+                || dehomogB.isEmpty()
+                || dehomogC.isEmpty()) {
+            return;
+        }
+
+        Vec3D screenA = transformToWindow(dehomogA.get());
+        Vec3D screenB = transformToWindow(dehomogB.get());
+        Vec3D screenC = transformToWindow(dehomogC.get());
+
+        double clipWA = a.getClipW();
+        double clipWB = b.getClipW();
+        double clipWC = c.getClipW();
+
+        double clipZA = a.getClipZ();
+        double clipZB = b.getClipZ();
+        double clipZC = c.getClipZ();
+
+        Point3D worldA = a.getWorldPosition();
+        Point3D worldB = b.getWorldPosition();
+        Point3D worldC = c.getWorldPosition();
+
+        Vertex newA = new Vertex(
+                new Point3D(screenA.getX(), screenA.getY(), screenA.getZ()),
+                a.getColor(),
+                a.getUV(),
+                a.getNormal());
+
+        newA.setWorldPosition(worldA);
+        newA.setClipW(clipWA);
+        newA.setClipZ(clipZA);
+
+        Vertex newB = new Vertex(
+                new Point3D(screenB.getX(), screenB.getY(), screenB.getZ()),
+                b.getColor(),
+                b.getUV(),
+                b.getNormal());
+
+        newB.setWorldPosition(worldB);
+        newB.setClipW(clipWB);
+        newB.setClipZ(clipZB);
+
+        Vertex newC = new Vertex(
+                new Point3D(screenC.getX(), screenC.getY(), screenC.getZ()),
+                c.getColor(),
+                c.getUV(),
+                c.getNormal());
+
+        newC.setWorldPosition(worldC);
+        newC.setClipW(clipWC);
+        newC.setClipZ(clipZC);
+
+        RasterVertex rvA = RasterVertexBuilder.from(newA);
+        RasterVertex rvB = RasterVertexBuilder.from(newB);
+        RasterVertex rvC = RasterVertexBuilder.from(newC);
+
+        triangleRasterizer.rasterize(rvA, rvB, rvC, shader);
     }
 
     public void setView(Mat4 view) {

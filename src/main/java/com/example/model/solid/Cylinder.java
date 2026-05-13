@@ -39,6 +39,10 @@ public class Cylinder extends Solid {
     }
 
     private void initialWireFrameMesh(double radius, double height, int segments, Col[] colors) {
+        vertexBuffer.clear();
+        indexBuffer.clear();
+        partBuffer.clear();
+
         int[] bottomVb = new int[segments];
         int[] topVb = new int[segments];
         double halfHeight = height / 2;
@@ -66,11 +70,15 @@ public class Cylinder extends Solid {
     }
 
     private void initialFillMesh(double radius, double height, int segments, Col[] colors) {
-        int[] bottomVb = new int[segments];
-        int[] topVb = new int[segments];
+        vertexBuffer.clear();
+        indexBuffer.clear();
+        partBuffer.clear();
+
+        int[] bottomVb = new int[segments + 1];
+        int[] topVb = new int[segments + 1];
         double halfHeight = height / 2;
 
-        for (int i = 0; i < segments; i++) {
+        for (int i = 0; i <= segments; i++) {
             double angle = 2 * Math.PI * i / segments;
             double x = radius * Math.cos(angle);
             double y = radius * Math.sin(angle);
@@ -88,7 +96,7 @@ public class Cylinder extends Solid {
 
         for (int i = 0; i < segments; i++) {
 
-            int next = (i + 1) % segments;
+            int next = i + 1;
 
             // First triangle
             addIndices(

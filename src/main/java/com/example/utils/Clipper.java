@@ -9,11 +9,12 @@ import com.example.transforms.Point3D;
 
 public class Clipper {
     public static Optional<Vertex[]> clipByZ(Vertex a, Vertex b) {
+        float zMin = 0;
         double z1 = a.getPosition().getZ();
         double z2 = b.getPosition().getZ();
 
-        boolean inside1 = z1 >= 0;
-        boolean inside2 = z2 >= 0;
+        boolean inside1 = z1 >= zMin;
+        boolean inside2 = z2 >= zMin;
 
         if (!inside1 && !inside2) {
             return Optional.empty();
@@ -26,10 +27,10 @@ public class Clipper {
         Vertex intersection;
 
         if (inside1) {
-            intersection = intersect(a, b, 0);
+            intersection = intersect(a, b, zMin);
             b = intersection;
         } else {
-            intersection = intersect(b, a, 0);
+            intersection = intersect(b, a, zMin);
             a = intersection;
         }
 

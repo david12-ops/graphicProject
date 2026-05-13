@@ -8,70 +8,88 @@ import com.example.transforms.Vec3D;
 
 public class PhongShader implements Shader {
 
-    private final Light sceneLight;
+        private final Light sceneLight;
+        private Vec3D cameraPosition;
 
-    public PhongShader(Light sceneLight) {
-        this.sceneLight = sceneLight;
-    }
+        public PhongShader(Light sceneLight) {
+                this.sceneLight = sceneLight;
+        }
 
-    @Override
-    public Col getColor(Vertex v) {
-        // Pozice vertexu
-        Vec3D position = new Vec3D(v.getWorldPosition());
+        public Col getColor(Vertex v) {
 
-        // Normála
-        Vec3D N = v.getNormal()
-                .normalized()
-                .orElseThrow();
+                if (cameraPosition == null) {
+                        return v.getColor();
+                }
 
-        // Směr ke světlu
-        Vec3D negativeVec = position.mul(-1);
-        Point3D point3d = new Point3D(negativeVec.getX(), negativeVec.getY(), negativeVec.getZ());
+                // Normála
+                Vec3D N = v.getNormal()
+                                .normalized()
+                                .orElse(new Vec3D(0, 0, 1));
 
-        Vec3D L = new Vec3D(sceneLight.getPosition()
-                .add(point3d))
-                .normalized()
-                .orElseThrow();
+                // Směr ke světlu
+                Vec3D L = subtract(
+                                sceneLight.getPosition(),
+                                v.getWorldPosition())
+                                .normalized()
+                                .orElse(new Vec3D(0, 0, 1));
 
-        // Směr ke kameře
-        // kamera v (0,0,0)
-        Vec3D V = position.opposite()
-                .normalized()
-                .orElseThrow();
+                // Směr ke kameře
+                Vec3D V = subtract(
+                                new Point3D(cameraPosition.getX(), cameraPosition.getY(),
+                                                cameraPosition.getZ()),
+                                v.getWorldPosition())
+                                .normalized()
+                                .orElse(new Vec3D(0, 0, 1));
 
-        // HALF VECTOR (Blinn-Phong)
-        Vec3D H = L.add(V).normalized().orElseThrow();
+                // HALF VECTOR (Blinn-Phong)
+                Vec3D H = L.add(V).normalized().orElse(new Vec3D(0, 0, 1));
 
-        // === AMBIENT ===
-        double ambientStrength = 0.2;
+                // === AMBIENT ===
+                double ambientStrength = 0.2;
 
-        // === DIFFUSE ===
-        double diff = Math.max(0.0, N.dot(L));
-        double diffuseStrength = 0.8;
+                // === DIFFUSE ===
+                double diff = Math.max(0.0, N.dot(L));
+                double diffuseStrength = 0.8;
 
-        // === SPECULAR ===
-        double specularStrength = 0.5;
-        double shininess = 32;
+                // === SPECULAR ===
+                double specularStrength = 0.5;
+                double shininess = 32;
 
-        double spec = Math.pow(Math.max(0.0, N.dot(H)), shininess);
+                double spec = 0.0;
 
-        double intensity = ambientStrength +
-                diffuseStrength * diff +
-                specularStrength * spec;
+                if (diff > 0.0) {
+                        spec = Math.pow(
+                                        Math.max(0.0, N.dot(H)),
+                                        shininess);
+                }
 
-        intensity = Math.max(0.0,
-                Math.min(1.0, intensity));
+                double ambient = ambientStrength;
+                double diffuse = diffuseStrength * diff;
+                double specular = specularStrength * spec;
+                double specularColor = 255.0 * specular;
 
-        Col base = v.getColor();
+                Col base = v.getColor();
 
-        return new Col(
-                clamp(base.getR() * intensity),
-                clamp(base.getG() * intensity),
-                clamp(base.getB() * intensity));
-    }
+                return new Col(
+                                clamp(base.getR() * (ambient + diffuse) + specularColor),
+                                clamp(base.getG() * (ambient + diffuse) + specularColor),
+                                clamp(base.getB() * (ambient + diffuse) + specularColor));
+        }
 
-    private int clamp(double value) {
-        return (int) Math.max(0,
-                Math.min(255, value));
-    }
+        private double clamp(double value) {
+                return Math.max(0.0,
+                                Math.min(255, value));
+        }
+
+        private Vec3D subtract(Point3D a, Point3D b) {
+                return new Vec3D(
+                                a.getX() - b.getX(),
+                                a.getY() - b.getY(),
+                                a.getZ() - b.getZ());
+        }
+
+        @Override
+        public void setCameraPosition(Vec3D cameraPosition) {
+                this.cameraPosition = cameraPosition;
+        }
 }

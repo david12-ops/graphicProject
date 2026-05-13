@@ -20,6 +20,10 @@ public class Cube extends Solid {
         }
 
         private void initialWireFrameMesh(double halfSize, Col[] colors) {
+                vertexBuffer.clear();
+                indexBuffer.clear();
+                partBuffer.clear();
+
                 // Fill in vb
                 // Bottom
                 vertexBuffer.add(new Vertex(new Point3D(-halfSize, -halfSize, -halfSize),
@@ -50,6 +54,10 @@ public class Cube extends Solid {
         }
 
         private void initialFillMesh(double halfSize, Col[] colors) {
+                vertexBuffer.clear();
+                indexBuffer.clear();
+                partBuffer.clear();
+
                 // Fill in vb
                 // Bottom
                 Vec3D bottomNormal = new Vec3D(0, 0, -1);

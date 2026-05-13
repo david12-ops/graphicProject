@@ -211,6 +211,10 @@ public class Col {
 		return new Col(r + c.r, g + c.g, b + c.b);
 	}
 
+	public Col subna(final Col c) {
+		return new Col(r - c.r, g - c.g, b - c.b);
+	}
+
 	/**
 	 * Returns a new color by multiplying individual RGB channels by a scalar
 	 * (one double-precision value), no saturation (clamping channels to

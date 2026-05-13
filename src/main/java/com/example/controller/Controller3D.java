@@ -33,6 +33,7 @@ import com.example.rasterize.LineRasterizer;
 import com.example.rasterize.PointRasterizer;
 import com.example.rasterize.TriangleRasterizer;
 import com.example.renderer.Renderer;
+import com.example.shader.PhongShader;
 import com.example.shader.ShaderConstant;
 import com.example.shader.ShaderInterpolated;
 import com.example.shader.ShaderTexture;
@@ -85,6 +86,7 @@ public class Controller3D implements Controller {
 
     private final ShaderConstant shaderConstant = new ShaderConstant();
     private final ShaderInterpolated shaderInterpolated = new ShaderInterpolated();
+    private PhongShader phongShader;
 
     // TODO - osvicení
 
@@ -122,6 +124,9 @@ public class Controller3D implements Controller {
         initCamera();
         initProjection();
         initScene(solidModel);
+
+        phongShader = new PhongShader(scene.getSceneLight());
+        phongShader.setCameraPosition(camera.getPosition());
 
         renderer = new Renderer(lineRasterizer, triangleRasterizer, pointRasterizer, scene.getSceneLight(),
                 panel.getRaster().getWidth(),
@@ -298,6 +303,8 @@ public class Controller3D implements Controller {
                 lastMouseY = e.getY();
 
                 mousePressed = true;
+
+                phongShader.setCameraPosition(camera.getPosition());
             }
 
             public void mouseReleased(MouseEvent e) {
@@ -317,6 +324,8 @@ public class Controller3D implements Controller {
 
                     lastMouseX = e.getX();
                     lastMouseY = e.getY();
+
+                    phongShader.setCameraPosition(camera.getPosition());
 
                     render();
                 }
@@ -346,31 +355,39 @@ public class Controller3D implements Controller {
                     // Cam up
                     case KeyEvent.VK_UP:
                         camera = camera.forward(MOVE_SPEED);
+                        phongShader.setCameraPosition(camera.getPosition());
                         break;
                     // Cam down
                     case KeyEvent.VK_DOWN:
                         camera = camera.backward(MOVE_SPEED);
+                        phongShader.setCameraPosition(camera.getPosition());
                         break;
                     // Cam left
                     case KeyEvent.VK_LEFT:
                         camera = camera.left(MOVE_SPEED);
+                        phongShader.setCameraPosition(camera.getPosition());
                         break;
                     // Cam right
                     case KeyEvent.VK_RIGHT:
                         camera = camera.right(MOVE_SPEED);
+                        phongShader.setCameraPosition(camera.getPosition());
                         break;
                     // Change projection mode
                     case KeyEvent.VK_P:
                         perspectiveProjection = !perspectiveProjection;
                         initProjection();
+                        phongShader.setCameraPosition(camera.getPosition());
+
                         break;
                     // Cam up
                     case KeyEvent.VK_U:
                         camera = camera.up(MOVE_SPEED);
+                        phongShader.setCameraPosition(camera.getPosition());
                         break;
                     // Cam down
                     case KeyEvent.VK_D:
                         camera = camera.down(MOVE_SPEED);
+                        phongShader.setCameraPosition(camera.getPosition());
                         break;
                     // Reset camera
                     case KeyEvent.VK_R:
@@ -530,7 +547,6 @@ public class Controller3D implements Controller {
 
         for (int i = 0; i < scene.getSolids().size(); i++) {
             Solid solid = scene.getSolids().get(i);
-            solid.setSolidTopology(solidModel);
 
             if (i == activeSolidIndex) {
                 solid.setState(SolidState.SELECTED);
@@ -577,7 +593,11 @@ public class Controller3D implements Controller {
             if (colorFillMode == ColorFillMode.GRADIENT)
                 solid.setShader(shaderInterpolated);
             else if (colorFillMode == ColorFillMode.CONSTANT) {
-                solid.setShader(shaderConstant);
+                if (solid.getUsePongShader()) {
+                    solid.setShader(phongShader);
+                } else {
+                    solid.setShader(shaderConstant);
+                }
             } else if (colorFillMode == ColorFillMode.TEXTURE)
                 if (solid.getTexture() == null) {
                     solid.setShader(shaderConstant);

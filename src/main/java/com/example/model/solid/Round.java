@@ -20,6 +20,10 @@ public class Round extends Solid {
     }
 
     private void initialWireFrameMesh(Point3D center, double radius, int stacks, int slices, Col[] colors) {
+        vertexBuffer.clear();
+        indexBuffer.clear();
+        partBuffer.clear();
+
         // Latitude rings
         for (int i = 1; i < stacks; i++) {
 
@@ -83,6 +87,10 @@ public class Round extends Solid {
     }
 
     private void initialFillMesh(Point3D center, double radius, int stacks, int slices, Col[] colors) {
+        vertexBuffer.clear();
+        indexBuffer.clear();
+        partBuffer.clear();
+
         for (int i = 0; i <= stacks; i++) {
 
             double theta = Math.PI * i / stacks;

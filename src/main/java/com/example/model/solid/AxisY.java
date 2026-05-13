@@ -18,6 +18,10 @@ public class AxisY extends Solid {
         }
 
         private void initialWireFrameMesh(Col[] colors) {
+                vertexBuffer.clear();
+                indexBuffer.clear();
+                partBuffer.clear();
+
                 // Fill in vertexBuffer
                 vertexBuffer.add(new Vertex(
                                 new Point3D(0, 0, 0),
@@ -54,6 +58,10 @@ public class AxisY extends Solid {
         }
 
         private void initialFillMesh(Col[] colors) {
+                vertexBuffer.clear();
+                indexBuffer.clear();
+                partBuffer.clear();
+
                 Vec3D normal = new Vec3D(0, 0, 1);
 
                 // Fill in vertexBuffer
