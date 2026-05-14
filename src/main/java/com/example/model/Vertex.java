@@ -7,12 +7,11 @@ import com.example.transforms.Vec3D;
 
 public class Vertex implements Vectorazible<Vertex> {
     private final Point3D position; // clip/screen
-    private Point3D worldPosition;
+    private Vec3D worldPosition;
     private final Col color;
     private Vec3D normal;
     private Vec2D uv;
     private double clipW;
-    private double clipZ;
 
     public Vertex(Point3D position, Col color, Vec2D uv, Vec3D normal) {
         this.position = position;
@@ -21,7 +20,7 @@ public class Vertex implements Vectorazible<Vertex> {
         this.normal = normal;
     }
 
-    public Vertex(Point3D position, Point3D worldPosition, Col color, Vec2D uv, Vec3D normal) {
+    public Vertex(Point3D position, Vec3D worldPosition, Col color, Vec2D uv, Vec3D normal) {
         this.position = position;
         this.worldPosition = worldPosition;
         this.color = color;
@@ -60,11 +59,11 @@ public class Vertex implements Vectorazible<Vertex> {
         this.clipW = clipW;
     }
 
-    public void setWorldPosition(Point3D worldPosition) {
+    public void setWorldPosition(Vec3D worldPosition) {
         this.worldPosition = worldPosition;
     }
 
-    public Point3D getWorldPosition() {
+    public Vec3D getWorldPosition() {
         return worldPosition;
     }
 
@@ -92,26 +91,14 @@ public class Vertex implements Vectorazible<Vertex> {
         return normal;
     }
 
-    public double getClipZ() {
-        return clipZ;
-    }
-
-    public void setClipZ(double clipZ) {
-        this.clipZ = clipZ;
-    }
-
     @Override
     public Vertex mul(double d) {
         Point3D newPosition = position != null ? position.mul(d) : null;
         Col newColor = color != null ? color.mul(d) : null;
         Vec2D newUV = uv != null ? uv.mul(d) : null;
         Vec3D newNormal = normal != null ? normal.mul(d) : null;
-        double newW = clipW * d;
-        double newZ = clipZ * d;
 
         Vertex out = new Vertex(newPosition, newColor, newUV, newNormal);
-        out.setClipW(newW);
-        out.setClipZ(newZ);
 
         if (worldPosition != null) {
             out.setWorldPosition(worldPosition.mul(d));
@@ -123,15 +110,11 @@ public class Vertex implements Vectorazible<Vertex> {
     @Override
     public Vertex add(Vertex v) {
         Point3D newPosition = position != null ? position.add(v.getPosition()) : null;
+        Vec3D newNormal = normal != null ? normal.add(v.getNormal()) : null;
         Col newColor = color != null ? color.add(v.getColor()) : null;
         Vec2D newUV = uv != null ? uv.add(v.getUV()) : null;
-        Vec3D newNormal = normal != null ? normal.add(v.getNormal()) : null;
-        double newW = clipW + v.getClipW();
-        double newZ = clipZ + v.getClipZ();
 
         Vertex out = new Vertex(newPosition, newColor, newUV, newNormal);
-        out.setClipW(newW);
-        out.setClipZ(newZ);
 
         if (worldPosition != null && v.getWorldPosition() != null) {
             out.setWorldPosition(

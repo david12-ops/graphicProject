@@ -1,9 +1,10 @@
 package com.example.shader;
 
+import java.util.Optional;
+
 import com.example.model.Light;
 import com.example.model.Vertex;
 import com.example.transforms.Col;
-import com.example.transforms.Point3D;
 import com.example.transforms.Vec3D;
 
 public class PhongShader implements Shader {
@@ -21,28 +22,34 @@ public class PhongShader implements Shader {
                         return v.getColor();
                 }
 
-                // Normála
-                Vec3D N = v.getNormal()
-                                .normalized()
-                                .orElse(new Vec3D(0, 0, 1));
+                Optional<Vec3D> normalized = v.getNormal().normalized();
 
-                // Směr ke světlu
-                Vec3D L = subtract(
+                if (normalized.isEmpty()) {
+                        System.out.println("ZERO NORMAL!");
+                        return v.getColor();
+                }
+
+                // Normála
+                Vec3D N = normalized.get();
+
+                // Směr ke světlu a směr ke kameře
+                Optional<Vec3D> lOpt = subtract(
                                 sceneLight.getPosition(),
                                 v.getWorldPosition())
-                                .normalized()
-                                .orElse(new Vec3D(0, 0, 1));
+                                .normalized();
 
-                // Směr ke kameře
-                Vec3D V = subtract(
-                                new Point3D(cameraPosition.getX(), cameraPosition.getY(),
+                Optional<Vec3D> vOpt = subtract(
+                                new Vec3D(cameraPosition.getX(), cameraPosition.getY(),
                                                 cameraPosition.getZ()),
                                 v.getWorldPosition())
-                                .normalized()
-                                .orElse(new Vec3D(0, 0, 1));
+                                .normalized();
 
-                // HALF VECTOR (Blinn-Phong)
-                Vec3D H = L.add(V).normalized().orElse(new Vec3D(0, 0, 1));
+                if (lOpt.isEmpty() || vOpt.isEmpty()) {
+                        return v.getColor();
+                }
+
+                Vec3D L = lOpt.get();
+                Vec3D V = vOpt.get();
 
                 // === AMBIENT ===
                 double ambientStrength = 0.2;
@@ -56,6 +63,15 @@ public class PhongShader implements Shader {
                 double shininess = 32;
 
                 double spec = 0.0;
+
+                // HALF VECTOR (Blinn-Phong)
+                Optional<Vec3D> hNorm = L.add(V).normalized();
+
+                if (hNorm.isEmpty()) {
+                        return v.getColor();
+                }
+
+                Vec3D H = hNorm.get();
 
                 if (diff > 0.0) {
                         spec = Math.pow(
@@ -81,7 +97,7 @@ public class PhongShader implements Shader {
                                 Math.min(255, value));
         }
 
-        private Vec3D subtract(Point3D a, Point3D b) {
+        private Vec3D subtract(Vec3D a, Vec3D b) {
                 return new Vec3D(
                                 a.getX() - b.getX(),
                                 a.getY() - b.getY(),

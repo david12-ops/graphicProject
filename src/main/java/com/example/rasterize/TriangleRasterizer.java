@@ -1,5 +1,7 @@
 package com.example.rasterize;
 
+import java.util.Optional;
+
 import com.example.model.RasterVertex;
 import com.example.model.Vertex;
 import com.example.raster.ZBuffer;
@@ -10,16 +12,14 @@ import com.example.transforms.Vec2D;
 import com.example.transforms.Vec3D;
 
 public class TriangleRasterizer {
-    // neni ready
     private final ZBuffer zBuffer;
-    // private boolean disableShader = false;
 
     public TriangleRasterizer(ZBuffer zBuffer) {
         this.zBuffer = zBuffer;
     }
 
     public void rasterize(RasterVertex a, RasterVertex b, RasterVertex c, Shader shader) {
-        // TODO: seřadit vrcholy podle y od min po max
+        // seřadit vrcholy podle y od min po max
         // ab
         if (a.getPosition().getY() > b.getPosition().getY()) {
             RasterVertex temp = a;
@@ -78,7 +78,7 @@ public class TriangleRasterizer {
             }
             double acX = lerp(a.getPosition().getX(), c.getPosition().getX(), tAC);
 
-            // TODO: kontrola, jestli je ab.getX() < ac.getX()
+            // kontrola, jestli je ab.getX() < ac.getX()
             if (abX > acX) {
                 double temp = abX;
                 abX = acX;
@@ -105,20 +105,27 @@ public class TriangleRasterizer {
                 double w1 = bary[1] * invDenom;
                 double w2 = bary[2] * invDenom;
 
+                if (w0 < 0 || w1 < 0 || w2 < 0)
+                    continue;
+
                 double baryInvW = w0 * a.getInvW() +
                         w1 * b.getInvW() +
                         w2 * c.getInvW();
 
-                double baryZOverW = w0 * a.getZOverW() +
-                        w1 * b.getZOverW() +
-                        w2 * c.getZOverW();
+                if (Math.abs(baryInvW) < 1e-8)
+                    continue;
 
-                Vec3D baryNormal = a.getNormalOverW().mul(w0)
+                Optional<Vec3D> normalOpt = a.getNormalOverW().mul(w0)
                         .add(b.getNormalOverW().mul(w1))
                         .add(c.getNormalOverW().mul(w2))
-                        .mul(1.0 / baryInvW).normalized().orElse(new Vec3D(0, 0, 1));
+                        .normalized();
 
-                Point3D baryWorldPos = a.getWorldPosOverW().mul(w0)
+                if (normalOpt.isEmpty())
+                    continue;
+
+                Vec3D baryNormal = normalOpt.get();
+
+                Vec3D baryWorldPos = a.getWorldPosOverW().mul(w0)
                         .add(b.getWorldPosOverW().mul(w1))
                         .add(c.getWorldPosOverW().mul(w2))
                         .mul(1.0 / baryInvW);
@@ -133,7 +140,9 @@ public class TriangleRasterizer {
                         .add(c.getColorOverW().mul(w2))
                         .mul(1.0 / baryInvW);
 
-                double depth = baryZOverW / baryInvW;
+                double depth = w0 * a.getZ()
+                        + w1 * b.getZ()
+                        + w2 * c.getZ();
 
                 Vertex pixel = new Vertex(new Point3D(new Vec3D(px, py, depth)), baryWorldPos, baryColor, baryUV,
                         baryNormal);
@@ -171,7 +180,7 @@ public class TriangleRasterizer {
             }
             double acX = lerp(a.getPosition().getX(), c.getPosition().getX(), tAC);
 
-            // TODO: kontrola, jestli je bc.getX() < ac.getX()
+            // kontrola, jestli je bc.getX() < ac.getX()
             if (bcX > acX) {
                 double temp = bcX;
                 bcX = acX;
@@ -198,20 +207,27 @@ public class TriangleRasterizer {
                 double w1 = bary[1] * invDenom;
                 double w2 = bary[2] * invDenom;
 
+                if (w0 < 0 || w1 < 0 || w2 < 0)
+                    continue;
+
                 double baryInvW = w0 * a.getInvW() +
                         w1 * b.getInvW() +
                         w2 * c.getInvW();
 
-                double baryZOverW = w0 * a.getZOverW() +
-                        w1 * b.getZOverW() +
-                        w2 * c.getZOverW();
+                if (Math.abs(baryInvW) < 1e-8)
+                    continue;
 
-                Vec3D baryNormal = a.getNormalOverW().mul(w0)
+                Optional<Vec3D> normalOpt = a.getNormalOverW().mul(w0)
                         .add(b.getNormalOverW().mul(w1))
                         .add(c.getNormalOverW().mul(w2))
-                        .mul(1.0 / baryInvW).normalized().orElse(new Vec3D(0, 0, 1));
+                        .normalized();
 
-                Point3D baryWorldPos = a.getWorldPosOverW().mul(w0)
+                if (normalOpt.isEmpty())
+                    continue;
+
+                Vec3D baryNormal = normalOpt.get();
+
+                Vec3D baryWorldPos = a.getWorldPosOverW().mul(w0)
                         .add(b.getWorldPosOverW().mul(w1))
                         .add(c.getWorldPosOverW().mul(w2))
                         .mul(1.0 / baryInvW);
@@ -226,7 +242,9 @@ public class TriangleRasterizer {
                         .add(c.getColorOverW().mul(w2))
                         .mul(1.0 / baryInvW);
 
-                double depth = baryZOverW / baryInvW;
+                double depth = w0 * a.getZ()
+                        + w1 * b.getZ()
+                        + w2 * c.getZ();
 
                 Vertex pixel = new Vertex(new Point3D(new Vec3D(px, py, depth)), baryWorldPos, baryColor, baryUV,
                         baryNormal);

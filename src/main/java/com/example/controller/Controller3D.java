@@ -88,8 +88,6 @@ public class Controller3D implements Controller {
     private final ShaderInterpolated shaderInterpolated = new ShaderInterpolated();
     private PhongShader phongShader;
 
-    // TODO - osvicení
-
     /**
      * Creates a new 3D controller for the given panel.
      * 
@@ -162,7 +160,7 @@ public class Controller3D implements Controller {
 
     private void initScene(SolidModel solidModel) {
         scene.setSceneLight(new Light(
-                new Point3D(10, 10, 10),
+                new Vec3D(7, 12, 30),
                 new Col(255, 255, 255)));
         scene.clear();
 
@@ -209,6 +207,7 @@ public class Controller3D implements Controller {
 
         cube.setModel(new Mat4Transl(3, 6, 0));
         cube.computeCenter();
+        // cube.setUsePongShader(true);
 
         try {
             Texture cubeTexture = new Texture("/beasternchen-bee-9766784.jpg");
@@ -229,6 +228,7 @@ public class Controller3D implements Controller {
 
         cylinder.setModel(new Mat4Transl(-1.5, 6, 0));
         cylinder.computeCenter();
+        // cylinder.setUsePongShader(true);
 
         try {
             Texture cubeTexture = new Texture("/jplenio-ocean-3605547.jpg");
@@ -254,8 +254,8 @@ public class Controller3D implements Controller {
                 solidModel);
 
         round.setModel(new Mat4Transl(10, 6, 5));
-        round.setUsePongShader(true);
         round.computeCenter();
+        round.setUsePongShader(true);
 
         try {
             Texture cubeTexture = new Texture("/pruslee-plane-7432680.jpg");
@@ -377,7 +377,6 @@ public class Controller3D implements Controller {
                         perspectiveProjection = !perspectiveProjection;
                         initProjection();
                         phongShader.setCameraPosition(camera.getPosition());
-
                         break;
                     // Cam up
                     case KeyEvent.VK_U:
@@ -392,6 +391,7 @@ public class Controller3D implements Controller {
                     // Reset camera
                     case KeyEvent.VK_R:
                         initCamera();
+                        phongShader.setCameraPosition(camera.getPosition());
                         break;
                     // Next solid
                     case KeyEvent.VK_TAB:

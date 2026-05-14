@@ -129,9 +129,9 @@ public class Renderer {
                         Vertex vecB = solid.getVertexBuffer().get(indexB);
                         Vertex vecC = solid.getVertexBuffer().get(indexC);
 
-                        Point3D worldA = vecA.getPosition().mul(solid.getModel());
-                        Point3D worldB = vecB.getPosition().mul(solid.getModel());
-                        Point3D worldC = vecC.getPosition().mul(solid.getModel());
+                        Vec3D worldA = new Vec3D(vecA.getPosition().mul(solid.getModel()));
+                        Vec3D worldB = new Vec3D(vecB.getPosition().mul(solid.getModel()));
+                        Vec3D worldC = new Vec3D(vecC.getPosition().mul(solid.getModel()));
 
                         vecA = new Vertex(
                                 vecA.getPosition().mul(finalMatrix),
@@ -155,23 +155,16 @@ public class Renderer {
                         vecB.setWorldPosition(worldB);
                         vecC.setWorldPosition(worldC);
 
-                        vecA.setClipW(vecA.getPosition().getW());
-                        vecB.setClipW(vecB.getPosition().getW());
-                        vecC.setClipW(vecC.getPosition().getW());
-
-                        vecA.setClipZ(vecA.getPosition().getZ());
-                        vecB.setClipZ(vecB.getPosition().getZ());
-                        vecC.setClipZ(vecC.getPosition().getZ());
-
                         // Crop in clip space
                         if (Clipper.clipReject(vecA, vecB, vecC))
                             continue;
 
-                        // 2. ořezání podle z TODO
+                        // 2. ořezání podle z
                         List<Vertex> output = Clipper.clipByZ(List.of(vecA, vecB, vecC));
 
                         if (output.size() < 3)
                             continue;
+
                         // první trojúhelník
                         rasterizeTriangle(
                                 output.get(0),
@@ -246,6 +239,10 @@ public class Renderer {
             Vertex c,
             Shader shader) {
 
+        double w1 = a.getPosition().getW();
+        double w2 = b.getPosition().getW();
+        double w3 = c.getPosition().getW();
+
         Optional<Vec3D> dehomogA = a.getPosition().dehomog();
         Optional<Vec3D> dehomogB = b.getPosition().dehomog();
         Optional<Vec3D> dehomogC = c.getPosition().dehomog();
@@ -260,17 +257,9 @@ public class Renderer {
         Vec3D screenB = transformToWindow(dehomogB.get());
         Vec3D screenC = transformToWindow(dehomogC.get());
 
-        double clipWA = a.getClipW();
-        double clipWB = b.getClipW();
-        double clipWC = c.getClipW();
-
-        double clipZA = a.getClipZ();
-        double clipZB = b.getClipZ();
-        double clipZC = c.getClipZ();
-
-        Point3D worldA = a.getWorldPosition();
-        Point3D worldB = b.getWorldPosition();
-        Point3D worldC = c.getWorldPosition();
+        Vec3D worldA = a.getWorldPosition();
+        Vec3D worldB = b.getWorldPosition();
+        Vec3D worldC = c.getWorldPosition();
 
         Vertex newA = new Vertex(
                 new Point3D(screenA.getX(), screenA.getY(), screenA.getZ()),
@@ -278,9 +267,8 @@ public class Renderer {
                 a.getUV(),
                 a.getNormal());
 
+        newA.setClipW(w1);
         newA.setWorldPosition(worldA);
-        newA.setClipW(clipWA);
-        newA.setClipZ(clipZA);
 
         Vertex newB = new Vertex(
                 new Point3D(screenB.getX(), screenB.getY(), screenB.getZ()),
@@ -288,9 +276,8 @@ public class Renderer {
                 b.getUV(),
                 b.getNormal());
 
+        newB.setClipW(w2);
         newB.setWorldPosition(worldB);
-        newB.setClipW(clipWB);
-        newB.setClipZ(clipZB);
 
         Vertex newC = new Vertex(
                 new Point3D(screenC.getX(), screenC.getY(), screenC.getZ()),
@@ -298,9 +285,8 @@ public class Renderer {
                 c.getUV(),
                 c.getNormal());
 
+        newC.setClipW(w3);
         newC.setWorldPosition(worldC);
-        newC.setClipW(clipWC);
-        newC.setClipZ(clipZC);
 
         RasterVertex rvA = RasterVertexBuilder.from(newA);
         RasterVertex rvB = RasterVertexBuilder.from(newB);

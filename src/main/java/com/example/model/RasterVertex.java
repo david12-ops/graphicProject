@@ -1,7 +1,6 @@
 package com.example.model;
 
 import com.example.transforms.Col;
-import com.example.transforms.Point3D;
 import com.example.transforms.Vec2D;
 import com.example.transforms.Vec3D;
 
@@ -9,10 +8,10 @@ public class RasterVertex {
     private final Vec3D position;
     private final double invW;
 
-    private final double zOverW;
+    private final double z;
 
     // future-proof
-    private final Point3D worldPosOverW;
+    private final Vec3D worldPosOverW;
     private final Vec3D normalOverW;
     private final Vec2D uvOverW;
 
@@ -21,17 +20,17 @@ public class RasterVertex {
     public RasterVertex(
             Vec3D position,
             double invW,
-            double zOverW,
-            Point3D worldPosOverW,
-            Vec3D normalOverW,
+            double z,
+            Vec3D worldPosOverW,
+            Vec3D normal,
             Vec2D uvOverW,
             Col colorOverW) {
 
         this.position = position;
         this.invW = invW;
-        this.zOverW = zOverW;
+        this.z = z;
         this.worldPosOverW = worldPosOverW;
-        this.normalOverW = normalOverW;
+        this.normalOverW = normal;
         this.uvOverW = uvOverW;
         this.colorOverW = colorOverW;
     }
@@ -41,13 +40,9 @@ public class RasterVertex {
         return position;
     }
 
-    // CLOR
+    // COLOR W
     public Col getColorOverW() {
         return colorOverW;
-    }
-
-    public void setColor(Col colorOverW) {
-        this.colorOverW = colorOverW;
     }
 
     // INV W
@@ -56,12 +51,12 @@ public class RasterVertex {
     }
 
     // Z OVER W
-    public double getZOverW() {
-        return zOverW;
+    public double getZ() {
+        return z;
     }
 
     // WORLD POSITION
-    public Point3D getWorldPosOverW() {
+    public Vec3D getWorldPosOverW() {
         return worldPosOverW;
     }
 

@@ -3,7 +3,6 @@ package com.example.utils;
 import com.example.model.RasterVertex;
 import com.example.model.Vertex;
 import com.example.transforms.Col;
-import com.example.transforms.Point3D;
 import com.example.transforms.Vec2D;
 import com.example.transforms.Vec3D;
 
@@ -13,13 +12,13 @@ public class RasterVertexBuilder {
 
         double invW = 1.0 / v.getClipW();
 
-        Vec3D pos = v.getPosition().ignoreW();
+        Vec3D pos = new Vec3D(v.getPosition());
 
-        double zOverW = v.getClipZ() * invW;
+        double z = v.getZ();
 
-        Point3D worldOverW = v.getWorldPosition().mul(invW);
+        Vec3D worldOverW = v.getWorldPosition().mul(invW);
 
-        Vec3D normalOverW = v.getNormal().mul(invW);
+        Vec3D normalOverW = v.getNormal();
 
         Vec2D uvOverW = v.getUV().mul(invW);
 
@@ -28,7 +27,7 @@ public class RasterVertexBuilder {
         return new RasterVertex(
                 pos,
                 invW,
-                zOverW,
+                z,
                 worldOverW,
                 normalOverW,
                 uvOverW,
