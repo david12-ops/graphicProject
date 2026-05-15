@@ -4,6 +4,44 @@ import com.example.transforms.Col;
 import com.example.transforms.Vec2D;
 import com.example.transforms.Vec3D;
 
+/**
+ * Represents a rasterization-ready vertex used during triangle rasterization.
+ *
+ * <p>
+ * A {@code RasterVertex} contains screen-space coordinates together with
+ * attributes prepared for perspective-correct interpolation.
+ * </p>
+ *
+ * <p>
+ * Most interpolated attributes are stored in the form:
+ * </p>
+ *
+ * :contentReference[oaicite:0]{index=0}
+ *
+ * <p>
+ * allowing reconstruction during rasterization using:
+ * </p>
+ *
+ * :contentReference[oaicite:1]{index=1}
+ *
+ * <p>
+ * Stored attributes:
+ * </p>
+ *
+ * <ul>
+ * <li>Screen-space position</li>
+ * <li>Reciprocal clip-space W ({@code 1 / w})</li>
+ * <li>Depth value</li>
+ * <li>World position divided by W</li>
+ * <li>Normal vector divided by W</li>
+ * <li>Texture coordinates divided by W</li>
+ * <li>Color divided by W</li>
+ * </ul>
+ *
+ * <p>
+ * The class is immutable and optimized for rasterization.
+ * </p>
+ */
 public class RasterVertex {
     private final Vec3D position;
     private final double invW;

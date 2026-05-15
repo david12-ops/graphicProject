@@ -87,6 +87,10 @@ public class Vertex implements Vectorazible<Vertex> {
         return uv;
     }
 
+    public void setNormal(Vec3D normal) {
+        this.normal = normal;
+    }
+
     public Vec3D getNormal() {
         return normal;
     }

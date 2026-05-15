@@ -7,6 +7,30 @@ import java.util.Optional;
 import com.example.model.Vertex;
 import com.example.transforms.Point3D;
 
+/**
+ * Utility class responsible for clipping primitives against the view frustum.
+ *
+ * <p>
+ * The clipping is performed in homogeneous clip space before perspective
+ * divide.
+ * The valid DirectX-style clip volume is:
+ * </p>
+ *
+ * <pre>
+ * -w <= x <= w
+ * -w <= y <= w
+ *  0 <= z <= w
+ * </pre>
+ *
+ * <p>
+ * This class provides:
+ * </p>
+ * <ul>
+ * <li>Line clipping against the near plane</li>
+ * <li>Polygon clipping against the near plane</li>
+ * <li>Fast clip rejection tests for points, lines, and triangles</li>
+ * </ul>
+ */
 public class Clipper {
     public static Optional<Vertex[]> clipByZ(Vertex a, Vertex b) {
         float zMin = 0;

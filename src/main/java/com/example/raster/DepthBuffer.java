@@ -2,11 +2,44 @@ package com.example.raster;
 
 import java.util.Optional;
 
+/**
+ * Raster storing per-pixel depth values for Z-buffering.
+ *
+ * <p>
+ * The depth buffer is used for hidden surface removal during rasterization.
+ * Each pixel stores the closest depth value rendered so far.
+ * </p>
+ *
+ * <p>
+ * Depth values are initialized to:
+ * </p>
+ *
+ * :contentReference[oaicite:0]{index=0}
+ *
+ * <p>
+ * meaning that initially no geometry has been drawn.
+ * </p>
+ *
+ * <p>
+ * The buffer is internally represented as a 2D array:
+ * </p>
+ *
+ * <ul>
+ * <li>X coordinate → column</li>
+ * <li>Y coordinate → row</li>
+ * </ul>
+ */
 public class DepthBuffer implements Raster<Double> {
 
     private double[][] zBuffer;
     private int width, height;
 
+    /**
+     * Creates a depth buffer with the specified dimensions.
+     *
+     * @param width  buffer width
+     * @param height buffer height
+     */
     public DepthBuffer(int width, int height) {
         this.width = width;
         this.height = height;
@@ -14,24 +47,39 @@ public class DepthBuffer implements Raster<Double> {
     }
 
     /**
-     * Checks whether the given pixel coordinates lie inside the raster bounds.
+     * Checks whether the specified coordinates lie inside the raster bounds.
      *
      * <p>
-     * A coordinate is considered inside if:
+     * A coordinate is valid if:
+     * </p>
+     *
      * <ul>
-     * <li>{@code x} is in the range {@code [0, image.getWidth())}</li>
-     * <li>{@code y} is in the range {@code [0, image.getHeight())}</li>
+     * <li>{@code x ∈ [0, width)}</li>
+     * <li>{@code y ∈ [0, height)}</li>
      * </ul>
      *
-     * @param x the x-coordinate of the pixel
-     * @param y the y-coordinate of the pixel
-     * @return {@code true} if the coordinates are inside the raster,
+     * @param x pixel x coordinate
+     * @param y pixel y coordinate
+     * @return {@code true} if coordinates are inside the raster;
      *         {@code false} otherwise
      */
     private boolean isInsideRaster(int x, int y) {
         return x >= 0 && y >= 0 && x < width && y < height;
     }
 
+    /**
+     * Clears the depth buffer.
+     *
+     * <p>
+     * All pixels are reset to positive infinity:
+     * </p>
+     *
+     * :contentReference[oaicite:1]{index=1}
+     *
+     * <p>
+     * This represents an empty scene where no geometry has yet been rendered.
+     * </p>
+     */
     @Override
     public void clear() {
         for (int x = 0; x < getWidth(); x++) {

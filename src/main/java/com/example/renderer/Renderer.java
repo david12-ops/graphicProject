@@ -22,6 +22,38 @@ import com.example.transforms.Vec3D;
 import com.example.utils.Clipper;
 import com.example.utils.RasterVertexBuilder;
 
+/**
+ * Main rendering pipeline responsible for transforming, clipping,
+ * dehomogenizing and rasterizing 3D primitives.
+ *
+ * <p>
+ * The renderer processes scene geometry in several stages:
+ * </p>
+ *
+ * <ol>
+ * <li>Model/View/Projection transformation</li>
+ * <li>Clip-space clipping</li>
+ * <li>Perspective divide (dehomogenization)</li>
+ * <li>Viewport transformation</li>
+ * <li>Rasterization</li>
+ * <li>Fragment shading</li>
+ * </ol>
+ *
+ * <p>
+ * Supported primitive topologies:
+ * </p>
+ *
+ * <ul>
+ * <li>Points</li>
+ * <li>Lines</li>
+ * <li>Triangles</li>
+ * </ul>
+ *
+ * <p>
+ * Triangles use perspective-correct interpolation through
+ * {@link RasterVertex}.
+ * </p>
+ */
 public class Renderer {
     private LineRasterizer lineRasterizer;
     private TriangleRasterizer triangleRasterizer;
@@ -30,6 +62,18 @@ public class Renderer {
     private int width, height;
     private Mat4 view, proj;
 
+    /**
+     * Creates a renderer with the specified rasterizers and matrices.
+     *
+     * @param lineRasterizer     rasterizer used for lines
+     * @param triangleRasterizer rasterizer used for triangles
+     * @param pointRasterizer    rasterizer used for points
+     * @param sceneLight         scene light source
+     * @param width              viewport width
+     * @param height             viewport height
+     * @param view               view matrix
+     * @param proj               projection matrix
+     */
     public Renderer(LineRasterizer lineRasterizer, TriangleRasterizer triangleRasterizer,
             PointRasterizer pointRasterizer, Light sceneLight, int width,
             int height, Mat4 view, Mat4 proj) {
@@ -42,7 +86,29 @@ public class Renderer {
         this.proj = proj;
     }
 
-    public void render(Solid solid) {
+    /**
+     * Renders the specified solid object.
+     *
+     * <p>
+     * Depending on topology type, the renderer performs:
+     * </p>
+     *
+     * <ul>
+     * <li>Transformation into clip space</li>
+     * <li>Clipping by z</li>
+     * <li>Perspective divide</li>
+     * <li>Viewport transformation</li>
+     * <li>Rasterization</li>
+     * </ul>
+     *
+     * <p>
+     * Selected solids are rendered slightly enlarged.
+     * </p>
+     *
+     * @param solid           rendered object
+     * @param perspectiveProj rendered with projection or otho
+     */
+    public void render(Solid solid, boolean perspectiveProj) {
         Vec3D centerVec3d = solid.getCenterVec3d();
         Mat4 finalMatrix = solid.useModelMatrix() ? solid.getModel().mul(view).mul(proj) : (view).mul(proj);
 
@@ -82,11 +148,13 @@ public class Renderer {
                         vecA = clipped.get()[0];
                         vecB = clipped.get()[1];
 
-                        double invW1 = 1.0 / vecA.getPosition().getW();
-                        double invW2 = 1.0 / vecB.getPosition().getW();
+                        double invW1 = perspectiveProj ? 1.0 / vecA.getPosition().getW() : 1.0;
+                        double invW2 = perspectiveProj ? 1.0 / vecB.getPosition().getW() : 1.0;
 
-                        double zOverW1 = vecA.getPosition().getZ() * invW1;
-                        double zOverW2 = vecB.getPosition().getZ() * invW2;
+                        double zOverW1 = perspectiveProj ? vecA.getPosition().getZ() * invW1
+                                : vecA.getPosition().getZ();
+                        double zOverW2 = perspectiveProj ? vecB.getPosition().getZ() * invW2
+                                : vecB.getPosition().getZ();
 
                         Optional<Vec3D> dehomogA = vecA.getPosition().dehomog();
                         Optional<Vec3D> dehomogB = vecB.getPosition().dehomog();
@@ -170,6 +238,7 @@ public class Renderer {
                                 output.get(0),
                                 output.get(1),
                                 output.get(2),
+                                perspectiveProj,
                                 solid.getShader());
 
                         // quad -> druhý trojúhelník
@@ -179,6 +248,7 @@ public class Renderer {
                                     output.get(0),
                                     output.get(2),
                                     output.get(3),
+                                    perspectiveProj,
                                     solid.getShader());
                         }
                     }
@@ -210,12 +280,45 @@ public class Renderer {
 
     }
 
+    /**
+     * Converts normalized device coordinates into screen coordinates.
+     *
+     * <p>
+     * Performs viewport transformation:
+     * </p>
+     *
+     * :contentReference[oaicite:0]{index=0}
+     *
+     * <p>
+     * and flips the Y axis.
+     * </p>
+     *
+     * @param v normalized device coordinates
+     * @return screen-space coordinates
+     */
     private Vec3D transformToWindow(Vec3D v) {
         return v.mul(new Vec3D(1, -1, 1))
                 .add(new Vec3D(1, 1, 0))
                 .mul(new Vec3D((width - 1) / 2., (height - 1) / 2., 1));
     }
 
+    /**
+     * Transforms a vertex normal using the inverse-transpose matrix.
+     *
+     * <p>
+     * Normals must be transformed differently than positions:
+     * </p>
+     *
+     * :contentReference[oaicite:1]{index=1}
+     *
+     * <p>
+     * This preserves correct orientation under non-uniform scaling.
+     * </p>
+     *
+     * @param v            source vertex
+     * @param normalMatrix inverse-transpose normal matrix
+     * @return transformed normalized normal
+     */
     private Vec3D computeNormalWithMtrix(Vertex v, Mat4 normalMatrix) {
         Point3D normalPoint = new Point3D(
                 v.getNormal().getX(),
@@ -233,10 +336,31 @@ public class Renderer {
                 .orElse(new Vec3D(0, 0, 1));
     }
 
+    /**
+     * Rasterizes a single triangle.
+     *
+     * <p>
+     * The method:
+     * </p>
+     *
+     * <ol>
+     * <li>Performs perspective divide</li>
+     * <li>Transforms vertices into screen space</li>
+     * <li>Builds perspective-correct raster vertices</li>
+     * <li>Delegates rasterization to triangle rasterizer</li>
+     * </ol>
+     *
+     * @param a               first vertex
+     * @param b               second vertex
+     * @param c               third vertex
+     * @param perspectiveProj rendered with projection or otho
+     * @param shader          fragment shader
+     */
     private void rasterizeTriangle(
             Vertex a,
             Vertex b,
             Vertex c,
+            boolean perspectiveProj,
             Shader shader) {
 
         double w1 = a.getPosition().getW();
@@ -288,9 +412,9 @@ public class Renderer {
         newC.setClipW(w3);
         newC.setWorldPosition(worldC);
 
-        RasterVertex rvA = RasterVertexBuilder.from(newA);
-        RasterVertex rvB = RasterVertexBuilder.from(newB);
-        RasterVertex rvC = RasterVertexBuilder.from(newC);
+        RasterVertex rvA = RasterVertexBuilder.from(newA, perspectiveProj);
+        RasterVertex rvB = RasterVertexBuilder.from(newB, perspectiveProj);
+        RasterVertex rvC = RasterVertexBuilder.from(newC, perspectiveProj);
 
         triangleRasterizer.rasterize(rvA, rvB, rvC, shader);
     }

@@ -11,13 +11,81 @@ import com.example.transforms.Point3D;
 import com.example.transforms.Vec2D;
 import com.example.transforms.Vec3D;
 
+/**
+ * Software triangle rasterizer using scanline rasterization and
+ * perspective-correct interpolation.
+ *
+ * <p>
+ * The rasterizer:
+ * </p>
+ *
+ * <ol>
+ * <li>Sorts vertices by Y coordinate</li>
+ * <li>Splits the triangle into upper/lower scanline sections</li>
+ * <li>Computes barycentric coordinates per pixel</li>
+ * <li>Performs perspective-correct interpolation</li>
+ * <li>Executes depth testing</li>
+ * <li>Runs fragment shading</li>
+ * </ol>
+ *
+ * <p>
+ * Interpolated attributes:
+ * </p>
+ *
+ * <ul>
+ * <li>World position</li>
+ * <li>Normal</li>
+ * <li>Texture coordinates</li>
+ * <li>Vertex color</li>
+ * </ul>
+ *
+ * <p>
+ * Perspective-correct interpolation follows:
+ * </p>
+ *
+ * :contentReference[oaicite:0]{index=0}
+ */
 public class TriangleRasterizer {
     private final ZBuffer zBuffer;
 
+    /**
+     * Creates a triangle rasterizer.
+     *
+     * @param zBuffer depth buffer
+     */
     public TriangleRasterizer(ZBuffer zBuffer) {
         this.zBuffer = zBuffer;
     }
 
+    /**
+     * Rasterizes a triangle using scanline rasterization.
+     *
+     * <p>
+     * The triangle is first sorted by Y coordinate and then processed
+     * in two scanline sections:
+     * </p>
+     *
+     * <ul>
+     * <li>Upper half (A → B)</li>
+     * <li>Lower half (B → C)</li>
+     * </ul>
+     *
+     * <p>
+     * For each pixel:
+     * </p>
+     *
+     * <ol>
+     * <li>Barycentric coordinates are computed</li>
+     * <li>Perspective-correct interpolation is performed</li>
+     * <li>Depth is evaluated</li>
+     * <li>The fragment shader computes final color</li>
+     * </ol>
+     *
+     * @param a      first triangle vertex
+     * @param b      second triangle vertex
+     * @param c      third triangle vertex
+     * @param shader fragment shader
+     */
     public void rasterize(RasterVertex a, RasterVertex b, RasterVertex c, Shader shader) {
         // seřadit vrcholy podle y od min po max
         // ab
@@ -39,12 +107,14 @@ public class TriangleRasterizer {
             b = temp;
         }
 
+        // TRIANGLE AREA / BARYCENTRIC DENOMINATOR
         double denom = (b.getPosition().getY() - c.getPosition().getY()) *
                 (a.getPosition().getX() - c.getPosition().getX()) +
 
                 (c.getPosition().getX() - b.getPosition().getX()) *
                         (a.getPosition().getY() - c.getPosition().getY());
 
+        // Degenerate triangle
         if (Math.abs(denom) < 1e-8) {
             return;
         }
@@ -118,6 +188,7 @@ public class TriangleRasterizer {
                 Optional<Vec3D> normalOpt = a.getNormalOverW().mul(w0)
                         .add(b.getNormalOverW().mul(w1))
                         .add(c.getNormalOverW().mul(w2))
+                        .mul(1.0 / baryInvW)
                         .normalized();
 
                 if (normalOpt.isEmpty())
@@ -217,9 +288,10 @@ public class TriangleRasterizer {
                 if (Math.abs(baryInvW) < 1e-8)
                     continue;
 
-                Optional<Vec3D> normalOpt = a.getNormalOverW().mul(w0)
+                Optional<Vec3D> normalOpt = a.getNormalOverW()
                         .add(b.getNormalOverW().mul(w1))
                         .add(c.getNormalOverW().mul(w2))
+                        .mul(1.0 / baryInvW).mul(w0)
                         .normalized();
 
                 if (normalOpt.isEmpty())
@@ -258,6 +330,22 @@ public class TriangleRasterizer {
         }
     }
 
+    /**
+     * Computes raw barycentric coordinate numerators.
+     *
+     * <p>
+     * Final barycentric weights are obtained by dividing by the
+     * triangle denominator.
+     * </p>
+     *
+     * @param v0    first vertex
+     * @param v1    second vertex
+     * @param v2    third vertex
+     * @param px    pixel x coordinate
+     * @param py    pixel y coordinate
+     * @param denom triangle denominator
+     * @return barycentric numerators
+     */
     private double[] computeBarycentric(
             RasterVertex v0,
             RasterVertex v1,
@@ -286,6 +374,16 @@ public class TriangleRasterizer {
         return new double[] { w0, w1, w2 };
     }
 
+    /**
+     * Performs linear interpolation.
+     *
+     * :contentReference[oaicite:1]{index=1}
+     *
+     * @param value1 start value
+     * @param value2 end value
+     * @param t      interpolation factor
+     * @return interpolated value
+     */
     private double lerp(double value1, double value2, double t) {
         return value1 + t * (value2 - value1);
     }

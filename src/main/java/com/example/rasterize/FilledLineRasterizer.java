@@ -21,10 +21,66 @@ import com.example.utils.Lerp;
  */
 
 /**
- * Line rasterizer using a simple (trivial) line drawing algorithm.
+ * Line rasterizer using a simple analytical (trivial) line drawing algorithm.
+ *
+ * <p>
+ * The rasterizer interpolates pixels between two screen-space vertices using
+ * a linear line equation.
+ * </p>
+ *
+ * <p>
+ * Features:
+ * </p>
+ *
+ * <ul>
+ * <li>Perspective-correct depth interpolation</li>
+ * <li>Depth testing through Z-buffer</li>
+ * <li>Vertex attribute interpolation</li>
+ * <li>Support for horizontal, vertical, and diagonal lines</li>
+ * </ul>
+ *
+ * <p>
+ * Depending on line orientation, iteration is performed over the dominant axis
+ * to reduce visual gaps:
+ * </p>
+ *
+ * <ul>
+ * <li>X-major lines iterate over X</li>
+ * <li>Y-major lines iterate over Y</li>
+ * </ul>
+ *
+ * <p>
+ * Line equation:
+ * </p>
+ *
  * 
- * Supports solid and gradient coloring, endpoint visualization,
- * and snapping to horizontal, vertical, or diagonal directions.
+ * ::contentReference[oaicite:0]{index=0}
+ *
+ * 
+ * <p>
+ * Perspective-correct depth interpolation:
+ * </p>
+ *
+ * :contentReference[oaicite:1]{index=1}
+ *
+ * <p>
+ * Advantages:
+ * </p>
+ *
+ * <ul>
+ * <li>Simple implementation</li>
+ * <li>Easily extendable to curves</li>
+ * </ul>
+ *
+ * <p>
+ * Disadvantages:
+ * </p>
+ *
+ * <ul>
+ * <li>Uses floating-point arithmetic</li>
+ * <li>Requires special handling of vertical lines</li>
+ * <li>Less efficient than Bresenham-style algorithms</li>
+ * </ul>
  */
 public class FilledLineRasterizer extends LineRasterizer {
 
@@ -38,15 +94,20 @@ public class FilledLineRasterizer extends LineRasterizer {
     }
 
     /**
-     * Rasterizes a line between two 3D vertices using the selected rasterization
-     * mode.
+     * Rasterizes a line segment between two vertices.
      *
-     * The X and Y coordinates are used for rasterization (screen space).
-     * The Z coordinate can be used for depth testing (Z-buffer), but is not handled
-     * here.
+     * <p>
+     * The line is rendered in screen space using the analytical line equation.
+     * Perspective-correct depth interpolation is used for Z-buffer testing.
+     * </p>
      *
-     * @param a start vertex of the line in 3D space
-     * @param b end vertex of the line in 3D space
+     * @param a       first line vertex
+     * @param invW1   reciprocal clip-space W for first vertex
+     * @param zOverW1 depth divided by W for first vertex
+     * @param b       second line vertex
+     * @param invW2   reciprocal clip-space W for second vertex
+     * @param zOverW2 depth divided by W for second vertex
+     * @param shader  fragment shader used for color computation
      */
     @Override
     public void rasterize(Vertex a, double invW1, double zOverW1, Vertex b, double invW2, double zOverW2,
@@ -55,19 +116,29 @@ public class FilledLineRasterizer extends LineRasterizer {
     }
 
     /**
-     * Draws a line using a simple analytical (trivial) algorithm.
+     * Draws a line using a simple analytical rasterization algorithm.
      *
-     * Chooses the dominant axis (X or Y) to avoid gaps
-     * and supports both solid and gradient coloring.
-     * Implemented clip the for cycle to only valid bounds
-     * {@code Math.max(0, x1); Math.min(raster.getWidth() - 1, x2);} - for X,
-     * {@code Math.max(0, y1); Math.min(raster.getHeight() - 1, y2);} - for Y
-     * 
-     * @param x1 Start x-coordinate
-     * @param y1 Start y-coordinate
-     * @param x2 End x-coordinate
-     * @param y2 End y-coordinate
-     * @param z  Depth value (z-coordinate)
+     * <p>
+     * The dominant axis is selected automatically:
+     * </p>
+     *
+     * <ul>
+     * <li>If |dx| > |dy| → iterate over X</li>
+     * <li>Otherwise → iterate over Y</li>
+     * </ul>
+     *
+     * <p>
+     * Vertex attributes are linearly interpolated along the line.
+     * Depth is reconstructed using perspective-correct interpolation.
+     * </p>
+     *
+     * @param a       first line vertex
+     * @param invW1   reciprocal clip-space W for first vertex
+     * @param zOverW1 depth divided by W for first vertex
+     * @param b       second line vertex
+     * @param invW2   reciprocal clip-space W for second vertex
+     * @param zOverW2 depth divided by W for second vertex
+     * @param shader  fragment shader
      */
     private void trivialAlgorithm(Vertex a, double invW1, double zOverW1, Vertex b,
             double invW2, double zOverW2, Shader shader) {
@@ -184,6 +255,35 @@ public class FilledLineRasterizer extends LineRasterizer {
         }
     }
 
+    /**
+     * Computes perspective-correct interpolated depth.
+     *
+     * <p>
+     * Depth reconstruction:
+     * </p>
+     *
+     * :contentReference[oaicite:2]{index=2}
+     *
+     * <p>
+     * Linear interpolation is first performed on:
+     * </p>
+     *
+     * <ul>
+     * <li>{@code 1 / w}</li>
+     * <li>{@code z / w}</li>
+     * </ul>
+     *
+     * <p>
+     * The final depth value is reconstructed afterward.
+     * </p>
+     *
+     * @param t       interpolation factor in range [0, 1]
+     * @param invW1   reciprocal W of first vertex
+     * @param invW2   reciprocal W of second vertex
+     * @param zOverW1 depth divided by W for first vertex
+     * @param zOverW2 depth divided by W for second vertex
+     * @return perspective-correct interpolated depth
+     */
     private double computeZ(float t, double invW1, double invW2, double zOverW1, double zOverW2) {
         double invW = invW1 + t * (invW2 - invW1);
         double zOverW = zOverW1 + t * (zOverW2 - zOverW1);

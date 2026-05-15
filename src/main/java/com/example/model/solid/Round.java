@@ -19,6 +19,53 @@ public class Round extends Solid {
             initialWireFrameMesh(center, radius, stacks, slices, colors);
     }
 
+    /**
+     * Initializes a wireframe sphere mesh.
+     *
+     * <p>
+     * The sphere is generated using two sets of circular segments:
+     * </p>
+     *
+     * <ul>
+     * <li>Latitude rings (horizontal circles)</li>
+     * <li>Longitude rings (vertical circles)</li>
+     * </ul>
+     *
+     * <p>
+     * Each segment is stored as a line primitive.
+     * The generated geometry is added into:
+     * </p>
+     *
+     * <ul>
+     * <li>{@code vertexBuffer}</li>
+     * <li>{@code indexBuffer}</li>
+     * <li>{@code partBuffer}</li>
+     * </ul>
+     *
+     * <p>
+     * Sphere parameterization:
+     * </p>
+     *
+     * :contentReference[oaicite:0]{index=0}
+     *
+     * <p>
+     * Latitude angle:
+     * </p>
+     *
+     * :contentReference[oaicite:1]{index=1}
+     *
+     * <p>
+     * Longitude angle:
+     * </p>
+     *
+     * :contentReference[oaicite:2]{index=2}
+     *
+     * @param center sphere center position
+     * @param radius sphere radius
+     * @param stacks number of horizontal subdivisions
+     * @param slices number of vertical subdivisions
+     * @param colors color palette used for generated vertices
+     */
     private void initialWireFrameMesh(Point3D center, double radius, int stacks, int slices, Col[] colors) {
         vertexBuffer.clear();
         indexBuffer.clear();
@@ -86,6 +133,54 @@ public class Round extends Solid {
                         indexBuffer.size()));
     }
 
+    /**
+     * Initializes a filled sphere mesh using triangle primitives.
+     *
+     * <p>
+     * The sphere is generated using spherical coordinates and tessellated
+     * into triangles.
+     * </p>
+     *
+     * <p>
+     * Generated per-vertex attributes:
+     * </p>
+     *
+     * <ul>
+     * <li>Position</li>
+     * <li>Color</li>
+     * <li>Texture coordinates (UV)</li>
+     * <li>Normal vector</li>
+     * </ul>
+     *
+     * <p>
+     * Sphere parameterization:
+     * </p>
+     *
+     * :contentReference[oaicite:3]{index=3}
+     *
+     * <p>
+     * UV mapping:
+     * </p>
+     *
+     * :contentReference[oaicite:4]{index=4}
+     *
+     * <p>
+     * Surface normal for a sphere:
+     * </p>
+     *
+     * :contentReference[oaicite:5]{index=5}
+     *
+     * <p>
+     * Every rectangular patch between neighboring stacks and slices
+     * is split into two triangles.
+     * </p>
+     *
+     * @param center sphere center position
+     * @param radius sphere radius
+     * @param stacks number of horizontal subdivisions
+     * @param slices number of vertical subdivisions
+     * @param colors color palette used for generated vertices
+     */
     private void initialFillMesh(Point3D center, double radius, int stacks, int slices, Col[] colors) {
         vertexBuffer.clear();
         indexBuffer.clear();

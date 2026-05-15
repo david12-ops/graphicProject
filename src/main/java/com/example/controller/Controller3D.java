@@ -51,6 +51,33 @@ import com.example.transforms.Point3D;
 import com.example.transforms.Vec3D;
 import com.example.view.Panel;
 
+/**
+ * Main application controller responsible for:
+ * <ul>
+ * <li>scene initialization</li>
+ * <li>camera setup</li>
+ * <li>projection management</li>
+ * <li>input handling</li>
+ * <li>render loop coordination</li>
+ * </ul>
+ *
+ * <p>
+ * The controller connects the rendering pipeline with the UI panel and handles
+ * keyboard/mouse interaction for manipulating the camera and scene objects.
+ * </p>
+ *
+ * <p>
+ * Supported features:
+ * <ul>
+ * <li>perspective and orthographic projection</li>
+ * <li>wireframe and solid rendering</li>
+ * <li>Phong shading</li>
+ * <li>texture mapping</li>
+ * <li>object translation, rotation, and scaling</li>
+ * <li>camera movement and mouse look</li>
+ * </ul>
+ * </p>
+ */
 public class Controller3D implements Controller {
 
     // Movement speed
@@ -103,9 +130,9 @@ public class Controller3D implements Controller {
     }
 
     /**
-     * Initializes rasterizers and drawable objects.
-     *
-     * @param raster Raster used for drawing operations
+     * Initializes rendering resources, rasterizers,
+     * shaders, camera, projection, scene objects,
+     * and renderer instance.
      */
     public void initObjects() {
         colorDrawMode = panel.getColorDrawMode();
@@ -131,6 +158,14 @@ public class Controller3D implements Controller {
                 panel.getRaster().getHeight(), camera.getViewMatrix(), projectionMatrix);
     }
 
+    /**
+     * Initializes the default camera configuration.
+     *
+     * <p>
+     * The camera is configured in first-person mode
+     * with predefined position, azimuth, and zenith.
+     * </p>
+     */
     private void initCamera() {
         camera = new Camera()
                 .withPosition(new Vec3D(1.1, -1.5, 1.5))
@@ -139,6 +174,14 @@ public class Controller3D implements Controller {
                 .withFirstPerson(true);
     }
 
+    /**
+     * Initializes the projection matrix.
+     *
+     * <p>
+     * Creates either a perspective or orthographic projection matrix
+     * depending on the current projection mode.
+     * </p>
+     */
     private void initProjection() {
         double height = Math.max(1, panel.getHeight());
         double width = Math.max(1, panel.getWidth());
@@ -158,9 +201,27 @@ public class Controller3D implements Controller {
         }
     }
 
+    /**
+     * Initializes the scene and all scene objects.
+     *
+     * <p>
+     * Creates:
+     * <ul>
+     * <li>coordinate axes</li>
+     * <li>cube</li>
+     * <li>cylinder</li>
+     * <li>sphere</li>
+     * </ul>
+     *
+     * Also assigns textures, shaders, transformations,
+     * and scene lighting.
+     * </p>
+     *
+     * @param solidModel rendering mode used for generated solids
+     */
     private void initScene(SolidModel solidModel) {
         scene.setSceneLight(new Light(
-                new Vec3D(7, 12, 30),
+                camera.getPosition(),
                 new Col(255, 255, 255)));
         scene.clear();
 
@@ -268,6 +329,23 @@ public class Controller3D implements Controller {
         scene.addSolid(round);
     }
 
+    /**
+     * Initializes all user input listeners.
+     *
+     * <p>
+     * Supported interactions:
+     * <ul>
+     * <li>mouse drag camera rotation</li>
+     * <li>mouse wheel scaling</li>
+     * <li>keyboard camera movement</li>
+     * <li>solid translation and rotation</li>
+     * <li>projection switching</li>
+     * <li>wireframe/solid switching</li>
+     * </ul>
+     * </p>
+     *
+     * @param panel target panel for event registration
+     */
     @Override
     public void initListeners(Panel panel) {
         panel.setFocusable(true);
@@ -377,6 +455,7 @@ public class Controller3D implements Controller {
                         perspectiveProjection = !perspectiveProjection;
                         initProjection();
                         phongShader.setCameraPosition(camera.getPosition());
+                        render();
                         break;
                     // Cam up
                     case KeyEvent.VK_U:
@@ -477,6 +556,11 @@ public class Controller3D implements Controller {
         });
     }
 
+    /**
+     * Returns the currently active solid object.
+     *
+     * @return active solid or {@code null} if the scene is empty
+     */
     private Solid getActiveSolid() {
         if (scene.getSolids().isEmpty())
             return null;
@@ -489,21 +573,20 @@ public class Controller3D implements Controller {
     }
 
     /**
-     * Updates the model matrix of the given solid according to the specified
-     * action.
+     * Updates the model matrix of the specified solid.
      *
-     * If the action is ROTATION, the provided rotation matrix is
-     * left-multiplied with the current model matrix.
+     * <p>
+     * Supported actions:
+     * <ul>
+     * <li>{@code ROTATION} - applies rotation matrix</li>
+     * <li>{@code PROOFING} - applies translation matrix</li>
+     * </ul>
+     * </p>
      *
-     * If the action is PROOFING, the provided translation matrix is
-     * right-multiplied with the current model matrix.
-     *
-     * Transformations are appended on the right side of the model matrix.
-     *
-     * @param solid            the solid whose model matrix will be updated
-     * @param action           the transformation type (ROTATION or PROOFING)
-     * @param translationValue translation matrix (required for PROOFING)
-     * @param rotationValue    rotation matrix (required for ROTATION)
+     * @param solid            solid to update
+     * @param action           transformation type
+     * @param translationValue translation matrix
+     * @param rotationValue    rotation matrix
      */
     private void updateSolid(Solid solid, SolidAction action, Mat4Transl translationValue,
             Mat4 rotationValue) {
@@ -535,6 +618,20 @@ public class Controller3D implements Controller {
         }
     }
 
+    /**
+     * Renders the complete scene.
+     *
+     * <p>
+     * The rendering process:
+     * <ol>
+     * <li>clears frame buffers</li>
+     * <li>updates projection and view matrices</li>
+     * <li>configures shaders</li>
+     * <li>renders all scene objects</li>
+     * <li>updates the display</li>
+     * </ol>
+     * </p>
+     */
     private void render() {
         panel.clear();
         zBuffer.clear();
@@ -557,12 +654,18 @@ public class Controller3D implements Controller {
             setRasterizerFillColor(renderer, solid);
             setRasterizerDrawColor(renderer, solid);
 
-            renderer.render(solid);
+            renderer.render(solid, perspectiveProjection);
         }
 
         update();
     }
 
+    /**
+     * Configures shaders for wireframe rendering mode.
+     *
+     * @param renderer renderer instance
+     * @param solid    rendered solid
+     */
     private void setRasterizerDrawColor(Renderer renderer, Solid solid) {
         if (solidModel != SolidModel.WIREFRAME)
             return;
@@ -585,6 +688,22 @@ public class Controller3D implements Controller {
         }
     }
 
+    /**
+     * Configures shaders for solid rendering mode.
+     *
+     * <p>
+     * Supports:
+     * <ul>
+     * <li>constant shading</li>
+     * <li>interpolated shading</li>
+     * <li>Phong shading</li>
+     * <li>texture mapping</li>
+     * </ul>
+     * </p>
+     *
+     * @param renderer renderer instance
+     * @param solid    rendered solid
+     */
     private void setRasterizerFillColor(Renderer renderer, Solid solid) {
         if (solidModel != SolidModel.SOLID)
             return;
@@ -624,6 +743,12 @@ public class Controller3D implements Controller {
         panel.repaint();
     }
 
+    /**
+     * Computes the geometric center of a list of vertices.
+     *
+     * @param vertexes input vertices
+     * @return center position as vector
+     */
     private Vec3D getCenterVec(List<Vertex> vertexes) {
         double x = 0;
         double y = 0;
