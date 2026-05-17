@@ -60,7 +60,7 @@ public class RasterVertex {
             double invW,
             double z,
             Vec3D worldPosOverW,
-            Vec3D normal,
+            Vec3D normalOverW,
             Vec2D uvOverW,
             Col colorOverW) {
 
@@ -68,7 +68,7 @@ public class RasterVertex {
         this.invW = invW;
         this.z = z;
         this.worldPosOverW = worldPosOverW;
-        this.normalOverW = normal;
+        this.normalOverW = normalOverW;
         this.uvOverW = uvOverW;
         this.colorOverW = colorOverW;
     }

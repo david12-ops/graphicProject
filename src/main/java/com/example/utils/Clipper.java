@@ -32,63 +32,60 @@ import com.example.transforms.Point3D;
  * </ul>
  */
 public class Clipper {
+    public static Lerp<Vertex> lerp = new Lerp<>();
+
     public static Optional<Vertex[]> clipByZ(Vertex a, Vertex b) {
-        float zMin = 0;
-        double z1 = a.getPosition().getZ();
-        double z2 = b.getPosition().getZ();
+        // ===== NEAR PLANE =====
 
-        boolean inside1 = z1 >= zMin;
-        boolean inside2 = z2 >= zMin;
+        boolean insideA = planeDistanceNear(a) >= 0;
 
-        if (!inside1 && !inside2) {
+        boolean insideB = planeDistanceNear(b) >= 0;
+
+        if (!insideA && !insideB) {
             return Optional.empty();
         }
 
-        if (inside1 && inside2) {
-            return Optional.of(new Vertex[] { a, b });
+        if (insideA && !insideB) {
+
+            b = intersectNear(a, b);
+
+        } else if (!insideA && insideB) {
+
+            a = intersectNear(a, b);
         }
 
-        Vertex intersection;
+        // ===== FAR PLANE =====
 
-        if (inside1) {
-            intersection = intersect(a, b, zMin);
-            b = intersection;
-        } else {
-            intersection = intersect(b, a, zMin);
-            a = intersection;
+        insideA = planeDistanceFar(a) >= 0;
+
+        insideB = planeDistanceFar(b) >= 0;
+
+        if (!insideA && !insideB) {
+            return Optional.empty();
+        }
+
+        if (insideA && !insideB) {
+
+            b = intersectFar(a, b);
+
+        } else if (!insideA && insideB) {
+
+            a = intersectFar(a, b);
         }
 
         return Optional.of(new Vertex[] { a, b });
     }
 
     public static List<Vertex> clipByZ(List<Vertex> input) {
-        List<Vertex> output = new ArrayList<>();
-        float zMin = 0;
+        input = clipNear(input);
 
-        for (int i = 0; i < input.size(); i++) {
-            Vertex current = input.get(i);
-            Vertex next = input.get((i + 1) % input.size());
-
-            boolean currentInside = current.getZ() >= zMin;
-            boolean nextInside = next.getZ() >= zMin;
-
-            if (currentInside && nextInside) {
-                output.add(next);
-            } else if (currentInside && !nextInside) {
-                output.add(intersect(current, next, zMin));
-            } else if (!currentInside && nextInside) {
-                output.add(intersect(current, next, zMin));
-                output.add(next);
-            }
+        if (input.isEmpty()) {
+            return input;
         }
 
-        return output;
-    }
+        input = clipFar(input);
 
-    public static Vertex intersect(Vertex inside, Vertex outside, float zMin) {
-        double t = (zMin - inside.getZ()) / (outside.getZ() - inside.getZ());
-
-        return inside.mul(1 - t).add(outside.mul(t));
+        return input;
     }
 
     public static boolean clipReject(Vertex v1, Vertex v2) {
@@ -127,5 +124,95 @@ public class Clipper {
         return p.getX() < -w || p.getX() > w ||
                 p.getY() < -w || p.getY() > w ||
                 p.getZ() < 0 || p.getZ() > w;
+    }
+
+    private static Vertex intersectNear(Vertex a, Vertex b) {
+
+        double da = planeDistanceNear(a);
+        double db = planeDistanceNear(b);
+
+        double t = da / (da - db);
+
+        return lerp.lerp(a, b, t);
+    }
+
+    private static Vertex intersectFar(Vertex a, Vertex b) {
+
+        double da = planeDistanceFar(a);
+        double db = planeDistanceFar(b);
+
+        double t = da / (da - db);
+
+        return lerp.lerp(a, b, t);
+    }
+
+    private static List<Vertex> clipFar(List<Vertex> input) {
+
+        List<Vertex> output = new ArrayList<>();
+
+        for (int i = 0; i < input.size(); i++) {
+
+            Vertex current = input.get(i);
+            Vertex next = input.get((i + 1) % input.size());
+
+            boolean currentInside = planeDistanceFar(current) >= 0;
+
+            boolean nextInside = planeDistanceFar(next) >= 0;
+
+            if (currentInside && nextInside) {
+
+                output.add(next);
+
+            } else if (currentInside && !nextInside) {
+
+                output.add(intersectFar(current, next));
+
+            } else if (!currentInside && nextInside) {
+
+                output.add(intersectFar(current, next));
+                output.add(next);
+            }
+        }
+
+        return output;
+    }
+
+    private static List<Vertex> clipNear(List<Vertex> input) {
+
+        List<Vertex> output = new ArrayList<>();
+
+        for (int i = 0; i < input.size(); i++) {
+
+            Vertex current = input.get(i);
+            Vertex next = input.get((i + 1) % input.size());
+
+            boolean currentInside = planeDistanceNear(current) >= 0;
+
+            boolean nextInside = planeDistanceNear(next) >= 0;
+
+            if (currentInside && nextInside) {
+
+                output.add(next);
+
+            } else if (currentInside && !nextInside) {
+
+                output.add(intersectNear(current, next));
+
+            } else if (!currentInside && nextInside) {
+
+                output.add(intersectNear(current, next));
+                output.add(next);
+            }
+        }
+
+        return output;
+    }
+
+    private static double planeDistanceNear(Vertex v) {
+        return v.getZ();
+    }
+
+    private static double planeDistanceFar(Vertex v) {
+        return v.getPosition().getW() - v.getZ();
     }
 }

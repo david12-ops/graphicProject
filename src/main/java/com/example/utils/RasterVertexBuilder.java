@@ -49,7 +49,9 @@ public class RasterVertexBuilder {
      */
     public static RasterVertex from(Vertex v, boolean perspectiveProj) {
 
-        double invW = perspectiveProj ? 1.0 / v.getClipW() : 1.0;
+        double invW = perspectiveProj
+                ? 1.0 / v.getPosition().getW()
+                : 1.0;
 
         Vec3D pos = new Vec3D(v.getPosition());
 

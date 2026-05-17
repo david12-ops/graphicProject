@@ -180,13 +180,11 @@ public class Renderer {
                     }
                     break;
                 case TopologyType.TRIANGLES:
-                    Mat4 normalMatrix = solid.getModel();
+                    Optional<Mat4> invModel = solid.getModel().inverse();
 
-                    Optional<Mat4> inverse = solid.getModel().inverse();
-
-                    if (inverse.isPresent()) {
-                        normalMatrix = inverse.get().transpose();
-                    }
+                    Mat4 normalMatrix = invModel
+                            .map(Mat4::transpose)
+                            .orElse(new Mat4());
 
                     for (int i = 0; i < part.getCount(); i += 3) {
                         int indexA = solid.getIndexBuffer().get(index++);
@@ -386,30 +384,27 @@ public class Renderer {
         Vec3D worldC = c.getWorldPosition();
 
         Vertex newA = new Vertex(
-                new Point3D(screenA.getX(), screenA.getY(), screenA.getZ()),
+                new Point3D(screenA.getX(), screenA.getY(), screenA.getZ(), w1),
                 a.getColor(),
                 a.getUV(),
                 a.getNormal());
 
-        newA.setClipW(w1);
         newA.setWorldPosition(worldA);
 
         Vertex newB = new Vertex(
-                new Point3D(screenB.getX(), screenB.getY(), screenB.getZ()),
+                new Point3D(screenB.getX(), screenB.getY(), screenB.getZ(), w2),
                 b.getColor(),
                 b.getUV(),
                 b.getNormal());
 
-        newB.setClipW(w2);
         newB.setWorldPosition(worldB);
 
         Vertex newC = new Vertex(
-                new Point3D(screenC.getX(), screenC.getY(), screenC.getZ()),
+                new Point3D(screenC.getX(), screenC.getY(), screenC.getZ(), w3),
                 c.getColor(),
                 c.getUV(),
                 c.getNormal());
 
-        newC.setClipW(w3);
         newC.setWorldPosition(worldC);
 
         RasterVertex rvA = RasterVertexBuilder.from(newA, perspectiveProj);

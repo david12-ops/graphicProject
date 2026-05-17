@@ -150,8 +150,10 @@ public class Controller3D implements Controller {
         initProjection();
         initScene(solidModel);
 
+        scene.setSceneLight(new Light(
+                camera.getPosition(),
+                new Col(255, 255, 255)));
         phongShader = new PhongShader(scene.getSceneLight());
-        phongShader.setCameraPosition(camera.getPosition());
 
         renderer = new Renderer(lineRasterizer, triangleRasterizer, pointRasterizer, scene.getSceneLight(),
                 panel.getRaster().getWidth(),
@@ -220,9 +222,6 @@ public class Controller3D implements Controller {
      * @param solidModel rendering mode used for generated solids
      */
     private void initScene(SolidModel solidModel) {
-        scene.setSceneLight(new Light(
-                camera.getPosition(),
-                new Col(255, 255, 255)));
         scene.clear();
 
         // axes
@@ -382,7 +381,7 @@ public class Controller3D implements Controller {
 
                 mousePressed = true;
 
-                phongShader.setCameraPosition(camera.getPosition());
+                setLightToPhongShader(camera.getPosition());
             }
 
             public void mouseReleased(MouseEvent e) {
@@ -403,7 +402,7 @@ public class Controller3D implements Controller {
                     lastMouseX = e.getX();
                     lastMouseY = e.getY();
 
-                    phongShader.setCameraPosition(camera.getPosition());
+                    setLightToPhongShader(camera.getPosition());
 
                     render();
                 }
@@ -433,44 +432,44 @@ public class Controller3D implements Controller {
                     // Cam up
                     case KeyEvent.VK_UP:
                         camera = camera.forward(MOVE_SPEED);
-                        phongShader.setCameraPosition(camera.getPosition());
+                        setLightToPhongShader(camera.getPosition());
                         break;
                     // Cam down
                     case KeyEvent.VK_DOWN:
                         camera = camera.backward(MOVE_SPEED);
-                        phongShader.setCameraPosition(camera.getPosition());
+                        setLightToPhongShader(camera.getPosition());
                         break;
                     // Cam left
                     case KeyEvent.VK_LEFT:
                         camera = camera.left(MOVE_SPEED);
-                        phongShader.setCameraPosition(camera.getPosition());
+                        setLightToPhongShader(camera.getPosition());
                         break;
                     // Cam right
                     case KeyEvent.VK_RIGHT:
                         camera = camera.right(MOVE_SPEED);
-                        phongShader.setCameraPosition(camera.getPosition());
+                        setLightToPhongShader(camera.getPosition());
                         break;
                     // Change projection mode
                     case KeyEvent.VK_P:
                         perspectiveProjection = !perspectiveProjection;
                         initProjection();
-                        phongShader.setCameraPosition(camera.getPosition());
+                        setLightToPhongShader(camera.getPosition());
                         render();
                         break;
                     // Cam up
                     case KeyEvent.VK_U:
                         camera = camera.up(MOVE_SPEED);
-                        phongShader.setCameraPosition(camera.getPosition());
+                        setLightToPhongShader(camera.getPosition());
                         break;
                     // Cam down
                     case KeyEvent.VK_D:
                         camera = camera.down(MOVE_SPEED);
-                        phongShader.setCameraPosition(camera.getPosition());
+                        setLightToPhongShader(camera.getPosition());
                         break;
                     // Reset camera
                     case KeyEvent.VK_R:
                         initCamera();
-                        phongShader.setCameraPosition(camera.getPosition());
+                        setLightToPhongShader(camera.getPosition());
                         break;
                     // Next solid
                     case KeyEvent.VK_TAB:
@@ -734,6 +733,11 @@ public class Controller3D implements Controller {
 
             solid.setShader(solid.getShader());
         }
+    }
+
+    private void setLightToPhongShader(Vec3D cameraPosition) {
+        scene.getSceneLight().setPosition(cameraPosition);
+        phongShader.setCameraPosition(cameraPosition);
     }
 
     /**

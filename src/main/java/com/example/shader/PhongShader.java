@@ -107,9 +107,11 @@ public class PhongShader implements Shader {
                 Vec3D N = normalized.get();
 
                 // Direction to light source
-                Optional<Vec3D> lOpt = subtract(
+                Vec3D lightVec = subtract(
                                 sceneLight.getPosition(),
-                                v.getWorldPosition())
+                                v.getWorldPosition());
+
+                Optional<Vec3D> lOpt = lightVec
                                 .normalized();
 
                 // Direction to camera
@@ -123,19 +125,60 @@ public class PhongShader implements Shader {
                         return v.getColor();
                 }
 
+                double distance = lightVec.length();
+
                 Vec3D L = lOpt.get();
                 Vec3D V = vOpt.get();
 
+                /*
+                 * Light attenuation (distance falloff)
+                 *
+                 * Simulates how light intensity decreases with distance.
+                 *
+                 * Formula:
+                 *
+                 * attenuation = 1.0 /
+                 * (kc + kl * d + kq * d * d)
+                 *
+                 * where:
+                 *
+                 * d = distance from light source to fragment
+                 *
+                 * kc = constant attenuation
+                 * Base light intensity.
+                 * Usually 1.0 to avoid division by zero.
+                 *
+                 * kl = linear attenuation
+                 * Controls linear light falloff over distance.
+                 *
+                 * kq = quadratic attenuation
+                 * Controls quadratic falloff (physically inspired).
+                 * Higher values make the light fade faster.
+                 *
+                 * Example values:
+                 *
+                 * kc = 1.0
+                 * kl = 0.04
+                 * kq = 0.002
+                 *
+                 * Result:
+                 * - close fragments receive strong lighting
+                 * - distant fragments become darker
+                 * - improves depth perception and realism
+                 */
+                double attenuation = 1.0 /
+                                (1.0 + 0.04 * distance + 0.002 * distance * distance);
+
                 // === AMBIENT ===
-                double ambientStrength = 0.2;
+                double ambientStrength = 0.24;
 
                 // === DIFFUSE ===
                 double diff = Math.max(0.0, N.dot(L));
-                double diffuseStrength = 0.8;
+                double diffuseStrength = 0.16;
 
                 // === SPECULAR ===
-                double specularStrength = 0.5;
-                double shininess = 32;
+                double specularStrength = 0.38;
+                double shininess = 10;
 
                 double spec = 0.0;
 
@@ -156,27 +199,25 @@ public class PhongShader implements Shader {
                 }
 
                 double ambient = ambientStrength;
-                double diffuse = diffuseStrength * diff;
-                double specular = specularStrength * spec;
-                double specularColor = 255.0 * specular;
+                double diffuse = diffuseStrength * diff * attenuation;
+                double specular = specularStrength * spec * attenuation;
 
                 Col base = v.getColor();
 
-                return new Col(
-                                clamp(base.getR() * (ambient + diffuse) + specularColor),
-                                clamp(base.getG() * (ambient + diffuse) + specularColor),
-                                clamp(base.getB() * (ambient + diffuse) + specularColor));
-        }
+                Col light = sceneLight.getColor();
 
-        /**
-         * Clamps a color channel value to the valid range {@code [0, 255]}.
-         *
-         * @param value input color value
-         * @return clamped color value
-         */
-        private double clamp(double value) {
-                return Math.max(0.0,
-                                Math.min(255, value));
+                return new Col(
+                                base.getR() * ambient +
+                                                base.getR() * light.getR() * diffuse +
+                                                light.getR() * specular,
+
+                                base.getG() * ambient +
+                                                base.getG() * light.getG() * diffuse +
+                                                light.getG() * specular,
+
+                                base.getB() * ambient +
+                                                base.getB() * light.getB() * diffuse +
+                                                light.getB() * specular);
         }
 
         private Vec3D subtract(Vec3D a, Vec3D b) {

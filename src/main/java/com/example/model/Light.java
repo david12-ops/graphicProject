@@ -33,7 +33,7 @@ import com.example.transforms.Vec3D;
  * :contentReference[oaicite:0]{index=0}
  */
 public class Light {
-    final Vec3D position;
+    private Vec3D position;
     final Col color;
 
     public Light(Vec3D position, Col color) {
@@ -47,5 +47,9 @@ public class Light {
 
     public Vec3D getPosition() {
         return position;
+    }
+
+    public void setPosition(Vec3D position) {
+        this.position = position;
     }
 }
