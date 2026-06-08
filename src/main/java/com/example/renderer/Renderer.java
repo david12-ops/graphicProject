@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.example.enums.SolidState;
-import com.example.enums.TopologyType;
 import com.example.model.Light;
 import com.example.model.Part;
 import com.example.model.RasterVertex;
@@ -122,7 +121,7 @@ public class Renderer {
         for (Part part : solid.getPartBuffer()) {
             int index = part.getStartIndex();
             switch (part.getTopologyType()) {
-                case TopologyType.LINES:
+                case LINES:
                     // barva
                     for (int i = 0; i < part.getCount(); i += 2) {
                         int indexA = solid.getIndexBuffer().get(index++);
@@ -179,7 +178,7 @@ public class Renderer {
                                 solid.getShader());
                     }
                     break;
-                case TopologyType.TRIANGLES:
+                case TRIANGLES:
                     Optional<Mat4> invModel = solid.getModel().inverse();
 
                     Mat4 normalMatrix = invModel
@@ -251,7 +250,7 @@ public class Renderer {
                         }
                     }
                     break;
-                case TopologyType.POINTS:
+                case POINTS:
                     for (int i = 0; i < part.getCount(); i++) {
                         int vertexIndex = solid.getIndexBuffer().get(index + i);
                         Vertex vertex = solid.getVertexBuffer().get(vertexIndex);
